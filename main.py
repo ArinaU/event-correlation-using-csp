@@ -50,29 +50,6 @@ def unary_constraint(*args):
             break
     return flag
 
-
-# Hardcoded Constraints for 2nd Case
-def unary_constraint2(*args):
-    flag = True
-    for x in args:
-        cond = generate_condition(x, attr='Activity', val="'B'", operator="==")
-        if not cond():
-            flag = False
-            break
-    return flag
-
-
-# Hardcoded Constraints for 3rd Case
-def unary_constraint3(*args):
-    flag = True
-    for x in args:
-        cond = generate_condition(x, attr='Activity', val="'C'", operator="==")
-        if not cond():
-            flag = False
-            break
-    return flag
-
-
 # Main()
 
 def get_solutions(df, nrow, curr, **kwargs):
@@ -92,7 +69,7 @@ def get_solutions(df, nrow, curr, **kwargs):
     return solutions
 
 
-def get_matrix():
+def get_matrix1():
 
     df = pd.read_csv('data1.csv', sep=';')
 
@@ -101,19 +78,13 @@ def get_matrix():
 
     matr = np.zeros((n_of_cases, n_of_events))
 
-    # initialize
     df2 = pd.DataFrame(columns=["Case1", "Case2", "Case3"])
-
-
-    # df2 = df2.append({'Case1': [np.NaN], 'Case2': [np.NaN], 'Case3': [np.NaN]}, ignore_index=True)
 
 
     for nrow in range(n_of_cases):
         curr = df.loc[nrow].to_dict()
         for col in df2:
             if col == 'Case1':
-                #             new_column = np.append(df2[df2['Case1'].notnull()]['Case1'].values, curr)
-
                 new_column = curr
 
                 solutions = get_solutions(df, nrow, curr, column=new_column, constraints=[unary_constraint])
@@ -137,17 +108,52 @@ def get_matrix():
     #                 var = list(solutions[0].values())[0]['EventID']
     #                 df2 = df2.append({'Case1': np.NaN, 'Case2': solutions[0][var], 'Case3': np.NaN}, ignore_index=True)
     #                 break
-
-
     return df2
 
 
-def my_constraint(case):
-    column = df2[df2[case].notnull()][case].to_list()
+def get_matrix():
+    df = pd.read_csv('data1.csv', sep=';')
 
+    # n_of_cases = len(df)
+
+    cases = ['Case1', 'Case2', 'Case3']
+
+    n_of_events = len(df['EventID'])
+
+    # df2 = pd.DataFrame(columns=["Case1", "Case2", "Case3"])
+
+
+
+    dict = { 'Case1': [{'EventID': 1, 'Activity': 'A', 'Timestamp': '2022-01-01 11:01:58', 'UserID': 1},
+            {'EventID': 2, 'Activity': 'B', 'Timestamp': '2022-01-01 11:10:58', 'UserID': 1}],
+             'Case2': np.NaN,
+             'Case3': np.NaN }
+
+    df2 = pd.DataFrame(dict) #!! in a certain case
+
+    problem = Problem()
+
+    for row in range(n_of_events):
+        curr = df.loc[row].to_dict()
+        for case in cases:
+            dict = { 'Case1': np.NaN, 'Case2': np.NaN, 'Case3': np.NaN }
+            dict[case] = curr
+            df3 = df2.append(dict, ignore_index=True)
+
+            problem.addVariable('Event', ['Case1', 'Case2', 'Case3'])
+
+            df
+
+            problem.addConstraint(my_constraint, [column, 'Event'])
+            print(problem.getSolutions())
+            problem.reset()
+
+
+
+def my_constraint(df, case):
     flag = True
     for x, y in itertools.combinations(column, 2):
-        cond = generate_condition(x, y, attrs=['Activity', 'Activity'], vals=['A', 'B'], operator=">")
+        cond = generate_condition(x, y, attrs=['Activity', 'Activity'], vals=['A', 'C'], operator=">")
         if not cond():
             flag = False
             break
@@ -157,17 +163,19 @@ def my_constraint(case):
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    df2 = get_matrix()
+    # df2 = get_matrix()
+    #
+    # var1 = 'Case1'
+    # var2 = 'Case2'
+    # var3 = 'Case3'
+    #
+    # problem = Problem()
+    #
+    # problem.addVariable('Event', [var1, var2, var3])
+    #
+    # problem.addConstraint(my_constraint, ['Event'])
+    #
+    # print(problem.getSolutions())
 
-    var1 = 'Case1'
-    var2 = 'Case2'
-    var3 = 'Case3'
-
-    problem = Problem()
-
-    problem.addVariable('Event', [var1, var2, var3])
-
-    problem.addConstraint(my_constraint, ['Event'])
-
-    print(problem.getSolutions())
+    get_matrix()
 
