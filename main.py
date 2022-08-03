@@ -7,6 +7,7 @@ from constraint import *
 import pandas as pd
 import numpy as np
 import itertools
+import math
 
 
 def generate_condition(*args, **kwargs):
@@ -15,12 +16,15 @@ def generate_condition(*args, **kwargs):
         if len(args) == 2:
             x = args[0]  # B
             y = args[1]  # A
-            attr = kwargs['attrs'][0]
-            attr2 = kwargs['attrs'][1]
-            # B == A and A == B
-            if (x[attr] == kwargs['vals'][0] and y[attr] == kwargs['vals'][1]) or (
-                    y[attr] == kwargs['vals'][0] and x[attr] == kwargs['vals'][1]):
-                flag = eval(f"{x['EventID']} {kwargs['operator']} {y['EventID']}")
+            if pd.isna(x) or pd.isna(y):
+                return True
+            else:
+                attr = kwargs['attrs'][0]
+                attr2 = kwargs['attrs'][1]
+                # B == A and A == B
+                if (x[attr] == kwargs['vals'][0] and y[attr] == kwargs['vals'][1]) or (
+                        y[attr] == kwargs['vals'][0] and x[attr] == kwargs['vals'][1]):
+                    flag = eval(f"{x['EventID']} {kwargs['operator']} {y['EventID']}")
         elif len(args) == 1:
             x = args[0]
             attr = kwargs['attr']
@@ -66,6 +70,7 @@ def get_solutions(df, nrow, curr, **kwargs):
         problem.addConstraint(constraint, [curr['EventID']])
 
     solutions = problem.getSolutions()
+    print(solutions)
     return solutions
 
 
@@ -129,36 +134,77 @@ def get_matrix():
              'Case2': np.NaN,
              'Case3': np.NaN }
 
-    df2 = pd.DataFrame(dict) #!! in a certain case
+    # dict = [{'EventID': 1, 'Activity': 'A', 'Timestamp': '2022-01-01 11:01:58', 'UserID': 1},
+    #         {'EventID': 2, 'Activity': 'B', 'Timestamp': '2022-01-01 11:10:58', 'UserID': 1}]
+
+    # df2 = pd.DataFrame(dict) #!! in a certain case
+
+    df2 = pd.DataFrame(dict)
 
     problem = Problem()
 
-    for row in range(n_of_events):
-        curr = df.loc[row].to_dict()
-        for case in cases:
-            dict = { 'Case1': np.NaN, 'Case2': np.NaN, 'Case3': np.NaN }
-            dict[case] = curr
-            df3 = df2.append(dict, ignore_index=True)
+    # for row in range(n_of_events):
+    #     curr = df.loc[row].to_dict()
+    #     # for case in cases:
+    #
+    #     dict = { 'Case1': curr, 'Case2': curr, 'Case3': curr }
+    #     df3 = df2.append(dict, ignore_index=True)
+    #
+    #     data = df3.to_dict()
+    #
+    #     problem.addVariable('Data', data)
+    #     problem.addVariable('Cases', ['Case1', 'Case2', 'Case3'])
+    #
+    #     problem.addConstraint(my_constraint, ['Data', 'Cases'])
+    #     print(problem.getSolutions())
+    #     problem.reset()
 
-            problem.addVariable('Event', ['Case1', 'Case2', 'Case3'])
+    curr = df.loc[2].to_dict()
 
-            df
+    dict = {'Case1': curr, 'Case2': curr, 'Case3': curr}
+    df3 = df2.append(dict, ignore_index=True)
 
-            problem.addConstraint(my_constraint, [column, 'Event'])
-            print(problem.getSolutions())
-            problem.reset()
+    data = df3.to_dict()
+
+    # problem.addVariable('Data', data)
+    problem.addVariable('Cases', ['Case1', 'Case2', 'Case3'])
+
+    problem.addConstraint(MyConstraint(data), ['Cases'])
+    print(problem.getSolutions())
+
+
+class MyConstraint(Constraint):
+
+    def __init__(self, data):
+        self._data = data
+
+    def __call__(self, variables, domains, assignments, forwardcheck=False):
+        data = self._data
+        for variable in variables:
+            if variable in assignments:
+                case = assignments[variable]
+                column = data[case]
+                for x, y in itertools.combinations(column, 2):
+                    x = column[x]
+                    y = column[y]
+                    cond = generate_condition(x, y, attrs=['Activity', 'Activity'], vals=['A', 'C'], operator=">")
+                    flag = cond()
+                    if not flag:
+                        return False
+                return True
 
 
 
-def my_constraint(df, case):
-    flag = True
-    for x, y in itertools.combinations(column, 2):
-        cond = generate_condition(x, y, attrs=['Activity', 'Activity'], vals=['A', 'C'], operator=">")
-        if not cond():
-            flag = False
-            break
-
-    return flag # binary_constraint(column)
+# def my_constraint(data):
+#     column = data[case]
+#     flag = True
+#     for x, y in itertools.combinations(column, 2):
+#         cond = generate_condition(x, y, attrs=['Activity', 'Activity'], vals=['A', 'C'], operator=">")
+#         if not cond():
+#             flag = False
+#             break
+#
+#     return flag # binary_constraint(column)
 
 
 # Press the green button in the gutter to run the script.
