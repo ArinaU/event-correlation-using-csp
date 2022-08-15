@@ -17,14 +17,14 @@ def generate_condition(*args, **kwargs):
         if len(args) == 2:
             x = args[0]  # B
             y = args[1]  # A
-            if pd.isna(x) or pd.isna(y):
+            if pd.isna(x) or pd.isna(y) or len(constraints['attrs']) == 1:
                 return True
             else:
                 attr = constraints['attrs'][0]
                 attr2 = constraints['attrs'][1]
                 # B == A and A == B
-                if (x[attr] == constraints['vals'][0] and y[attr] == constraints['vals'][1]) or (
-                        y[attr] == constraints['vals'][0] and x[attr] == constraints['vals'][1]):
+                if (x[attr] == constraints['vals'][0] and y[attr2] == constraints['vals'][1]) or (
+                        y[attr] == constraints['vals'][0] and x[attr2] == constraints['vals'][1]):
                     flag = eval(f"{x['EventID']} {constraints['operator']} {y['EventID']}")
         elif len(args) == 1 and len(constraints['attrs']) == 1:
             x = args[0]
@@ -72,7 +72,7 @@ def get_matrix():
     result_df = pd.DataFrame(columns=[i for i in range(n_of_cases)])
 
     constraints = {0: {'attrs': ['Activity', 'Activity'], 'vals': ['A', 'B'], 'operator': ">"},
-                   1: {'attrs': ['Activity', 'UserID'], 'vals': ['A', '2'], 'operator': "<"},
+                   1: {'attrs': ['Activity', 'UserID'], 'vals': ['B', 2], 'operator': ">"},
                    2: {'attrs': ['Activity'], 'vals': 'C', 'operator': "!="}}
 
     for nrow in range(n_of_events):
@@ -91,29 +91,16 @@ def get_matrix():
         case = min([case['Cases'] for case in problem.getSolutions()]) # find 1st convenient case
 
         temp_df.iloc[nrow, temp_df.columns.difference([case])] = pd.NA
-
         result_df = temp_df #TODO delete temp_df ???
-
-        print(result_df)
-
         problem.reset()
 
-
-
-
-
-
-
-
-
-
-
-
+    return result_df
 
 
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
 
-    get_matrix()
+    result = get_matrix()
+    print(result)
 
