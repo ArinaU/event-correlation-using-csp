@@ -55,7 +55,7 @@ class MyConstraint(Constraint):
                     flag = cond()
                 else:
                     for x, y in itertools.combinations(column, 2):
-                        cond = generate_condition(column[x], column[y], constraints = constraints[case])
+                        cond = generate_condition(x, y, constraints = constraints[case])
                         flag = cond()
                         if not flag:
                             break
@@ -90,7 +90,7 @@ def get_matrix():
 
         case = min([case['Cases'] for case in problem.getSolutions()]) # find 1st convenient case
 
-        temp_df[temp_df.columns.difference([case])] = pd.NA
+        temp_df.iloc[nrow, temp_df.columns.difference([case])] = pd.NA
 
         result_df = temp_df #TODO delete temp_df ???
 
