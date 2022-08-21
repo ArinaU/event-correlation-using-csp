@@ -28,8 +28,8 @@ def generate_condition(*args, **kwargs):
                     flag = eval(f"{x['EventID']} {constraints['operator']} {y['EventID']}")
         elif len(args) == 1 and len(constraints['attrs']) == 1:
             x = args[0]
-            attr = constraints['attrs']
-            flag = eval(f"x{attr} {constraints['operator']} '{constraints['vals']}'") # TODO что-то с кавычками
+            attr = constraints['attrs'][0]
+            flag = eval(f"x{[attr]} {constraints['operator']} constraints{['vals']}") # TODO
         return flag
 
     return f

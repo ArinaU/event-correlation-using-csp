@@ -83,11 +83,41 @@ evaluates to:
 if ('B' == 'A' and 'A' == 'B') or ('A' == 'A' and 'B' == 'B'):
 ```
 
+The next expression
+```
+flag = eval(f"{x['EventID']} {constraints['operator']} {y['EventID']}")
+```
+
+evaluates to:
+
+```
+'1 < 2'
+```
 
 
+The following condition is for unary constraints:
+```
+elif len(args) == 1 and len(constraints['attrs']) == 1:
+```
+
+When:
+* `constraints` is equal to `{'attrs': ['Activity'], 'vals': 'C', 'operator': '!='}`
+* x = `{'EventID': 1, 'Activity': 'B', 'Timestamp': '2022-01-01 11:01:58', 'UserID': 1}`
+* attr = `'Activity'`
+
+Then:
+```
+eval(f"x{[attr]} {constraints['operator']} constraints{['vals']}")
+```
+evaluates to:
+```
+'B' != 'C'
+```
 
 
+The resulting matrix is with the given event log in this example:
 
+![result](result.png)
 
 
 
