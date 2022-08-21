@@ -17,14 +17,14 @@ def generate_condition(*args, **kwargs):
         if len(args) == 2:
             x = args[0]  # B
             y = args[1]  # A
-            if pd.isna(x) or pd.isna(y):
+            if pd.isna(x) or pd.isna(y) or len(constraints['attrs']) == 1:
                 return True
             else:
                 attr = constraints['attrs'][0]
                 attr2 = constraints['attrs'][1]
                 # B == A and A == B
-                if (x[attr] == constraints['vals'][0] and y[attr] == constraints['vals'][1]) or (
-                        y[attr] == constraints['vals'][0] and x[attr] == constraints['vals'][1]):
+                if (x[attr] == constraints['vals'][0] and y[attr2] == constraints['vals'][1]) or (
+                        y[attr] == constraints['vals'][0] and x[attr2] == constraints['vals'][1]):
                     flag = eval(f"{x['EventID']} {constraints['operator']} {y['EventID']}")
         elif len(args) == 1 and len(constraints['attrs']) == 1:
             x = args[0]
@@ -34,51 +34,6 @@ def generate_condition(*args, **kwargs):
 
     return f
 
-
-def get_solutions(df, nrow, curr, **kwargs):
-    curr = df.loc[nrow].to_dict()
-    problem = Problem()
-
-    # problem.addVariable('2', [var1, var2])
-
-    #     problem.addVariable(curr['EventID'], kwargs['column'])
-
-    problem.addVariable(curr['EventID'], [curr])
-
-    for constraint in kwargs['constraints']:
-        problem.addConstraint(constraint, [curr['EventID']])
-
-    solutions = problem.getSolutions()
-    print(solutions)
-    return solutions
-
-
-def get_matrix():
-    df = pd.read_csv('data1.csv', sep=';')
-    cases = ['Case1', 'Case2', 'Case3']
-
-    n_of_cases = len(cases)
-    n_of_events = len(df['EventID'])
-
-    df2 = pd.DataFrame()
-    problem = Problem()
-
-    for nrow in range(n_of_cases):
-        curr = df.loc[nrow].to_dict()
-
-    curr = df.loc[2].to_dict()
-
-    dict = {'Case1': curr, 'Case2': curr, 'Case3': curr}
-    df3 = df2.append(dict, ignore_index=True)
-    data = df3.to_dict()
-
-    problem.addVariable('Cases', ['Case1', 'Case2', 'Case3'])
-
-    constraints = {'Case1': {'attrs': ['Activity', 'Activity'], 'vals': ['A', 'C'], 'operator': ">"},
-                   'Case2': {'attrs': ['Activity', 'UserID'], 'vals': ['A', '2'], 'operator': "<"},
-                   'Case3': {'attrs': ['Activity'], 'vals': 'C', 'operator': "!="}}
-    problem.addConstraint(MyConstraint(data, constraints), ['Cases'])
-    print(problem.getSolutions())
 
 
 class MyConstraint(Constraint):
@@ -99,23 +54,53 @@ class MyConstraint(Constraint):
                     cond = generate_condition(column[0], constraints=constraints[case])
                     flag = cond()
                 else:
-                    for x, y in itertools.combinations(column, 2):
-                        cond = generate_condition(column[x], column[y], constraints = constraints[case])
+                    for x, y in itertools.permutations(column, 2):
+                        cond = generate_condition(x, y, constraints = constraints[case])
                         flag = cond()
                         if not flag:
                             break
                 return flag
 
 
+def get_matrix():
+    raw_df = pd.read_csv('data.csv', sep=';')
+
+    n_of_cases = 3
+    n_of_events = len(raw_df['EventID'])
+
+    problem = Problem()
+    result_df = pd.DataFrame(columns=[i for i in range(n_of_cases)])
+
+    constraints = {0: {'attrs': ['Activity', 'Activity'], 'vals': ['A', 'B'], 'operator': "<"},
+                   1: {'attrs': ['Activity', 'UserID'], 'vals': ['B', 2], 'operator': "<"},
+                   2: {'attrs': ['Activity'], 'vals': 'C', 'operator': "!="}}
+
+    for nrow in range(n_of_events):
+        curr = raw_df.loc[nrow].to_dict()
+        dict = {}
+
+        for i in range(n_of_cases):
+            dict[i] = curr
+
+        temp_df = result_df.append(dict, ignore_index=True)
+
+        # Add cases from 0 to n
+        problem.addVariable('Cases', [i for i in range(n_of_cases)])
+        problem.addConstraint(MyConstraint(temp_df, constraints), ['Cases'])
+
+        case = min([case['Cases'] for case in problem.getSolutions()]) # find 1st convenient case
+
+        temp_df.iloc[nrow, temp_df.columns.difference([case])] = pd.NA
+        result_df = temp_df
+        problem.reset()
+
+    return result_df
+
+
+
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
 
-    # UserID 3 !=
-    # dict = {'Case1': { 'attrs': ['Activity', 'Activity'], 'vals': ['A', 'C'], 'operator': ">" },
-    #         'Case2': { 'attrs': ['UserID'], 'vals': ['2'], 'operator': "!=" }}
-    # print()
-
-    # cond = generate_condition(x, y, attrs=['Activity', 'Activity'], vals=['A', 'C'], operator=">")
-
-    get_matrix()
+    result = get_matrix()
+    print(result)
 
