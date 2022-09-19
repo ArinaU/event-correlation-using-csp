@@ -16,6 +16,8 @@ class MyConstraint(Constraint):
 
     def __call__(self, events, domains, assignments, forwardcheck=False, _unassigned=Unassigned):
         constraints = self._constraints
+        unary_constraints = constraints[1]
+        binary_constraints = constraints[2]
         data = self._data
         #for event in events:
         # print(event)
@@ -27,22 +29,19 @@ class MyConstraint(Constraint):
 
         last_events = [event for event in data if event['EventID'] in last_events_ids]
 
-
-
-
-
-
-
-
-
-
-
-
-            # for x, y in itertools.permutations(assignments[variable], 2):
-            #
-                # for constraint in constraints:
-                #     eval(constraint)
-        return True
+        result = True
+        if binary_constraints and len(last_events) > 1:
+            for constraint in binary_constraints:
+                for x, y in itertools.permutations(last_events, 2):
+                    result = eval(constraint)
+                    if not result:
+                        break
+        elif unary_constraints:
+            for x in last_events:
+                result = eval(x)
+                if not result:
+                    break
+        return result
 
 
 
@@ -82,16 +81,16 @@ def assign_cases():
 
     # raw_df.loc[raw_df['Activity'] == 'B']
 
-    constraints = {1: [], 2: ["x.Activity == 'B' and y.Activity == 'A' and x.Timestamp < y.Timestamp"]}
+    constraints = {1: [], 2: ["x['Timestamp'] < y['Timestamp'] if x['Activity'] == 'B' and y['Activity'] == 'A' else True"]}
 
     case = 1
     # for nrow in range(n_of_events):
     problem.addVariables(range(1, n_of_events+1), [f"Case{i}" for i in range(1, n_of_events+1)])
 
     problem.addConstraint(MyConstraint(data, constraints))
-    solutions = problem.getSolutions()
+    solutions = problem.getSolution()
 
-    return data
+    return solutions
 
 
 
