@@ -16,53 +16,29 @@ class MyConstraint(Constraint):
 
     def __call__(self, events, domains, assignments, forwardcheck=False, _unassigned=Unassigned):
         constraints = self._constraints
-        unary_constraints = constraints[1]
-        binary_constraints = constraints[2]
+        unary_constraints = constraints['unary']
+        binary_constraints = constraints['binary']
         data = self._data
-        #for event in events:
-        # print(event)
-        curr_event = max(assignments, key=assignments.get)
+
+        curr_event = max(assignments.keys())
         suggested_case = assignments[curr_event]
 
-        # get all events with this case
+        # get all events ids with this case
         last_events_ids = [key for key, value in assignments.items() if value == suggested_case]
-
+        # get events themselves
         last_events = [event for event in data if event['EventID'] in last_events_ids]
 
-        result = True
         if binary_constraints and len(last_events) > 1:
             for constraint in binary_constraints:
                 for x, y in itertools.permutations(last_events, 2):
-                    result = eval(constraint)
-                    if not result:
+                    if not eval(constraint):
+                        return False
+        if unary_constraints:
+            for constraint in unary_constraints:
+                for x in last_events:
+                    if not eval(constraint):
                         break
-        elif unary_constraints:
-            for x in last_events:
-                result = eval(x)
-                if not result:
-                    break
-        return result
-
-
-
-
-
-
-        # for variable in variables:
-        #     if variable in assignments:
-        #         case = assignments[variable]
-        #         column = data[case]
-        #         flag = True
-        #         if len(column) < 2:
-        #             cond = generate_condition(column[0], constraints=constraints[case])
-        #             flag = cond()
-        #         else:
-        #             for x, y in itertools.permutations(column, 2):
-        #                 cond = generate_condition(x, y, constraints = constraints[case])
-        #                 flag = cond()
-        #                 if not flag:
-        #                     break
-        #         return flag
+        return True
 
 
 
@@ -73,19 +49,15 @@ def assign_cases():
     # add empty column with cases
     data = data.assign(CaseID=None)
     data = data.to_dict(orient="records")
-    # data = list(data.to_records(index=False)) # to tuple
 
     problem = Problem()
 
-    # result_df = pd.DataFrame(columns=[i for i in range(n_of_events)])
-
-    # raw_df.loc[raw_df['Activity'] == 'B']
-
-    constraints = {1: [], 2: ["x['Timestamp'] < y['Timestamp'] if x['Activity'] == 'B' and y['Activity'] == 'A' else True"]}
+    constraints = {'unary': ["x['Timestamp'] < '2022-01-01 11:20:59'"],
+                   'binary': ["x['UserID'] == y['UserID']", "x['Timestamp'] < y['Timestamp'] if x['Activity'] == 'B' and y['Activity'] == 'A' else True"]}
 
     case = 1
     # for nrow in range(n_of_events):
-    problem.addVariables(range(1, n_of_events+1), [f"Case{i}" for i in range(1, n_of_events+1)])
+    problem.addVariables(range(1, n_of_events+1), [f"Case{i}" for i in range(n_of_events, 0, -1)])
 
     problem.addConstraint(MyConstraint(data, constraints))
     solutions = problem.getSolution()
@@ -98,7 +70,7 @@ def assign_cases():
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     result = assign_cases()
-
+    print(result)
     # problem = Problem()
     # problem.addVariable("a", [1, 2, 3])
     # problem.addConstraint(AllDifferentConstraint())
