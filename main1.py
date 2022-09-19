@@ -50,14 +50,15 @@ def assign_cases():
     data = data.assign(CaseID=None)
     data = data.to_dict(orient="records")
 
-    problem = Problem()
+    solver = RecursiveBacktrackingSolver()
+    problem = Problem(solver)
 
     constraints = {'unary': ["x['Timestamp'] < '2022-01-01 11:20:59'"],
-                   'binary': ["x['UserID'] == y['UserID']", "x['Timestamp'] < y['Timestamp'] if x['Activity'] == 'B' and y['Activity'] == 'A' else True"]}
+                   'binary': ["x['UserID'] == y['UserID']", "x['Timestamp'] < y['Timestamp'] if x['Activity'] == 'B' and y['Activity'] == 'A' else True" ]}
 
     case = 1
     # for nrow in range(n_of_events):
-    problem.addVariables(range(1, n_of_events+1), [f"Case{i}" for i in range(n_of_events, 0, -1)])
+    problem.addVariables(range(1, n_of_events+1), [f"Case{i}" for i in range(1, n_of_events+1)])
 
     problem.addConstraint(MyConstraint(data, constraints))
     solutions = problem.getSolution()
