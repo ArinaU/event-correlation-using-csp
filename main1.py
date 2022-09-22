@@ -7,7 +7,6 @@ import numpy as np
 import itertools
 import math
 
-
 class MyConstraint(Constraint):
 
     def __init__(self, data, constraints):
@@ -37,8 +36,73 @@ class MyConstraint(Constraint):
             for constraint in unary_constraints:
                 for x in last_events:
                     if not eval(constraint):
-                        break
+                        break #???
         return True
+
+
+
+class MyRecursiveBacktrackingSolver(Solver):
+
+    def __init__(self, forwardcheck=True):
+        """
+        @param forwardcheck: If false forward checking will not be requested
+                             to constraints while looking for solutions
+                             (default is true)
+        @type  forwardcheck: bool
+        """
+        self._forwardcheck = forwardcheck
+
+
+    def recursiveBacktracking(
+        self, solutions, domains, vconstraints, assignments, single
+    ):
+
+        # Mix the Degree and Minimum Remaing Values (MRV) heuristics
+        lst = [
+            (-len(vconstraints[variable]), len(domains[variable]), variable)
+            for variable in domains
+        ]
+        lst.sort()
+        for item in lst: #(-1, 4, 1)
+            if item[-1] not in assignments: # {}
+                # Found an unassigned variable. Let's go.
+                break
+        else:
+            # No unassigned variables. We've got a solution.
+            solutions.append(assignments.copy())
+            return solutions
+
+        variable = item[-1] # 1
+        assignments[variable] = None # add to
+        # queue
+
+        # Case1
+        for value in domains[variable]:
+            assignments[variable] = value # {1: 'Case1'}
+
+            for constraint, variables in vconstraints[variable]:
+                if not constraint(variables, domains, assignments):
+                    # Value is not good.
+
+                    break
+            else:
+                # Value is good. Recurse and get next variable.
+                self.recursiveBacktracking(
+                    solutions, domains, vconstraints, assignments, single
+                )
+                if solutions and single:
+                    return solutions
+
+        del assignments[variable]
+        return solutions
+
+
+    def getSolution(self, domains, constraints, vconstraints):
+        solutions = self.recursiveBacktracking([], domains, vconstraints, {}, True)
+        return solutions and solutions[0] or None
+
+    def getSolutions(self, domains, constraints, vconstraints):
+        return self.recursiveBacktracking([], domains, vconstraints, {}, False)
 
 
 
@@ -50,14 +114,18 @@ def assign_cases():
     data = data.assign(CaseID=None)
     data = data.to_dict(orient="records")
 
-    solver = RecursiveBacktrackingSolver()
+    solver = MyRecursiveBacktrackingSolver()
     problem = Problem(solver)
 
-    constraints = {'unary': ["x['Timestamp'] < '2022-01-01 11:20:59'"],
-                   'binary': ["x['UserID'] == y['UserID']", "x['Timestamp'] < y['Timestamp'] if x['Activity'] == 'B' and y['Activity'] == 'A' else True" ]}
+    # constraints = {'unary': ["x['Timestamp'] < '2022-01-01 11:20:59'"],
+    #                'binary': ["x['UserID'] == y['UserID']",
+    #                           "x['Timestamp'] < y['Timestamp'] if x['Activity'] == 'B' and y['Activity'] == 'A' else True" ]}
+
+    constraints = {'unary': [],
+                   'binary': ["x['Timestamp'] < y['Timestamp'] if x['Activity'] == 'A' and y['Activity'] == 'B' else True" ]}
 
     case = 1
-    # for nrow in range(n_of_events):
+
     problem.addVariables(range(1, n_of_events+1), [f"Case{i}" for i in range(1, n_of_events+1)])
 
     problem.addConstraint(MyConstraint(data, constraints))
@@ -72,27 +140,5 @@ def assign_cases():
 if __name__ == '__main__':
     result = assign_cases()
     print(result)
-    # problem = Problem()
-    # problem.addVariable("a", [1, 2, 3])
-    # problem.addConstraint(AllDifferentConstraint())
-    # problem.addVariables("b", [4, 5, 6])
-    # print(problem.getSolutions())
-
-    # problem = Problem()
-    # numpieces = 4
-    # cols = range(numpieces)
-    # rows = range(numpieces)
-    # problem.addVariables(cols, rows)
-    # for col1 in cols:
-    #     for col2 in cols:
-    #         if col1 < col2:
-    #             problem.addConstraint(lambda row1, row2: row1 != row2, (col1, col2))
-    # solutions = problem.getSolutions()
-    # solutions
-
-    # problem = Problem()
-    # problem.addVariables(["a", "b"], [1, 2, 3])
-    # problem.addConstraint(AllDifferentConstraint())
-    # print(problem.getSolution())
 
 
