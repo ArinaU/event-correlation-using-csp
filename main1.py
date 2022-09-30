@@ -72,8 +72,11 @@ class MyRecursiveBacktrackingSolver(Solver):
         for value in domains[variable]:
 
             if self._data[variable]['Activity'] == self._start_event['Activity']: # if A
-                assignment_values = list(assignments.values())
+                # assignment_values = list(assignments.values())
+
+                assignment_values = sorted([x for x in list(assignments.values()) if x is not None])
                 last_assignment = assignment_values[-1] if len(assignment_values) > 0 else None
+
                 if last_assignment:
                     index = domains[variable].index(last_assignment)
                     assignments[variable] = domains[variable][index + 1]
