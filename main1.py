@@ -22,7 +22,7 @@ class MyConstraint(Constraint):
         # get all events ids with this case
         last_events_ids = [key for key, value in assignments.items() if value == suggested_case]
         # get events themselves
-        last_events = [event for event in data if event['EventID'] in last_events_ids]
+        last_events = [value for key, value in data.items() if key in last_events_ids]
 
         if constraints and len(last_events) > 1:
             for cname, constraint in constraints.items():
@@ -67,12 +67,11 @@ class MyRecursiveBacktrackingSolver(Solver):
             return solutions
 
         variable = item[-1] # 1
-        # assignments[variable] = None
 
         # Case1
         for value in domains[variable]:
 
-            if self._data[variable]['Activity'] == self._start_event['Activity']:
+            if self._data[variable]['Activity'] == self._start_event['Activity']: # if A
                 assignment_values = list(assignments.values())
                 last_assignment = assignment_values[-1] if len(assignment_values) > 0 else None
                 if last_assignment:
@@ -82,11 +81,18 @@ class MyRecursiveBacktrackingSolver(Solver):
                     self.recursiveBacktracking(
                         solutions, domains, vconstraints, assignments, single
                     )
+            else: # if B
+                past_events = [key for key, val in assignments.items() if val == value]
+                if not past_events:
+                    assignments[variable] = None
+                    self.recursiveBacktracking(
+                        solutions, domains, vconstraints, assignments, single
+                    )
 
             assignments[variable] = value  # {1: 'Case1'}
 
             for constraint, variables in vconstraints[variable]:
-                if not constraint(data, variables, domains, assignments):
+                if not constraint(self._data, variables, domains, assignments):
                     # Value is not good.
                     break
             else:
@@ -110,31 +116,30 @@ class MyRecursiveBacktrackingSolver(Solver):
 
 
 
-def assign_cases(data, start_event_id = 1):
+def assign_cases(data, start_event):
 
     n_of_events = len(data)
 
     data.set_index('EventID', inplace=True)
     data = data.to_dict(orient="index")
 
-    start_event = data[start_event_id]
+    # start_event = data[start_event_id]
+    start_event = data[[key for key, val in data.items() if val[start_event[0]] == start_event[1]][0]]
 
     solver = MyRecursiveBacktrackingSolver(data, start_event)
     problem = Problem(solver)
 
-    constraints = {'C1': "x['UserID'] == y['UserID']",
-                   'C2': "x['Timestamp'] < y['Timestamp'] if x['Activity'] == 'A' and y['Activity'] == 'B' else True" }
+    # constraints = {'C1': "x['UserID'] == y['UserID']",
+    #                'C2': "x['Timestamp'] < y['Timestamp'] if x['Activity'] == 'A' and y['Activity'] == 'B' else True" }
+
+    constraints = { 'C1': "x['UserID'] == y['UserID']" }
 
     case = 1
-
-    # for key, value in data.items():
-    #     problem.addVariable(range(1, n_of_events + 1), [f"Case{i}" for i in range(1, n_of_events+1)])
-
 
     problem.addVariables(range(1, n_of_events+1), [f"Case{i}" for i in range(1, n_of_events+1)])
 
 
-    # problem.addConstraint(MyConstraint(constraints))
+    problem.addConstraint(MyConstraint(constraints))
     solutions = problem.getSolution()
 
     return solutions
@@ -143,11 +148,11 @@ def assign_cases(data, start_event_id = 1):
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
 
-    start_event_id = 1
+    start_event = ['Activity', 'A']
 
     data = pd.read_csv('data.csv', sep=';')
 
-    result = assign_cases(data, start_event_id)
+    result = assign_cases(data, start_event)
     print(result)
 
 
