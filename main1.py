@@ -67,23 +67,23 @@ class MyRecursiveBacktrackingSolver(Solver):
             return solutions
 
         variable = item[-1] # 1
-        assignments[variable] = None # add to
-        # queue
+        # assignments[variable] = None
 
         # Case1
         for value in domains[variable]:
-            assignments[variable] = value # {1: 'Case1'}
 
+            if self._data[variable]['Activity'] == self._start_event['Activity']:
+                assignment_values = list(assignments.values())
+                last_assignment = assignment_values[-1] if len(assignment_values) > 0 else None
+                if last_assignment:
+                    index = domains[variable].index(last_assignment)
+                    assignments[variable] = domains[variable][index + 1]
 
-            if self._start_event['EventID'] == variable:
-                self.recursiveBacktracking(
-                    solutions, domains, vconstraints, assignments, single
-                )
-            # else:
-            #     if not [key for key, val in assignments.items() if val == value]: # if there're no events in curr case
-            #         self.recursiveBacktracking(
-            #             solutions, domains, vconstraints, assignments, single
-            #         )
+                    self.recursiveBacktracking(
+                        solutions, domains, vconstraints, assignments, single
+                    )
+
+            assignments[variable] = value  # {1: 'Case1'}
 
             for constraint, variables in vconstraints[variable]:
                 if not constraint(data, variables, domains, assignments):
@@ -113,11 +113,11 @@ class MyRecursiveBacktrackingSolver(Solver):
 def assign_cases(data, start_event_id = 1):
 
     n_of_events = len(data)
-    data = data.to_dict(orient="records")
-    # data.set_index('EventID', inplace=True)
-    # data = data.to_dict(orient="index")
 
-    start_event = [event for event in data if event['EventID'] == start_event_id][0]
+    data.set_index('EventID', inplace=True)
+    data = data.to_dict(orient="index")
+
+    start_event = data[start_event_id]
 
     solver = MyRecursiveBacktrackingSolver(data, start_event)
     problem = Problem(solver)
