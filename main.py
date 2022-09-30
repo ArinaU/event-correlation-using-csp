@@ -1,7 +1,5 @@
-# This is a sample Python script.
 
-# Press ⌃R to execute it or replace it with your code.
-# Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
+
 
 from constraint import *
 import pandas as pd
@@ -9,98 +7,123 @@ import numpy as np
 import itertools
 import math
 
-
-def generate_condition(*args, **kwargs):
-    def f():
-        flag = True
-        constraints = kwargs['constraints']
-        if len(args) == 2:
-            x = args[0]  # B
-            y = args[1]  # A
-            if pd.isna(x) or pd.isna(y) or len(constraints['attrs']) == 1:
-                return True
-            else:
-                attr = constraints['attrs'][0]
-                attr2 = constraints['attrs'][1]
-                # B == A and A == B
-                if (x[attr] == constraints['vals'][0] and y[attr2] == constraints['vals'][1]) or (
-                        y[attr] == constraints['vals'][0] and x[attr2] == constraints['vals'][1]):
-                    flag = eval(f"{x['EventID']} {constraints['operator']} {y['EventID']}")
-        elif len(args) == 1 and len(constraints['attrs']) == 1:
-            x = args[0]
-            attr = constraints['attrs'][0]
-            flag = eval(f"x{[attr]} {constraints['operator']} constraints{['vals']}") # TODO
-        return flag
-
-    return f
-
-
-
 class MyConstraint(Constraint):
 
     def __init__(self, data, constraints):
         self._data = data
         self._constraints = constraints
 
-    def __call__(self, variables, domains, assignments, forwardcheck=False):
-        data = self._data
+    def __call__(self, events, domains, assignments, forwardcheck=False, _unassigned=Unassigned):
         constraints = self._constraints
-        for variable in variables:
-            if variable in assignments:
-                case = assignments[variable]
-                column = data[case]
-                flag = True
-                if len(column) < 2:
-                    cond = generate_condition(column[0], constraints=constraints[case])
-                    flag = cond()
-                else:
-                    for x, y in itertools.permutations(column, 2):
-                        cond = generate_condition(x, y, constraints = constraints[case])
-                        flag = cond()
-                        if not flag:
-                            break
-                return flag
+        data = self._data
+
+        curr_event = max(assignments.keys())
+        suggested_case = assignments[curr_event]
+
+        # get all events ids with this case
+        last_events_ids = [key for key, value in assignments.items() if value == suggested_case]
+        # get events themselves
+        last_events = [event for event in data if event['EventID'] in last_events_ids]
+
+        if constraints and len(last_events) > 1:
+            for cname, constraint in constraints.items():
+                for x, y in itertools.permutations(last_events, 2):
+                    if not eval(constraint):
+                        return False
+        return True
 
 
-def get_matrix():
-    raw_df = pd.read_csv('data.csv', sep=';')
 
-    n_of_cases = 3
-    n_of_events = len(raw_df['EventID'])
+class MyRecursiveBacktrackingSolver(Solver):
 
-    problem = Problem()
-    result_df = pd.DataFrame(columns=[i for i in range(n_of_cases)])
+    def __init__(self, forwardcheck=True):
+        """
+        @param forwardcheck: If false forward checking will not be requested
+                             to constraints while looking for solutions
+                             (default is true)
+        @type  forwardcheck: bool
+        """
+        self._forwardcheck = forwardcheck
 
-    constraints = {0: {'attrs': ['Activity', 'Activity'], 'vals': ['A', 'B'], 'operator': "<"},
-                   1: {'attrs': ['Activity', 'UserID'], 'vals': ['B', 2], 'operator': "<"},
-                   2: {'attrs': ['Activity'], 'vals': 'C', 'operator': "!="}}
 
-    for nrow in range(n_of_events):
-        curr = raw_df.loc[nrow].to_dict()
-        dict = {}
+    def recursiveBacktracking(
+        self, solutions, domains, vconstraints, assignments, single
+    ):
 
-        for i in range(n_of_cases):
-            dict[i] = curr
+        # Mix the Degree and Minimum Remaing Values (MRV) heuristics
+        lst = [
+            (-len(vconstraints[variable]), len(domains[variable]), variable)
+            for variable in domains
+        ]
+        lst.sort()
+        for item in lst: #(-1, 4, 1)
+            if item[-1] not in assignments: # {}
+                # Found an unassigned variable. Let's go.
+                break
+        else:
+            # No unassigned variables. We've got a solution.
+            solutions.append(assignments.copy())
+            return solutions
 
-        temp_df = result_df.append(dict, ignore_index=True)
+        variable = item[-1] # 1
+        assignments[variable] = None # add to
+        # queue
 
-        # Add cases from 0 to n
-        problem.addVariable('Cases', [i for i in range(n_of_cases)])
-        problem.addConstraint(MyConstraint(temp_df, constraints), ['Cases'])
+        # Case1
+        for value in domains[variable]:
+            assignments[variable] = value # {1: 'Case1'}
 
-        case = min([case['Cases'] for case in problem.getSolutions()]) # find 1st convenient case
+            for constraint, variables in vconstraints[variable]:
+                if not constraint(variables, domains, assignments):
+                    # Value is not good.
 
-        temp_df.iloc[nrow, temp_df.columns.difference([case])] = pd.NA
-        result_df = temp_df
-        problem.reset()
+                    break
+            else:
+                # Value is good. Recurse and get next variable.
+                self.recursiveBacktracking(
+                    solutions, domains, vconstraints, assignments, single
+                )
+                if solutions and single:
+                    return solutions
 
-    return result_df
+        del assignments[variable]
+        return solutions
 
+
+    def getSolution(self, domains, constraints, vconstraints):
+        solutions = self.recursiveBacktracking([], domains, vconstraints, {}, True)
+        return solutions and solutions[0] or None
+
+    def getSolutions(self, domains, constraints, vconstraints):
+        return self.recursiveBacktracking([], domains, vconstraints, {}, False)
+
+
+
+def assign_cases():
+    data = pd.read_csv('data.csv', sep=';')
+    n_of_events = len(data)
+
+    data = data.to_dict(orient="records")
+
+    solver = MyRecursiveBacktrackingSolver()
+    problem = Problem(solver)
+
+    constraints = {'C1': "x['UserID'] == y['UserID']",
+                   'C2': "x['Timestamp'] < y['Timestamp'] if x['Activity'] == 'A' and y['Activity'] == 'B' else True" }
+
+    case = 1
+
+    problem.addVariables(range(1, n_of_events+1), [f"Case{i}" for i in range(1, n_of_events+1)])
+
+    problem.addConstraint(MyConstraint(data, constraints))
+    solutions = problem.getSolution()
+
+    return solutions
 
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-
-    result = get_matrix()
+    result = assign_cases()
     print(result)
+
 

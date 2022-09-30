@@ -6,15 +6,23 @@ import pandas as pd
 import numpy as np
 import itertools
 import math
-import json
 
 class MyConstraint(Constraint):
 
-    def __init__(self, constraints):
+    def __init__(self, data, constraints):
+        self._data = data
         self._constraints = constraints
 
-    def __call__(self, data, events, domains, assignments, forwardcheck=False, _unassigned=Unassigned):
+    def exist_in_exceptions(self, x, y, exceptions):
+        for exception in exceptions: # [5, 3]
+            if x in exception and y in exception:
+                return True
+        return False
+
+
+    def __call__(self, events, domains, assignments, exceptions):
         constraints = self._constraints
+        data = self._data
 
         curr_event = max(assignments.keys())
         suggested_case = assignments[curr_event]
@@ -28,6 +36,11 @@ class MyConstraint(Constraint):
             for cname, constraint in constraints.items():
                 for x, y in itertools.permutations(last_events, 2):
                     if not eval(constraint):
+                        if cname == 'C6':
+                            if not self.exist_in_exceptions(x['EventID'], y['EventID'], exceptions):
+                                other_event = y['EventID'] if x['EventID'] == curr_event else x['EventID']
+                                exceptions.append([curr_event, other_event])
+                            return True
                         return False
         return True
 
@@ -35,20 +48,18 @@ class MyConstraint(Constraint):
 
 class MyRecursiveBacktrackingSolver(Solver):
 
-    def __init__(self, data, start_event = 1, forwardcheck=True):
+    def __init__(self, forwardcheck=True):
         """
         @param forwardcheck: If false forward checking will not be requested
                              to constraints while looking for solutions
                              (default is true)
         @type  forwardcheck: bool
         """
-        self._data = data
-        self._start_event = start_event
         self._forwardcheck = forwardcheck
 
 
     def recursiveBacktracking(
-        self, solutions, domains, vconstraints, assignments, single
+        self, solutions, domains, vconstraints, assignments, single, exceptions=[]
     ):
 
         # Mix the Degree and Minimum Remaing Values (MRV) heuristics
@@ -66,33 +77,24 @@ class MyRecursiveBacktrackingSolver(Solver):
             solutions.append(assignments.copy())
             return solutions
 
-        variable = item[-1] # 1
+        variable = item[-1]
         assignments[variable] = None # add to
-        # queue
 
         # Case1
         for value in domains[variable]:
             assignments[variable] = value # {1: 'Case1'}
 
-
-            if self._start_event['EventID'] == variable:
-                self.recursiveBacktracking(
-                    solutions, domains, vconstraints, assignments, single
-                )
-            # else:
-            #     if not [key for key, val in assignments.items() if val == value]: # if there're no events in curr case
-            #         self.recursiveBacktracking(
-            #             solutions, domains, vconstraints, assignments, single
-            #         )
-
             for constraint, variables in vconstraints[variable]:
-                if not constraint(data, variables, domains, assignments):
+                if not constraint(variables, domains, assignments, exceptions):
                     # Value is not good.
-                    break
+                    if variable in [item[0] for item in exceptions]:
+                        continue
+                    else:
+                        break
             else:
                 # Value is good. Recurse and get next variable.
                 self.recursiveBacktracking(
-                    solutions, domains, vconstraints, assignments, single
+                    solutions, domains, vconstraints, assignments, single, exceptions
                 )
                 if solutions and single:
                     return solutions
@@ -110,44 +112,38 @@ class MyRecursiveBacktrackingSolver(Solver):
 
 
 
-def assign_cases(data, start_event_id = 1):
-
+def assign_cases():
+    data = pd.read_csv('data.csv', sep=';')
     n_of_events = len(data)
+
     data = data.to_dict(orient="records")
-    # data.set_index('EventID', inplace=True)
-    # data = data.to_dict(orient="index")
 
-    start_event = [event for event in data if event['EventID'] == start_event_id][0]
-
-    solver = MyRecursiveBacktrackingSolver(data, start_event)
+    solver = MyRecursiveBacktrackingSolver()
+    # solver = RecursiveBacktrackingSolver()
     problem = Problem(solver)
 
-    constraints = {'C1': "x['UserID'] == y['UserID']",
-                   'C2': "x['Timestamp'] < y['Timestamp'] if x['Activity'] == 'A' and y['Activity'] == 'B' else True" }
+    # constraints = {'unary': ["x['Timestamp'] < '2022-01-01 11:20:59'"],
+    #                'binary': ["x['UserID'] == y['UserID']",
+    #                           "x['Timestamp'] < y['Timestamp'] if x['Activity'] == 'B' and y['Activity'] == 'A' else True" ]}
+
+    constraints = {
+                   'C6': "x['Timestamp'] < y['Timestamp'] if x['Activity'] == 'A' and y['Activity'] == 'B' else True" }
 
     case = 1
 
-    # for key, value in data.items():
-    #     problem.addVariable(range(1, n_of_events + 1), [f"Case{i}" for i in range(1, n_of_events+1)])
-
-
     problem.addVariables(range(1, n_of_events+1), [f"Case{i}" for i in range(1, n_of_events+1)])
 
-
-    # problem.addConstraint(MyConstraint(constraints))
+    problem.addConstraint(MyConstraint(data, constraints))
     solutions = problem.getSolution()
 
     return solutions
 
 
+
+
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-
-    start_event_id = 1
-
-    data = pd.read_csv('data.csv', sep=';')
-
-    result = assign_cases(data, start_event_id)
+    result = assign_cases()
     print(result)
 
 
