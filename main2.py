@@ -123,13 +123,8 @@ class MyRecursiveBacktrackingSolver(Solver):
                     assignments[variable] = value  # TODO
             else: # if B
                 past_events = [key for key, val in assignments.items() if val == value]
-                if not past_events:
-                    assignments[variable] = None
-                    # self.recursiveBacktracking(
-                    #     solutions, domains, vconstraints, assignments, single
-                    # )
-                else:
-                    assignments[variable] = value  # TODO
+                if past_events:
+                    assignments[variable] = value
 
             for constraint, variables in vconstraints[variable]:
                 if not constraint(self._data, variables, domains, assignments):
@@ -176,7 +171,7 @@ def assign_cases(data, start_event):
     problem.addVariables(range(1, n_of_events+1), [f"Case{i}" for i in range(1, n_of_events+1)])
 
 
-    # problem.addConstraint(Existence({'attribute': 'Activity', 'value': 'B'}))
+    problem.addConstraint(Existence({'attribute': 'Activity', 'value': 'B'}))
     solutions = problem.getSolution()
 
     return solutions
