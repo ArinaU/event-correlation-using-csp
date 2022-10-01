@@ -57,8 +57,6 @@ class Existence(Constraint):
             #         flag = True
                 flag = False
 
-
-
         # if curr_event_id == events[-1]: # if last event
         #     if curr_event[attr['attribute']] != attr['value']:
         #         flag = False
@@ -104,7 +102,7 @@ class MyRecursiveBacktrackingSolver(Solver):
         variable = item[-1] # 1
         assignments[variable] = None
         # Case1
-        for value in domains[variable]:
+        for ind, value in enumerate(domains[variable]):
 
             if self._data[variable]['Activity'] == self._start_event['Activity']: # if A
                 # assignment_values = list(assignments.values())
@@ -114,7 +112,8 @@ class MyRecursiveBacktrackingSolver(Solver):
 
                 if last_assignment: # if not the 1st event
                     index = domains[variable].index(last_assignment)
-                    assignments[variable] = domains[variable][index + 1] # take next Case
+                    # assignments[variable] = domains[variable][index + 1] # take next Case
+                    assignments[variable] = domains[variable][(index + 1) % len(domains[variable])]
 
                     # self.recursiveBacktracking(
                     #     solutions, domains, vconstraints, assignments, single
@@ -129,6 +128,7 @@ class MyRecursiveBacktrackingSolver(Solver):
             for constraint, variables in vconstraints[variable]:
                 if not constraint(self._data, variables, domains, assignments):
                     # Value is not good.
+                    assignments[variable] = None
                     break
             else:
                 # Value is good. Recurse and get next variable.
@@ -139,6 +139,8 @@ class MyRecursiveBacktrackingSolver(Solver):
                     return solutions
 
         del assignments[variable]
+        # assignments[variable] = None
+
         return solutions
 
 
@@ -171,7 +173,7 @@ def assign_cases(data, start_event):
     problem.addVariables(range(1, n_of_events+1), [f"Case{i}" for i in range(1, n_of_events+1)])
 
 
-    problem.addConstraint(Existence({'attribute': 'Activity', 'value': 'B'}))
+    # problem.addConstraint(Existence({'attribute': 'Activity', 'value': 'B'}))
     solutions = problem.getSolution()
 
     return solutions
