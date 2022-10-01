@@ -31,9 +31,41 @@ class MyConstraint(Constraint):
                         return False
         return True
 
-#
-# class Existence():
-#
+
+class Existence(Constraint):
+
+    def __init__(self, required_event):
+        self._required_attr = required_event['attribute']
+        self._required_value = required_event['value']
+
+
+    def __call__(self, data, events, domains, assignments, forwardcheck=False, _unassigned=Unassigned):
+        required_attr = self._required_attr
+        required_value = self._required_value
+
+        curr_event_id = max(assignments.keys())
+        curr_event = data[curr_event_id]
+        suggested_case = assignments[curr_event_id]
+
+        past_events = [data[key] for key, val in assignments.items() if val == suggested_case]
+
+        flag = True
+        if curr_event_id == events[-1]:
+            if required_value not in [event[required_attr] for event in past_events]:
+            # for event in past_events:
+            #     if event[required_attr] == required_value:
+            #         flag = True
+                flag = False
+
+
+
+        # if curr_event_id == events[-1]: # if last event
+        #     if curr_event[attr['attribute']] != attr['value']:
+        #         flag = False
+        return flag
+
+
+
 
 
 class MyRecursiveBacktrackingSolver(Solver):
@@ -70,7 +102,7 @@ class MyRecursiveBacktrackingSolver(Solver):
             return solutions
 
         variable = item[-1] # 1
-
+        assignments[variable] = None
         # Case1
         for value in domains[variable]:
 
@@ -80,22 +112,24 @@ class MyRecursiveBacktrackingSolver(Solver):
                 assignment_values = sorted([x for x in list(assignments.values()) if x is not None])
                 last_assignment = assignment_values[-1] if len(assignment_values) > 0 else None
 
-                if last_assignment:
+                if last_assignment: # if not the 1st event
                     index = domains[variable].index(last_assignment)
-                    assignments[variable] = domains[variable][index + 1]
+                    assignments[variable] = domains[variable][index + 1] # take next Case
 
-                    self.recursiveBacktracking(
-                        solutions, domains, vconstraints, assignments, single
-                    )
+                    # self.recursiveBacktracking(
+                    #     solutions, domains, vconstraints, assignments, single
+                    # )
+                else:
+                    assignments[variable] = value  # TODO
             else: # if B
                 past_events = [key for key, val in assignments.items() if val == value]
                 if not past_events:
                     assignments[variable] = None
-                    self.recursiveBacktracking(
-                        solutions, domains, vconstraints, assignments, single
-                    )
-
-            assignments[variable] = value  # {1: 'Case1'}
+                    # self.recursiveBacktracking(
+                    #     solutions, domains, vconstraints, assignments, single
+                    # )
+                else:
+                    assignments[variable] = value  # TODO
 
             for constraint, variables in vconstraints[variable]:
                 if not constraint(self._data, variables, domains, assignments):
@@ -130,22 +164,19 @@ def assign_cases(data, start_event):
     data = data.to_dict(orient="index")
 
     # start_event = data[start_event_id]
-    start_event = data[[key for key, val in data.items() if val[start_event[0]] == start_event[1]][0]]
+    start_event = data[[key for key, val in data.items() if val[start_event['attribute']] == start_event['value']][0]]
 
     solver = MyRecursiveBacktrackingSolver(data, start_event)
     problem = Problem(solver)
 
-    # constraints = {'C1': "x['UserID'] == y['UserID']",
-    #                'C2': "x['Timestamp'] < y['Timestamp'] if x['Activity'] == 'A' and y['Activity'] == 'B' else True" }
-
-    constraints = { 'C1': "x['UserID'] == y['UserID']" }
+    # constraints = { 'C1': "x['UserID'] == y['UserID']" }
 
     case = 1
 
     problem.addVariables(range(1, n_of_events+1), [f"Case{i}" for i in range(1, n_of_events+1)])
 
 
-    problem.addConstraint(MyConstraint(constraints))
+    # problem.addConstraint(Existence({'attribute': 'Activity', 'value': 'B'}))
     solutions = problem.getSolution()
 
     return solutions
@@ -154,7 +185,7 @@ def assign_cases(data, start_event):
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
 
-    start_event = ['Activity', 'A']
+    start_event = {'attribute': 'Activity', 'value': 'A'}
 
     data = pd.read_csv('data.csv', sep=';')
 
