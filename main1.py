@@ -114,6 +114,7 @@ class MyRecursiveBacktrackingSolver(Solver):
 
 
     def getSolution(self, domains, constraints, vconstraints):
+
         solutions = self.recursiveBacktracking([], domains, vconstraints, {}, True)
         return solutions and solutions[0] or None
 
