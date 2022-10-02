@@ -49,7 +49,7 @@ class Existence(Constraint):
         # past_events = [data[key] for key, val in assignments.items() if val == suggested_case]
         past_events = { key:data[key] for key, val in assignments.items() if val == suggested_case }
 
-        # if event with this activity exists already
+        # if event with this activity exists already within case
         if required_value in [val[required_attr] for id, val in past_events.items()]:
             exceptions[curr_event_id] = [True, suggested_case]
 
@@ -146,7 +146,7 @@ class MyRecursiveBacktrackingSolver(Solver):
 
 
     def recursiveBacktracking(
-        self, solutions, domains, vconstraints, assignments, single, curr_index, exceptions
+        self, solutions, domains, vconstraints, assignments, single, exceptions
     ):
 
         # Mix the Degree and Minimum Remaing Values (MRV) heuristics
@@ -166,30 +166,29 @@ class MyRecursiveBacktrackingSolver(Solver):
 
         variable = item[-1] # 1
 
-        # value = domains[variable][curr_index]
-        # assignments[variable] = None
+        last_cases = sorted([x for x in list(set(assignments.values())) if x is not None])
+        exception = exceptions[variable][1]
 
 
-        last_assignments = sorted([x for x in list(set(assignments.values())) if x is not None])
-
-
-        if exceptions[variable][1] in last_assignments:
-            last_assignments.remove(exceptions[variable][1])
-
-        value = last_assignments[curr_index] if len(last_assignments) > 0 else domains[variable][curr_index]
-
-        if self._data[variable]['Activity'] == self._start_event['Activity']: # if A
-
-            last_assignment = last_assignments[-1] if last_assignments else None
-            if curr_index < len(domains[variable]): # to not exceed bounds
-                if last_assignment: # if not the 1st event
-                    index = domains[variable].index(last_assignment)
-                    assignments[variable] = domains[variable][index + 1]
+        if last_cases:
+            if exception:
+                idx = last_cases.index(exception) + 1
+                if idx < len(last_cases):
+                    assignments[variable] = last_cases[idx]  # next
+            else:
+                # if 'A' then get last max case
+                if self._data[variable]['Activity'] == self._start_event['Activity']:
+                    max_used_case = last_cases[-1]
+                    idx = domains[variable].index(max_used_case) + 1
+                    if idx < len(domains[variable]):
+                        assignments[variable] = domains[variable][idx]
                 else:
-                    assignments[variable] = value  # TODO
-        else: # if B
-            if value in last_assignments:
-                assignments[variable] = value
+                    # get only among already used cases
+                    assignments[variable] = last_cases[0]
+        else:
+            # first initialization
+            assignments[variable] =  domains[variable][0]
+
 
         for constraint, variables in vconstraints[variable]:
             if not constraint(self._data, variables, domains, assignments, exceptions, variable):
@@ -197,12 +196,12 @@ class MyRecursiveBacktrackingSolver(Solver):
                 assignments[variable] = None
                 # break
                 self.recursiveBacktracking(
-                    solutions, domains, vconstraints, assignments, single, curr_index, exceptions
+                    solutions, domains, vconstraints, assignments, single, exceptions
                 )
         else:
             # Value is good. Recurse and get next variable.
             self.recursiveBacktracking(
-                solutions, domains, vconstraints, assignments, single, curr_index, exceptions
+                solutions, domains, vconstraints, assignments, single, exceptions
             )
             if solutions and single:
                 return solutions
@@ -215,7 +214,7 @@ class MyRecursiveBacktrackingSolver(Solver):
     def getSolution(self, domains, constraints, vconstraints):
         assignments = dict.fromkeys(domains.keys())
         exceptions = dict.fromkeys(domains.keys(), [None, None])
-        solutions = self.recursiveBacktracking([], domains, vconstraints, assignments, True, 0, exceptions)
+        solutions = self.recursiveBacktracking([], domains, vconstraints, assignments, True, exceptions)
         return solutions and solutions[0] or None
 
     def getSolutions(self, domains, constraints, vconstraints):
