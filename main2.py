@@ -49,7 +49,7 @@ class Existence(Constraint):
         # past_events = [data[key] for key, val in assignments.items() if val == suggested_case]
         past_events = { key:data[key] for key, val in assignments.items() if val == suggested_case }
 
-
+        # if event with this activity exists already
         if required_value in [val[required_attr] for id, val in past_events.items()]:
             exceptions[curr_event_id] = [True, suggested_case]
 
@@ -60,15 +60,11 @@ class Existence(Constraint):
         else:
             exceptions[curr_event_id] = [False, suggested_case]
 
-
         if curr_event_id == events[-1]:
             if [key for key, value in exceptions.items() if value[0] == False]:
                 return False
-        else:
-            return True
 
-
-
+        return True
 
 
 
@@ -170,7 +166,7 @@ class MyRecursiveBacktrackingSolver(Solver):
 
         variable = item[-1] # 1
 
-        value = domains[variable][curr_index]
+        # value = domains[variable][curr_index]
         # assignments[variable] = None
 
 
@@ -180,12 +176,11 @@ class MyRecursiveBacktrackingSolver(Solver):
         if exceptions[variable][1] in last_assignments:
             last_assignments.remove(exceptions[variable][1])
 
-        # value = last_assignments[curr_index] if len(last_assignments) > 0 else domains[variable][curr_index]
+        value = last_assignments[curr_index] if len(last_assignments) > 0 else domains[variable][curr_index]
 
         if self._data[variable]['Activity'] == self._start_event['Activity']: # if A
 
-            # assignment_values = sorted([x for x in list(assignments.values()) if x is not None])
-            last_assignment = last_assignments[-1] if len(last_assignments) > 0 else None
+            last_assignment = last_assignments[-1] if last_assignments else None
             if curr_index < len(domains[variable]): # to not exceed bounds
                 if last_assignment: # if not the 1st event
                     index = domains[variable].index(last_assignment)
