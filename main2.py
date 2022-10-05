@@ -94,6 +94,38 @@ class RespondedExistence(Constraint):
 
 
 
+class Coexistence(Constraint):
+
+    def __init__(self, data, required_event, required_event2):
+        self._data = data
+        self._required_event = required_event
+        self._required_event2 = required_event2
+
+
+    def __call__(self, data, events, assignments, domains):
+        data = self._data
+        required_attr = self._required_event['attr']
+        required_value = self._required_event['value']
+        required_attr2 = self._required_event2['attr']
+        required_value2 = self._required_event2['value']
+
+        curr_event_id = max(assignments.keys())
+
+        if curr_event_id == len(events):
+            for case in sorted(set(assignments.values())):
+                events_with_case = [data[event][required_attr] for event, assigned_case in assignments.items() if
+                                    case == assigned_case]
+
+                # if A occurs then B occurs and vice versa
+                if (events_with_case.count(required_value) >= 1 and events_with_case.count(required_value2) < 1)\
+                        or (events_with_case.count(required_value) < 1 and events_with_case.count(required_value2) >= 1):
+                    return False
+
+        return True
+
+
+
+
 def declare_domains(problem, data, start):
     attr = start['attr']
     value = start['value']
@@ -121,10 +153,20 @@ def assign_cases(data, start_data):
 
     declare_domains(problem, data, start_data)
 
+    # problem.addConstraint(Existence(data, {'attr': 'Activity', 'value': 'B'}))
 
-    problem.addConstraint(RespondedExistence(data,
-                                             {'attr': 'Activity', 'value': 'A'},
-                                             {'attr': 'Activity', 'value': 'B'}))
+    # problem.addConstraint(RespondedExistence(data,
+    #                                          {'attr': 'Activity', 'value': 'B'},
+    #                                          {'attr': 'Activity', 'value': 'C'}))
+    #
+    # problem.addConstraint(Coexistence(data,
+    #                                          {'attr': 'Activity', 'value': 'B'},
+    #                                          {'attr': 'Activity', 'value': 'C'}))
+
+    problem.addConstraint(Coexistence(data,
+                                      {'attr': 'Activity', 'value': 'B'},
+                                      {'attr': 'Activity', 'value': 'C'}))
+
     solutions = problem.getSolution()
 
     return solutions
