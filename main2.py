@@ -8,63 +8,32 @@ import itertools
 import math
 import json
 
-class MyConstraint(Constraint):
-
-    def __init__(self, constraints):
-        self._constraints = constraints
-
-    def __call__(self, data, events, domains, assignments, forwardcheck=False, _unassigned=Unassigned):
-        constraints = self._constraints
-
-        curr_event = max(assignments.keys())
-        suggested_case = assignments[curr_event]
-
-        # get all events ids with this case
-        last_events_ids = [key for key, value in assignments.items() if value == suggested_case]
-        # get events themselves
-        last_events = [value for key, value in data.items() if key in last_events_ids]
-
-        if constraints and len(last_events) > 1:
-            for cname, constraint in constraints.items():
-                for x, y in itertools.permutations(last_events, 2):
-                    if not eval(constraint):
-                        return False
-        return True
-
 
 
 
 class Absence(Constraint):
 
-    def __init__(self, required_event):
-        self._required_attr = required_event['attribute']
-        self._required_value = required_event['value']
+    def __init__(self, data, required_event):
+        self._data = data
+        self._required_event = required_event
 
 
-    def __call__(self, data, events, domains, assignments, exceptions, curr_event_id):
-        required_attr = self._required_attr
-        required_value = self._required_value
+    def __call__(self, data, events, assignments, domains):
+        data = self._data
+        required_attr = self._required_event['attr']
+        required_value = self._required_event['value']
 
-        curr_event = data[curr_event_id]
-        suggested_case = assignments[curr_event_id]
-        past_events = { key:data[key] for key, val in assignments.items() if val == suggested_case }
+        curr_event_id = max(assignments.keys())
 
-        # if event with this activity exists already within case
-        if required_value not in [val[required_attr] for id, val in past_events.items()]:
-            exceptions[curr_event_id] = True
+        if curr_event_id == len(events):
+            for case in sorted(set(assignments.values())):
+                events_with_case = [data[event][required_attr] for event, assigned_case in assignments.items() if case == assigned_case]
 
-            for event_id, status in exceptions.items():
-                if event_id in past_events.keys():
-                    # update all old exceptions
-                    exceptions[event_id] = True
-        else:
-            exceptions[curr_event_id] = False
-
-        if curr_event_id == events[-1]:
-            if [key for key, value in exceptions.items() if value == False]:
-                return False
+                if events_with_case.count(required_value) > 1:
+                    return False
 
         return True
+
 
 
 
@@ -72,17 +41,15 @@ class Existence(Constraint):
 
     def __init__(self, data, required_event):
         self._data = data
-        self._required_attr = required_event['attribute']
-        self._required_value = required_event['value']
+        self._required_event = required_event
 
 
     def __call__(self, data, events, assignments, domains):
         data = self._data
-        required_attr = self._required_attr
-        required_value = self._required_value
+        required_attr = self._required_event['attr']
+        required_value = self._required_event['value']
 
         curr_event_id = max(assignments.keys())
-        suggested_case = assignments[curr_event_id]
 
         if curr_event_id == len(events):
             for case in sorted(set(assignments.values())):
@@ -97,8 +64,38 @@ class Existence(Constraint):
         return True
 
 
+
+class RespondedExistence(Constraint):
+
+    def __init__(self, data, required_event, required_event2):
+        self._data = data
+        self._required_event = required_event
+        self._required_event2 = required_event2
+
+
+    def __call__(self, data, events, assignments, domains):
+        data = self._data
+        required_attr = self._required_event['attr']
+        required_value = self._required_event['value']
+        required_attr2 = self._required_event2['attr']
+        required_value2 = self._required_event2['value']
+
+        curr_event_id = max(assignments.keys())
+
+        if curr_event_id == len(events):
+            for case in sorted(set(assignments.values())):
+                events_with_case = [data[event][required_attr] for event, assigned_case in assignments.items() if
+                                    case == assigned_case]
+
+                if events_with_case.count(required_value) >= 1 and events_with_case.count(required_value2) < 1:
+                    return False
+
+        return True
+
+
+
 def declare_domains(problem, data, start):
-    attr = start['attribute']
+    attr = start['attr']
     value = start['value']
     iter = 1
     for id, val in data.items():
@@ -115,18 +112,19 @@ def assign_cases(data, start_data):
     data.set_index('EventID', inplace=True)
     data = data.to_dict(orient="index")
 
-    # start_event = data[start_event_id]
-    start_event = data[[key for key, val in data.items() if val[start_data['attribute']] == start_data['value']][0]]
+
+    # start_event = data[[key for key, val in data.items() if val[start_data['attr']] == start_data['value']][0]]
 
     solver = RecursiveBacktrackingSolver();
     problem = Problem(solver)
 
-    # constraints = { 'C1': "x['UserID'] == y['UserID']" }
 
     declare_domains(problem, data, start_data)
 
 
-    problem.addConstraint(Existence(data, {'attribute': 'Activity', 'value': 'B'}))
+    problem.addConstraint(RespondedExistence(data,
+                                             {'attr': 'Activity', 'value': 'A'},
+                                             {'attr': 'Activity', 'value': 'B'}))
     solutions = problem.getSolution()
 
     return solutions
@@ -135,7 +133,7 @@ def assign_cases(data, start_data):
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
 
-    start_event = {'attribute': 'Activity', 'value': 'A'}
+    start_event = {'attr': 'Activity', 'value': 'A'}
 
     data = pd.read_csv('data.csv', sep=';')
 
