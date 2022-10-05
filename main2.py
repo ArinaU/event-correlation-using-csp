@@ -135,9 +135,6 @@ class Response(Constraint):
         return True
 
 
-
-
-
 class MyRecursiveBacktrackingSolver(Solver):
 
     def __init__(self, data, start_event = 1, forwardcheck=True):
@@ -235,27 +232,34 @@ class MyRecursiveBacktrackingSolver(Solver):
 
 
 
-def assign_cases(data, start_event):
+def declare_domains(problem, data, start):
+    attr = start['attribute']
+    value = start['value']
+    for id, val in data.items():
+        if val[attr] == value:
+            problem.addVariable(id, [f"Case{id}"])
+        else:
+            problem.addVariable(id, [f"Case{i}" for i in range(1, id+1)])
 
-    n_of_events = len(data)
+
+
+def assign_cases(data, start_data):
 
     data.set_index('EventID', inplace=True)
     data = data.to_dict(orient="index")
 
     # start_event = data[start_event_id]
-    start_event = data[[key for key, val in data.items() if val[start_event['attribute']] == start_event['value']][0]]
+    start_event = data[[key for key, val in data.items() if val[start_data['attribute']] == start_data['value']][0]]
 
     solver = MyRecursiveBacktrackingSolver(data, start_event)
     problem = Problem(solver)
 
     # constraints = { 'C1': "x['UserID'] == y['UserID']" }
 
-    case = 1
-
-    problem.addVariables(range(1, n_of_events+1), [f"Case{i}" for i in range(1, n_of_events+1)])
+    declare_domains(problem, data, start_data)
 
 
-    problem.addConstraint(Absence({'attribute': 'Activity', 'value': 'B'}))
+    problem.addConstraint(Response({'attribute': 'Activity', 'value': 'B'}))
     solutions = problem.getSolution()
 
     return solutions
