@@ -1,121 +1,53 @@
-
-
-
-from constraint import *
 import pandas as pd
-import numpy as np
-import itertools
-import math
-
-class MyConstraint(Constraint):
-
-    def __init__(self, data, constraints):
-        self._data = data
-        self._constraints = constraints
-
-    def __call__(self, events, domains, assignments, forwardcheck=False, _unassigned=Unassigned):
-        constraints = self._constraints
-        data = self._data
-
-        curr_event = max(assignments.keys())
-        suggested_case = assignments[curr_event]
-
-        # get all events ids with this case
-        last_events_ids = [key for key, value in assignments.items() if value == suggested_case]
-        # get events themselves
-        last_events = [event for event in data if event['EventID'] in last_events_ids]
-
-        if constraints and len(last_events) > 1:
-            for cname, constraint in constraints.items():
-                for x, y in itertools.permutations(last_events, 2):
-                    if not eval(constraint):
-                        return False
-        return True
+from constraints.existence_constraints import *
+from constraints.relation_constraints import *
+from constraints.mutual_relation_constraints import *
+from constraints.negative_relation_constraints import *
+from measures.log_to_log_case_measure import *
+from measures.log_to_log_time_measure import *
 
 
-
-class MyRecursiveBacktrackingSolver(Solver):
-
-    def __init__(self, forwardcheck=True):
-        """
-        @param forwardcheck: If false forward checking will not be requested
-                             to constraints while looking for solutions
-                             (default is true)
-        @type  forwardcheck: bool
-        """
-        self._forwardcheck = forwardcheck
-
-
-    def recursiveBacktracking(
-        self, solutions, domains, vconstraints, assignments, single
-    ):
-
-        # Mix the Degree and Minimum Remaing Values (MRV) heuristics
-        lst = [
-            (-len(vconstraints[variable]), len(domains[variable]), variable)
-            for variable in domains
-        ]
-        lst.sort()
-        for item in lst: #(-1, 4, 1)
-            if item[-1] not in assignments: # {}
-                # Found an unassigned variable. Let's go.
-                break
+def declare_domains(problem, data, start):
+    attr = start['attr']
+    value = start['value']
+    iter = 1
+    for id, val in data.items():
+        # if equal to start event
+        if val[attr] == value:
+            # problem.addVariable(id, [iter])
+            problem.addVariable(id, [f"Case{iter}"])
+            iter += 1
+        # if n-th events
         else:
-            # No unassigned variables. We've got a solution.
-            solutions.append(assignments.copy())
-            return solutions
-
-        variable = item[-1] # 1
-        assignments[variable] = None # add to
-        # queue
-
-        # Case1
-        for value in domains[variable]:
-            assignments[variable] = value # {1: 'Case1'}
-
-            for constraint, variables in vconstraints[variable]:
-                if not constraint(variables, domains, assignments):
-                    # Value is not good.
-
-                    break
-            else:
-                # Value is good. Recurse and get next variable.
-                self.recursiveBacktracking(
-                    solutions, domains, vconstraints, assignments, single
-                )
-                if solutions and single:
-                    return solutions
-
-        del assignments[variable]
-        return solutions
+            # problem.addVariable(id, list(range(1, iter)))
+            problem.addVariable(id, [f"Case{i}" for i in range(1, iter)])
 
 
-    def getSolution(self, domains, constraints, vconstraints):
-        solutions = self.recursiveBacktracking([], domains, vconstraints, {}, True)
-        return solutions and solutions[0] or None
+def prepare_data(str, timestamp='Timestamp'):
+    data = pd.read_csv(str, sep=',')
+    data = data.sort_values(by=timestamp, ascending=True)
+    data['EventID'] = range(1, len(data) + 1)
+    data.set_index('EventID', inplace=True)
+    return data.to_dict(orient="index")
 
-    def getSolutions(self, domains, constraints, vconstraints):
-        return self.recursiveBacktracking([], domains, vconstraints, {}, False)
 
-
-
-def assign_cases():
-    data = pd.read_csv('data.csv', sep=';')
-    n_of_events = len(data)
-
-    data = data.to_dict(orient="records")
-
-    solver = MyRecursiveBacktrackingSolver()
+def assign_cases(data, start_event, constraints):
+    solver = RecursiveBacktrackingSolver();
     problem = Problem(solver)
 
-    constraints = {'C1': "x['UserID'] == y['UserID']",
-                   'C2': "x['Timestamp'] < y['Timestamp'] if x['Activity'] == 'A' and y['Activity'] == 'B' else True" }
+    declare_domains(problem, data, start_event)
 
-    case = 1
+    # problem.addConstraint(Absence(data, {'attr': 'Activity', 'value': 'B'}))
 
-    problem.addVariables(range(1, n_of_events+1), [f"Case{i}" for i in range(1, n_of_events+1)])
+    for const in constraints:
+        method = const['constraint']
+        ev = const['e']
+        ev2 = const.get('e2')
+        if ev2:
+            problem.addConstraint(method(data, ev, ev2))
+        else:
+            problem.addConstraint(method(data, ev))
 
-    problem.addConstraint(MyConstraint(data, constraints))
     solutions = problem.getSolution()
 
     return solutions
@@ -123,7 +55,97 @@ def assign_cases():
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    result = assign_cases()
+    start_event = {'attr': 'Activity', 'value': 'A'}
+    case_name = "CaseID"
+    timestamp_name = "Start Timestamp"
+
+    data_file = 'event_logs/data64.csv'
+
+    data = prepare_data(data_file, timestamp_name)
+
+    constraints = [
+        {'constraint': Existence,
+         'e': {'attr': 'Activity', 'value': 'A'}},
+        {'constraint': Existence,
+         'e': {'attr': 'Activity', 'value': 'L'}},
+        {'constraint': Existence,
+         'e': {'attr': 'Activity', 'value': 'B'}},
+        {'constraint': Existence,
+         'e': {'attr': 'Activity', 'value': 'C'}},
+        {'constraint': Existence,
+         'e': {'attr': 'Activity', 'value': 'G'}},
+        {'constraint': Existence,
+         'e': {'attr': 'Activity', 'value': 'I'}},
+        {'constraint': Existence,
+         'e': {'attr': 'Activity', 'value': 'D'}},
+        {'constraint': Absence,
+         'e': {'attr': 'Activity', 'value': 'K'}},
+        {'constraint': AlternateResponse,
+         'e': {'attr': 'Activity', 'value': 'B'},
+         'e2': {'attr': 'Activity', 'value': 'D'}},
+        {'constraint': AlternateResponse,
+         'e': {'attr': 'Activity', 'value': 'C'},
+         'e2': {'attr': 'Activity', 'value': 'D'}},
+        {'constraint': Precedence,
+         'e': {'attr': 'Activity', 'value': 'A'},
+         'e2': {'attr': 'Activity', 'value': 'B'}},
+        {'constraint': Precedence,
+         'e': {'attr': 'Activity', 'value': 'A'},
+         'e2': {'attr': 'Activity', 'value': 'C'}},
+        {'constraint': Coexistence,
+         'e': {'attr': 'Activity', 'value': 'B'},
+         'e2': {'attr': 'Activity', 'value': 'C'}},
+        {'constraint': ChainResponse,
+         'e': {'attr': 'Activity', 'value': 'F'},
+         'e2': {'attr': 'Activity', 'value': 'G'}},
+        {'constraint': ChainResponse,
+         'e': {'attr': 'Activity', 'value': 'E'},
+         'e2': {'attr': 'Activity', 'value': 'G'}},
+        {'constraint': ChainPrecedence,
+         'e': {'attr': 'Activity', 'value': 'G'},
+         'e2': {'attr': 'Activity', 'value': 'H'}},
+        {'constraint': ChainPrecedence,
+         'e': {'attr': 'Activity', 'value': 'I'},
+         'e2': {'attr': 'Activity', 'value': 'J'}},
+        {'constraint': NotChainSuccession,
+         'e': {'attr': 'Activity', 'value': 'D'},
+         'e2': {'attr': 'Activity', 'value': 'G'}},
+        {'constraint': NotSuccession,
+         'e': {'attr': 'Activity', 'value': 'J'},
+         'e2': {'attr': 'Activity', 'value': 'I'}},  # redundant?
+        {'constraint': ChainPrecedence,
+         'e': {'attr': 'Activity', 'value': 'J'},
+         'e2': {'attr': 'Activity', 'value': 'K'}},
+        {'constraint': RespondedExistence,
+         'e': {'attr': 'Activity', 'value': 'F'},
+         'e2': {'attr': 'Activity', 'value': 'G'}},
+        {'constraint': RespondedExistence,
+         'e': {'attr': 'Activity', 'value': 'E'},
+         'e2': {'attr': 'Activity', 'value': 'G'}},
+        {'constraint': RespondedExistence,
+         'e': {'attr': 'Activity', 'value': 'K'},
+         'e2': {'attr': 'Activity', 'value': 'L'}},
+        {'constraint': AlternatePrecedence,
+         'e': {'attr': 'Activity', 'value': 'H'},
+         'e2': {'attr': 'Activity', 'value': 'I'}},
+        {'constraint': AlternatePrecedence,
+         'e': {'attr': 'Activity', 'value': 'G'},
+         'e2': {'attr': 'Activity', 'value': 'H'}}
+    ]
+
+    result = assign_cases(data, start_event, constraints)
+
+    measure = LogToLogCaseMeasure(data, result, case_name).trace_to_trace_similarity()
+
+    measure2 = LogToLogCaseMeasure(data, result, case_name).case_similarity()
+
+    measure3 = LogToLogTimeMeasure(timestamp_name, data, result, case_name).event_time_deviation()
+
+    measure4 = LogToLogTimeMeasure(timestamp_name, data, result, case_name).case_cycle_time_deviation()
+
+
     print(result)
-
-
+    print(measure)
+    print(measure2)
+    print(measure3)
+    print(measure4)
