@@ -44,17 +44,6 @@ class Existence(BaseEventConstraint):
         self._required_event = required_event
         self._case_status = {}
 
-    def find_solutions(self, all_domains, case_status, events, other_event = None):
-        # other cases
-        left_cases = [c for c, v in case_status.items() if case_status[c] and other_event not in case_status[c]]
-        arr = []
-        for event in events:
-            domains = all_domains[event]
-            if set(left_cases) & set(domains):
-                arr.append(event)
-        return arr
-
-
     def __call__(self, events, domains, assignments, forwardcheck=False):
         data = self._data
         required_attr = self._required_event['attr']
