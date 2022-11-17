@@ -1,5 +1,6 @@
 
 from constraint import *
+from constraints.base_event_constraint import BaseEventConstraint
 
 # A occurs at most once
 class Absence(Constraint):
@@ -36,30 +37,48 @@ class Absence(Constraint):
 
 
 # A occurs at least once
-class Existence(Constraint):
+class Existence(BaseEventConstraint):
 
     def __init__(self, data, required_event):
         self._data = data
         self._required_event = required_event
+        self._case_status = {}
+
+    def find_solutions(self, all_domains, case_status, events, other_event = None):
+        # other cases
+        left_cases = [c for c, v in case_status.items() if case_status[c] and other_event not in case_status[c]]
+        arr = []
+        for event in events:
+            domains = all_domains[event]
+            if set(left_cases) & set(domains):
+                arr.append(event)
+        return arr
 
 
     def __call__(self, events, domains, assignments, forwardcheck=False):
         data = self._data
         required_attr = self._required_event['attr']
         required_value = self._required_event['value']
-        curr_event_id = max(assignments.keys())
+        curr_id = list(assignments)[-1]
+        curr_case = assignments[curr_id]
+
+        self.clean_case_status(assignments)
+
+        if not self._case_status.get(curr_case, None):
+            self._case_status[curr_case] = {}
+
+        # if event
+        if data[curr_id][required_attr] == required_value:
+            if self._case_status[curr_case].get('e'):
+                if [case for case in domains[curr_id] if case not in self._case_status.keys()]:
+                    return False
+            else:
+                self._case_status[curr_case].setdefault('e', []).append(curr_id)
 
         # check at the last event
-        if curr_event_id == len(events):
-            # iterate over the set of cases
-            for case in sorted(set(assignments.values())):
-                flag = False
-                # check the events of each case
-                for event, assigned_case in assignments.items():
-                    if case == assigned_case:
-                        if data[event][required_attr] == required_value:
-                            flag = True
-                # if for this case we didn't find an event with the required attr
-                if not flag:
+        if curr_id == len(events):
+            for case in set(assignments.values()):
+                if not self._case_status.get(case):
                     return False
+
         return True

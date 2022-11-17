@@ -55,7 +55,7 @@ class TestExistenceConstraints(unittest.TestCase, EventLogGenerationMixin):
                              'e': {'attr': 'Activity', 'value': 'B'}}]
 
         cases = assign_cases(data, self.start_event, constraints)
-        expected_result = {1: 'Case1', 2: 'Case1', 3: 'Case2', 4: 'Case1', 5: 'Case2', 6: 'Case1'}
+        expected_result = {1: 'Case1', 2: 'Case1', 3: 'Case2', 4: 'Case2', 5: 'Case1', 6: 'Case1'}
         self.assertEqual(cases, expected_result, "Incorrect cases")
 
     def test_existence_with_no_req_events_for_1_case(self):
