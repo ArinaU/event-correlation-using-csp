@@ -59,7 +59,7 @@ if __name__ == '__main__':
     case_name = "CaseID"
     timestamp_name = "Start Timestamp"
 
-    data_file = 'event_logs/data64.csv'
+    data_file = 'event_logs/data10.csv'
 
     data = prepare_data(data_file, timestamp_name)
 
