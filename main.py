@@ -1,4 +1,5 @@
 import pandas as pd
+import os
 from constraints.existence_constraints import *
 from constraints.relation_constraints import *
 from constraints.mutual_relation_constraints import *
@@ -28,7 +29,7 @@ def prepare_data(str, timestamp='Timestamp'):
     data = data.sort_values(by=timestamp, ascending=True)
     data['EventID'] = range(1, len(data) + 1)
     data.set_index('EventID', inplace=True)
-    return data.to_dict(orient="index")
+    return data
 
 
 def assign_cases(data, start_event, constraints):
@@ -53,15 +54,30 @@ def assign_cases(data, start_event, constraints):
     return solutions
 
 
+def generate_logs(data, assignments):
+    data['SuggestedCaseID'] = list(assignments.values())
+
+    outdir = './new_event_logs'
+    filename = f"data{len(data)}"
+    if not os.path.exists(outdir):
+        os.mkdir(outdir)
+
+    fullname = os.path.join(outdir, filename)
+
+    data.to_csv(fullname, sep=',')
+
+
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     start_event = {'attr': 'Activity', 'value': 'A'}
     case_name = "CaseID"
     timestamp_name = "Start Timestamp"
 
-    data_file = 'event_logs/data10.csv'
+    data_file = 'event_logs/data105.csv'
 
     data = prepare_data(data_file, timestamp_name)
+
+    datadict = data.to_dict(orient="index")
 
     constraints = [
         {'constraint': Existence,
@@ -133,15 +149,17 @@ if __name__ == '__main__':
          'e2': {'attr': 'Activity', 'value': 'H'}}
     ]
 
-    result = assign_cases(data, start_event, constraints)
+    result = assign_cases(datadict, start_event, constraints)
 
-    measure = LogToLogCaseMeasure(data, result, case_name).trace_to_trace_similarity()
+    generate_logs(data, result)
 
-    measure2 = LogToLogCaseMeasure(data, result, case_name).case_similarity()
+    measure = LogToLogCaseMeasure(datadict, result, case_name).trace_to_trace_similarity()
 
-    measure3 = LogToLogTimeMeasure(timestamp_name, data, result, case_name).event_time_deviation()
+    measure2 = LogToLogCaseMeasure(datadict, result, case_name).case_similarity()
 
-    measure4 = LogToLogTimeMeasure(timestamp_name, data, result, case_name).case_cycle_time_deviation()
+    measure3 = LogToLogTimeMeasure(timestamp_name, datadict, result, case_name).event_time_deviation()
+
+    measure4 = LogToLogTimeMeasure(timestamp_name, datadict, result, case_name).case_cycle_time_deviation()
 
 
     print(result)
