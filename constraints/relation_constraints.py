@@ -14,17 +14,6 @@ class RespondedExistence(BaseEventConstraint):
         self._buf = {}
 
 
-    def find_solutions(self, all_domains, case_status, events, other_event):
-        # other cases
-        left_cases = [c for c, v in case_status.items() if case_status[c] and other_event not in case_status[c]]
-        arr = []
-        for event in events:
-            domains = all_domains[event]
-            if set(left_cases) & set(domains):
-                arr.append(event)
-        return arr
-
-
     def __call__(self, events, domains, assignments, forwardcheck=False):
         data = self._data
         buf = self._buf
@@ -71,15 +60,6 @@ class Response(BaseEventConstraint):
         self._required_event = required_event
         self._required_event2 = required_event2
         self._case_status = {}
-
-    def find_solutions(self, all_domains, case_status, events, other_event):
-        left_cases = [c for c,v in case_status.items() if case_status[c] and other_event not in case_status[c]]
-        arr = []
-        for event in events:
-            domains = all_domains[event]
-            if set(left_cases) & set(domains):
-                arr.append(event)
-        return arr
 
     def __call__(self, events, domains, assignments, forwardcheck=False):
         data = self._data
@@ -162,7 +142,6 @@ class ChainResponse(BaseEventConstraint):
         self._case_status = {}
 
 
-    # TODO 
     def find_solutions(self, all_domains, case_status, events, other_event = None):
         left_cases = []
         for c, v in case_status.items():
@@ -231,16 +210,6 @@ class ChainPrecedence(BaseEventConstraint):
         self._case_status = {}
 
 
-    def find_solutions(self, all_domains, case_status, events, other_event):
-        left_cases = [c for c,v in case_status.items() if case_status[c] and other_event not in case_status[c]]
-        arr = []
-        for event in events:
-            domains = all_domains[event]
-            if set(left_cases) & set(domains):
-                arr.append(event)
-        return arr
-
-
     def __call__(self, events, domains, assignments, forwardcheck=False):
         data = self._data
         required_attr = self._required_event['attr']
@@ -278,16 +247,6 @@ class AlternateResponse(BaseEventConstraint):
         self._required_event = required_event
         self._required_event2 = required_event2
         self._case_status = {}
-
-    def find_solutions(self, all_domains, case_status, events, other_event):
-        left_cases = [c for c,v in case_status.items() if case_status[c] and other_event not in case_status[c]]
-        arr = []
-        for event in events:
-            domains = all_domains[event]
-            if set(left_cases) & set(domains):
-                arr.append(event)
-        return arr
-
 
     def __call__(self, events, domains, assignments, forwardcheck=False):
         data = self._data
@@ -343,14 +302,6 @@ class AlternatePrecedence(BaseEventConstraint):
         self._required_event2 = required_event2
         self._case_status = {}
 
-    def find_solutions(self, all_domains, case_status, events, other_event):
-        left_cases = [c for c,v in case_status.items() if case_status[c] and other_event not in case_status[c]]
-        arr = []
-        for event in events:
-            domains = all_domains[event]
-            if set(left_cases) & set(domains):
-                arr.append(event)
-        return arr
 
     def __call__(self, events, domains, assignments, forwardcheck=False):
         data = self._data

@@ -6,14 +6,15 @@ class BaseEventConstraint(Constraint):
     def __init__(self):
         pass
 
-    # def remove_old_assignments(self, assignments):
-    #     # -1 because current assignment would be the last one in list
-    #     assigned_events = list(assignments.keys())[:-1]
-    #     case_status = self._case_status.copy()
-    #     for key, events in case_status.items():
-    #         self._case_status[key] = [x for x in events if x in assigned_events]
-    #         if not self._case_status[key]:
-    #             del self._case_status[key]
+    def find_solutions(self, all_domains, case_status, events, other_event):
+        left_cases = [c for c,v in case_status.items() if case_status[c] and other_event not in case_status[c]]
+        arr = []
+        for event in events:
+            domains = all_domains[event]
+            if set(left_cases) & set(domains):
+                arr.append(event)
+        return arr
+
 
     def strip(self, data):
         new_data = {}
