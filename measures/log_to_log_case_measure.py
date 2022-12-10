@@ -55,12 +55,8 @@ class LogToLogCaseMeasure(LogToLogMeasure):
 
     def trace_to_trace_frequency_similarity(self):
         init_traces = self.init_traces()
-        suggested_traces = self.suggested_traces()
-
         pairs = self.get_tcc_pairs()
-
         delta_total = sum([dist for case, dist in pairs.items() if case[1] == f"{case[0]}_2"])
-
         L2L_freq = 1 - delta_total / ( 2.0 * len(init_traces))
 
         return L2L_freq
