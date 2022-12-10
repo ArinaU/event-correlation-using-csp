@@ -5,16 +5,38 @@ from measures.log_to_log_measure import *
 
 class LogToLogCaseMeasure(LogToLogMeasure):
 
-    def trace_to_trace_similarity(self):
-        init_traces = self.init_traces()
-        suggested_traces = self.renamed_suggested_traces()
-        levenshtein = textdistance.Levenshtein(external=False)
+    def levenshtein_distance(self, list1, list2):
+        distance = 0
+        # Find the length of the longer list
+        max_length = max(len(list1), len(list2))
+        for i in range(max_length):
+            if i < len(list1) and i < len(list2):
+                # If the items are the same, continue
+                if list1[i] == list2[i]:
+                    continue
+                # If the items are different, increment the distance
+                else:
+                    distance += 1
+            else:
+                # If one list is shorter than the other, increment the distance
+                distance += 1
+        return distance
 
+    def get_tcc_pairs(self):
         # get pairs from calculating distances
         pairs = {}
-        for case1, trace1 in init_traces.items():
-            for case2, trace2 in suggested_traces.items():
-                pairs[(case1, case2)] = levenshtein(trace1, trace2)
+        for case1, trace1 in self.init_traces().items():
+            for case2, trace2 in self.suggested_traces().items():
+                pairs[(case1, case2)] = self.levenshtein_distance(trace1, trace2)
+
+        return pairs
+
+
+    def trace_to_trace_similarity(self):
+        init_traces = self.init_traces()
+        suggested_traces = self.suggested_traces()
+
+        pairs = self.get_tcc_pairs()
 
         min_value = min(pairs.values())
         min_distances = [k for k in pairs if pairs[k] == min_value]
@@ -31,6 +53,17 @@ class LogToLogCaseMeasure(LogToLogMeasure):
 
         return L2L_trace
 
+    def trace_to_trace_frequency_similarity(self):
+        init_traces = self.init_traces()
+        suggested_traces = self.suggested_traces()
+
+        pairs = self.get_tcc_pairs()
+
+        delta_total = sum([dist for case, dist in pairs.items() if case[1] == f"{case[0]}_2"])
+
+        L2L_freq = 1 - delta_total / ( 2.0 * len(init_traces))
+
+        return L2L_freq
 
     def case_similarity(self):
         init_traces = self.init_traces()
