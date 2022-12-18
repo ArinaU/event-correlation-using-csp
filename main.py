@@ -159,9 +159,11 @@ if __name__ == '__main__':
 
     measure3 = LogToLogCaseMeasure(datadict, result, case_name).trace_to_trace_frequency_similarity()
 
-    measure4 = LogToLogTimeMeasure(timestamp_name, datadict, result, case_name).event_time_deviation()
+    measure4 = LogToLogCaseMeasure(datadict, result, case_name).partial_case_similarity()
 
-    measure5 = LogToLogTimeMeasure(timestamp_name, datadict, result, case_name).case_cycle_time_deviation()
+    measure7 = LogToLogTimeMeasure(timestamp_name, datadict, result, case_name).event_time_deviation()
+
+    measure8 = LogToLogTimeMeasure(timestamp_name, datadict, result, case_name).case_cycle_time_deviation()
 
 
     print(result)

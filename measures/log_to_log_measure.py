@@ -19,7 +19,7 @@ class LogToLogMeasure():
             init_cases[id] = event[self._case_name]
         return self.get_traces(init_cases)
 
-    def suggested_traces(self):
+    def renamed_suggested_traces(self):
         traces = {}
         for case, event in self.get_traces(self._assigned_cases).items():
             traces[f"{case}_2"] = event

@@ -26,7 +26,7 @@ class LogToLogCaseMeasure(LogToLogMeasure):
         # get pairs from calculating distances
         pairs = {}
         for case1, trace1 in self.init_traces().items():
-            for case2, trace2 in self.suggested_traces().items():
+            for case2, trace2 in self.renamed_suggested_traces().items():
                 pairs[(case1, case2)] = self.levenshtein_distance(trace1, trace2)
 
         return pairs
@@ -34,7 +34,7 @@ class LogToLogCaseMeasure(LogToLogMeasure):
 
     def trace_to_trace_similarity(self):
         init_traces = self.init_traces()
-        suggested_traces = self.suggested_traces()
+        suggested_traces = self.renamed_suggested_traces()
 
         pairs = self.get_tcc_pairs()
 
@@ -57,15 +57,30 @@ class LogToLogCaseMeasure(LogToLogMeasure):
         init_traces = self.init_traces()
         pairs = self.get_tcc_pairs()
         delta_total = sum([dist for case, dist in pairs.items() if case[1] == f"{case[0]}_2"])
-        L2L_freq = 1 - delta_total / ( 2.0 * len(init_traces))
+        L2L_freq = 1 - delta_total / ( 2.0 * len(self._data))
 
         return L2L_freq
+
+
+    def partial_case_similarity(self):
+        init_traces = self.init_traces()
+        suggested_traces = self.get_traces(self._assigned_cases)
+
+        intersect_sum = 0
+        for case, events in init_traces.items():
+            events2 = suggested_traces[case]
+            if events[0] == events2[0] and len(events) > 1 and len(events2) > 1:
+                intersect_sum += len(set(events[1:]) & set(events2[1:]))
+
+        L2L_first = intersect_sum / (len(self._data) - len(init_traces))
+
+        return L2L_first
 
     def case_similarity(self):
         init_traces = self.init_traces()
         suggested_traces = self.get_traces(self._assigned_cases)
 
         intersection = [k for k, v in init_traces.items() if suggested_traces.get(k) == v]
-        L2L_case = len(intersection) / len(init_traces) * 1.0
+        L2L_case = len(intersection) / len(init_traces)
 
         return L2L_case
