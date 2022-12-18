@@ -161,6 +161,8 @@ if __name__ == '__main__':
 
     measure4 = LogToLogCaseMeasure(datadict, result, case_name).partial_case_similarity()
 
+    measure5 = LogToLogCaseMeasure(datadict, result, case_name).bigram_similarity()
+
     measure7 = LogToLogTimeMeasure(timestamp_name, datadict, result, case_name).event_time_deviation()
 
     measure8 = LogToLogTimeMeasure(timestamp_name, datadict, result, case_name).case_cycle_time_deviation()

@@ -31,6 +31,23 @@ class LogToLogCaseMeasure(LogToLogMeasure):
 
         return pairs
 
+    def get_ngrams(self, traces, n):
+        ngrams = {}
+        for case, events in traces.items():
+            ngrams[case] = [events[i:i + n] for i in range(0, len(events), n)]
+
+        return ngrams
+
+    def get_ngrams(self, traces, n):
+        dict = {}
+        for case, events in traces.items():
+            ngrams = []
+            for i in range(len(events) - n + 1):
+                ngrams.append(events[i:i + n])
+            dict[case] = ngrams
+
+        return dict
+
 
     def trace_to_trace_similarity(self):
         init_traces = self.init_traces()
@@ -75,6 +92,27 @@ class LogToLogCaseMeasure(LogToLogMeasure):
         L2L_first = intersect_sum / (len(self._data) - len(init_traces))
 
         return L2L_first
+
+    def bigram_similarity(self):
+        init_traces = self.init_traces()
+        suggested_traces = self.get_traces(self._assigned_cases)
+
+        init_bigrams = self.get_ngrams(init_traces, 2)
+        suggested_bigrams = self.get_ngrams(suggested_traces, 2)
+
+        occurs_sum = 0
+        for case, bigrams in init_bigrams.items():
+            occurrence = 0
+            for bigram in bigrams:
+                if bigram in suggested_bigrams[case]:
+                    occurrence += 1
+            occurs_sum += (occurrence / (len(init_traces[case]) - 1))
+
+        L2L_2gram = occurs_sum / len(init_traces)
+
+        return L2L_2gram
+
+
 
     def case_similarity(self):
         init_traces = self.init_traces()
