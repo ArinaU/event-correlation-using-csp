@@ -99,6 +99,26 @@ class LogToLogCaseMeasure(LogToLogMeasure):
 
         init_bigrams = self.get_ngrams(init_traces, 2)
         suggested_bigrams = self.get_ngrams(suggested_traces, 2)
+        occurs_sum = 0
+        for case, bigrams in init_bigrams.items():
+            occurrence = 0
+            for bigram in bigrams:
+                if bigram in suggested_bigrams[case]:
+                    occurrence += 1
+            denominator = (len(init_traces[case]) - 1)
+            if denominator > 0:
+                occurs_sum += (occurrence / denominator)
+        L2L_2gram = occurs_sum / len(init_traces)
+
+        return L2L_2gram
+
+
+    def trigram_similarity(self):
+        init_traces = self.init_traces()
+        suggested_traces = self.get_traces(self._assigned_cases)
+
+        init_bigrams = self.get_ngrams(init_traces, 3)
+        suggested_bigrams = self.get_ngrams(suggested_traces, 3)
 
         occurs_sum = 0
         for case, bigrams in init_bigrams.items():
@@ -106,13 +126,12 @@ class LogToLogCaseMeasure(LogToLogMeasure):
             for bigram in bigrams:
                 if bigram in suggested_bigrams[case]:
                     occurrence += 1
-            occurs_sum += (occurrence / (len(init_traces[case]) - 1))
+            denominator = (len(init_traces[case]) - 2)
+            if denominator > 0:
+                occurs_sum += (occurrence / denominator)
+        L2L_3gram = occurs_sum / len(init_traces)
 
-        L2L_2gram = occurs_sum / len(init_traces)
-
-        return L2L_2gram
-
-
+        return L2L_3gram
 
     def case_similarity(self):
         init_traces = self.init_traces()
