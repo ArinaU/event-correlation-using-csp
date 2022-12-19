@@ -170,8 +170,12 @@ if __name__ == '__main__':
     measure8 = LogToLogTimeMeasure(timestamp_name, datadict, result, case_name).case_cycle_time_deviation()
 
 
-    print(result)
-    print(measure)
-    print(measure2)
-    print(measure3)
-    print(measure4)
+    print(f"Result: {result}")
+    print(f"Trace-to-trace similarity: {measure}")
+    print(f"Case similarity: {measure2}")
+    print(f"Trace-to-trace frequency similarity: {measure3}")
+    print(f"Partial case similarity: {measure4}")
+    print(f"Bigram similarity: {measure5}")
+    print(f"Trigram similarity: {measure6}")
+    print(f"Event time deviation: {measure7}")
+    print(f"Case cycle time deviation: {measure8}")
