@@ -151,9 +151,10 @@ class ChainResponse(BaseEventConstraint):
 
         for k, v in deepcopy(self._case_status).items():
             for a, b in v.items():
-                # TODO
-                if isinstance(b, list):
-                    self._case_status[k][a] = [x for x in b if x in assigned_events]
+                if a not in assigned_events:
+                    self._case_status[k][a] = None
+                elif b not in assigned_events:
+                    self._case_status[k][a] = False
 
         self._case_status = self.strip(self._case_status)
 

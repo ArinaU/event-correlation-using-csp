@@ -225,8 +225,8 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
         ]
 
         cases = assign_cases(data, self.start_event, constraints)
-        expected_result = {1: 'Case1', 2: 'Case1', 3: 'Case2', 4: 'Case1',
-                           5: 'Case1', 6: 'Case2', 7: 'Case2', 8: 'Case2' }
+        expected_result = {1: 'Case1', 2: 'Case1', 3: 'Case2', 4: 'Case2',
+                           5: 'Case2', 6: 'Case1', 7: 'Case2', 8: 'Case2' }
         self.assertEqual(cases, expected_result, "Incorrect cases")
 
 
@@ -246,7 +246,8 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
 
         cases = assign_cases(data, self.start_event, constraints)
         expected_result = {1: 'Case1', 2: 'Case2', 3: 'Case1', 4: 'Case1',
-                           5: 'Case2', 6: 'Case2', 7: 'Case1' }
+                           5: 'Case2', 6: 'Case1', 7: 'Case2' }
+        self.assertEqual(cases, expected_result, "Incorrect cases")
         self.assertEqual(cases, expected_result, "Incorrect cases")
 
 
