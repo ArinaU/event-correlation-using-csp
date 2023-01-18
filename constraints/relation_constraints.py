@@ -136,6 +136,9 @@ class Precedence(BaseEventConstraint):
 
 # If A occurs, then B occurs immediately after A <A, B, B>, <A, B, C, A, B>
 class ChainResponse(BaseEventConstraint):
+
+    lock = {}
+
     def __init__(self, data, required_event, required_event2):
         self._data = data
         self._required_event = required_event
@@ -143,15 +146,20 @@ class ChainResponse(BaseEventConstraint):
         self._case_status = {}
 
 
-    def find_solutions(self, all_domains, case_status, events, curr_case):
-        left_cases = []
-        for c, v in case_status.items():
-            # if somewhere B available
-            if case_status[c].get('e') and c > curr_case:
-                if not self._case_status[c].get('e2') or \
-                        len(self._case_status[c]['e']) > len(self._case_status[c]['e2']):
-                    left_cases.append(c)
+    def clean_case_status(self, assignments):
+        assigned_events = list(assignments.keys())[:-1]
 
+        for k, v in deepcopy(self._case_status).items():
+            for a, b in v.items():
+                # TODO
+                if isinstance(b, list):
+                    self._case_status[k][a] = [x for x in b if x in assigned_events]
+
+        self._case_status = self.strip(self._case_status)
+
+
+    def find_solutions(self, all_domains, case_status, events, other_event = None):
+        left_cases = [c for c, v in case_status.items() if case_status[c] and False in case_status[c].values()]
         arr = []
         for event in events:
             domains = all_domains[event]
@@ -169,38 +177,38 @@ class ChainResponse(BaseEventConstraint):
         curr_id = list(assignments)[-1]
         curr_case = assignments[curr_id]
 
+        if ChainResponse.lock.get(curr_id) == self:
+            ChainResponse.lock[curr_id] = None
+
         self.clean_case_status(assignments)
 
         if not self._case_status.get(curr_case, None):
             self._case_status[curr_case] = {}
 
-        # get last element
-        case_events = [e for e, c in assignments.items() if c == curr_case]
-        last_id = case_events[-2] if len(case_events) > 1 else None
+        # A,A,D,F,E,G,G
 
         # if curr element is C
         if data[curr_id][required_attr2] == required_value2:
-            # if last element in case was B
-            if last_id and data[last_id][required_attr] == required_value:
-                self._case_status[curr_case].setdefault('e2', []).append(curr_id)
-            else: # if last element was C or any other (?)
-                if self.find_solutions(domains, self._case_status, [curr_id], curr_case):
+            target_event = next(iter([k for k, v in self._case_status[curr_case].items() if not v]), None)
+            # if available B is found
+            if target_event and data[target_event][required_attr] == required_value:
+                self._case_status[curr_case][target_event] = curr_id
+                ChainResponse.lock[curr_id] = self
+            else:
+                # check other cases
+                if not ChainResponse.lock.get(curr_id) and self.find_solutions(domains, self._case_status, [curr_id]):
                     return False
-        else:
-            # if last event in case was F
-            if last_id and data[last_id][required_attr] == required_value:
+
+        else: # if B or any other Activity
+            if False in self._case_status[curr_case].values():
                 return False
+
             # if curr element is B
             if data[curr_id][required_attr] == required_value:
-                if not self._case_status[curr_case].get('e2') or \
-                        self._case_status[curr_case].get('e') and \
-                        len(self._case_status[curr_case]['e']) == len(self._case_status[curr_case]['e2']):
-                    self._case_status[curr_case].setdefault('e', []).append(curr_id)
-                else:
-                    return False
-
+                self._case_status[curr_case][curr_id] = False
 
         return True
+
 
 
 class ChainPrecedence(BaseEventConstraint):
