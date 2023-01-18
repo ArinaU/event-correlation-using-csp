@@ -209,12 +209,12 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
 
 
     def test_chain_response3(self):
-        data = self.generate_log('A,H,A,D,B,D,C,H')
+        data = self.generate_log('A,H,A,D,E,D,G,H')
 
         constraints = [
             {'constraint': ChainResponse,
-             'e': {'attr': 'Activity', 'value': 'B'},
-             'e2': {'attr': 'Activity', 'value': 'C'}},
+             'e': {'attr': 'Activity', 'value': 'E'},
+             'e2': {'attr': 'Activity', 'value': 'G'}},
             {'constraint': Absence,
              'e': {'attr': 'Activity', 'value': 'H'}},
             {'constraint': Absence,
@@ -225,14 +225,14 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
         ]
 
         cases = assign_cases(data, self.start_event, constraints)
-        expected_result = {1: 'Case1', 2: 'Case1', 3: 'Case2', 4: 'Case2',
-                           5: 'Case2', 6: 'Case1', 7: 'Case2', 8: 'Case2' }
+        expected_result = {1: 'Case1', 2: 'Case1', 3: 'Case2', 4: 'Case1',
+                           5: 'Case1', 6: 'Case2', 7: 'Case2', 8: 'Case2' }
         self.assertEqual(cases, expected_result, "Incorrect cases")
 
 
     # test deadlock when ChainResponse(F, G) and ChainResponse(E, G)
     # and ...E,F,G,G; assign G to E first
-    def test_chain_response3(self):
+    def test_chain_response4(self):
         data = self.generate_log('A,A,D,F,E,G,G')
 
         constraints = [
@@ -246,7 +246,7 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
 
         cases = assign_cases(data, self.start_event, constraints)
         expected_result = {1: 'Case1', 2: 'Case2', 3: 'Case1', 4: 'Case1',
-                           5: 'Case2', 6: 'Case1', 7: 'Case2' }
+                           5: 'Case2', 6: 'Case2', 7: 'Case1' }
         self.assertEqual(cases, expected_result, "Incorrect cases")
 
 
