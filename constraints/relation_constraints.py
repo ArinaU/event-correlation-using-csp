@@ -136,7 +136,6 @@ class Precedence(BaseEventConstraint):
 
 # If A occurs, then B occurs immediately after A <A, B, B>, <A, B, C, A, B>
 class ChainResponse(BaseEventConstraint):
-
     lock = {}
 
     def __init__(self, data, required_event, required_event2):
