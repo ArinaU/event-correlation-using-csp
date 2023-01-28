@@ -5,10 +5,11 @@ from constraints.base_event_constraint import BaseEventConstraint
 # If B occurs, then A occurs and vice versa: <C, A, C, B, B>, <B, C, C, A>
 class Coexistence(BaseEventConstraint):
 
-    def __init__(self, data, required_event, required_event2):
+    def __init__(self, data, required_event, required_event2, start_event):
         self._data = data
         self._required_event = required_event
         self._required_event2 = required_event2
+        self._start_event = start_event
         self._case_status = {}
         self._buf = {}
 

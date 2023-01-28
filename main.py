@@ -45,9 +45,9 @@ def assign_cases(data, start_event, constraints):
         ev = const['e']
         ev2 = const.get('e2')
         if ev2:
-            problem.addConstraint(method(data, ev, ev2))
+            problem.addConstraint(method(data, ev, ev2, start_event))
         else:
-            problem.addConstraint(method(data, ev))
+            problem.addConstraint(method(data, ev, start_event))
 
     solutions = problem.getSolution()
 

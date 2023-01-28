@@ -3,8 +3,9 @@ from copy import deepcopy
 
 class BaseEventConstraint(Constraint):
 
-    def __init__(self):
-        pass
+    def __init__(self, data, start_event = None):
+        self._data = data
+        self._start_event = start_event
 
     def find_solutions(self, all_domains, case_status, events, other_event):
         left_cases = [c for c,v in case_status.items() if case_status[c] and other_event not in case_status[c]]

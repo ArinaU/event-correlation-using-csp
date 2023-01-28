@@ -2,12 +2,15 @@
 from constraint import *
 from constraints.base_event_constraint import BaseEventConstraint
 
+
+
 # A occurs at most once
 class Absence(Constraint):
 
-    def __init__(self, data, required_event):
+    def __init__(self, data, required_event, start_event = None):
         self._data = data
         self._required_event = required_event
+        self._start_event = start_event
         self._buf = {}
 
     def clear_buf(self, curr_event):
@@ -39,9 +42,10 @@ class Absence(Constraint):
 # A occurs at least once
 class Existence(BaseEventConstraint):
 
-    def __init__(self, data, required_event):
+    def __init__(self, data, required_event, start_event = None):
         self._data = data
         self._required_event = required_event
+        self._start_event = start_event
         self._case_status = {}
 
     def __call__(self, events, domains, assignments, forwardcheck=False):
