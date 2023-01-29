@@ -33,7 +33,7 @@ def prepare_data(str, timestamp='Timestamp'):
 
 
 def assign_cases(data, start_event, constraints):
-    solver = RecursiveBacktrackingSolver(False);
+    solver = RecursiveBacktrackingSolver();
     problem = Problem(solver)
 
     declare_domains(problem, data, start_event)
