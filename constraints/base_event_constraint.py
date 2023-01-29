@@ -31,8 +31,11 @@ class BaseEventConstraint(Constraint):
         assigned_events = list(assignments.keys())[:-1]
 
         for k, v in deepcopy(self._case_status).items():
-            for a, b in v.items():
-                self._case_status[k][a] = [x for x in b if x in assigned_events]
+            if isinstance(v, dict):
+                for a, b in v.items():
+                    self._case_status[k][a] = [x for x in b if x in assigned_events]
+            elif isinstance(v, list):
+                self._case_status[k] = [x for x in v if x in assigned_events]
 
         self._case_status = self.strip(self._case_status)
 
