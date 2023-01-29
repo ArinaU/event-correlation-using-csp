@@ -189,14 +189,14 @@ class ChainResponse(BaseEventConstraint):
         if not self._case_status.get(curr_case, None):
             self._case_status[curr_case] = {}
 
-        # A,A,D,F,E,G,G
+        case_events = sorted([e for e, c in assignments.items() if c == curr_case])
+        last_id = case_events[-2] if len(case_events) > 1 else None
 
         # if curr element is C
         if data[curr_id][required_attr2] == required_value2:
-            target_event = next(iter([k for k, v in self._case_status[curr_case].items() if not v]), None)
             # if available B is found
-            if target_event and data[target_event][required_attr] == required_value:
-                self._case_status[curr_case][target_event] = curr_id
+            if last_id and data[last_id][required_attr] == required_value:
+                self._case_status[curr_case][last_id] = curr_id
                 ChainResponse.lock[curr_id] = self
             else:
                 # check other cases
