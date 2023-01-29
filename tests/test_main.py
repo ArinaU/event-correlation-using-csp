@@ -233,9 +233,11 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
     # test deadlock when ChainResponse(F, G) and ChainResponse(E, G)
     # and ...E,F,G,G; assign G to E first
     def test_chain_response4(self):
-        data = self.generate_log('A,A,D,F,E,G,G')
+        data = self.generate_log('A,A,G,A,F,E,G,G')
 
         constraints = [
+            {'constraint': Absence,
+             'e': {'attr': 'Activity', 'value': 'G'}},
             {'constraint': ChainResponse,
              'e': {'attr': 'Activity', 'value': 'F'},
              'e2': {'attr': 'Activity', 'value': 'G'}},
@@ -245,9 +247,8 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
         ]
 
         cases = assign_cases(data, self.start_event, constraints)
-        expected_result = {1: 'Case1', 2: 'Case2', 3: 'Case1', 4: 'Case1',
-                           5: 'Case2', 6: 'Case1', 7: 'Case2' }
-        self.assertEqual(cases, expected_result, "Incorrect cases")
+        expected_result = {1: 'Case1', 2: 'Case2', 3: 'Case1', 4: 'Case3',
+                           5: 'Case2', 6: 'Case3', 7: 'Case2', 8: 'Case3' }
         self.assertEqual(cases, expected_result, "Incorrect cases")
 
 
