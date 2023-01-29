@@ -58,15 +58,28 @@ class Existence(BaseEventConstraint):
         self.clean_case_status(assignments)
 
         if not self._case_status.get(curr_case, None):
-            self._case_status[curr_case] = {}
+            self._case_status[curr_case] = []
 
-        # if event
+        # if required element
         if data[curr_id][required_attr] == required_value:
-            if self._case_status[curr_case].get('e'):
-                if [case for case in domains[curr_id] if case not in self._case_status.keys()]:
-                    return False
-            else:
-                self._case_status[curr_case].setdefault('e', []).append(curr_id)
+            # if was before
+            if not self._case_status[curr_case]:
+
+                count = 0
+                # how many cases in total
+                max_cases = [k for k, v in data.items() if v[self._start_event['attr']] == self._start_event['value']]
+                unassigned_cases = len(max_cases) - len(self._case_status)
+                for event in events:
+                    if event not in assignments and data[event][required_attr] == required_value:
+                        if count < unassigned_cases:
+                            domain = domains[event]
+                            for value in domain[:]:
+                                if value in self._case_status:
+                                    domain.hideValue(value)
+                                    domain.popState()
+                            count += 1
+
+            self._case_status[curr_case].append(curr_id)
 
         # check at the last event
         if curr_id == len(events):
