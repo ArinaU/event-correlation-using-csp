@@ -18,6 +18,7 @@ from PyQt6.QtWidgets import (
     QFileDialog,
     QLineEdit,
     QLabel,
+    QTextEdit,
     QMainWindow,
     QPushButton,
     QVBoxLayout,
@@ -25,7 +26,7 @@ from PyQt6.QtWidgets import (
 )
 
 WINDOW_WIDTH = 500
-WINDOW_HEIGHT = 400
+WINDOW_HEIGHT = 550
 DISPLAY_HEIGHT = 35
 
 
@@ -64,117 +65,149 @@ class Window(QWidget):
             path = Path(filename)
             self.filename_edit.setText(str(path))
 
+    def set_generate_button(self):
+        start_event = {'attr': 'Activity', 'value': 'A'}
+        case_name = "CaseID"
+        timestamp_name = "Start Timestamp"
+
+        # data_file = 'event_logs/check/data21.csv'
+        data_file = self.filename_edit.text()
+
+        constraints = [
+            {'constraint': Existence,
+             'e': {'attr': 'Activity', 'value': 'A'}},
+            {'constraint': Existence,
+             'e': {'attr': 'Activity', 'value': 'L'}},
+            {'constraint': Existence,
+             'e': {'attr': 'Activity', 'value': 'B'}},
+            {'constraint': Existence,
+             'e': {'attr': 'Activity', 'value': 'C'}},
+            {'constraint': Existence,
+             'e': {'attr': 'Activity', 'value': 'G'}},
+            {'constraint': Existence,
+             'e': {'attr': 'Activity', 'value': 'I'}},
+            {'constraint': Existence,
+             'e': {'attr': 'Activity', 'value': 'D'}},
+            {'constraint': Absence,
+             'e': {'attr': 'Activity', 'value': 'K'}},
+            {'constraint': AlternateResponse,
+             'e': {'attr': 'Activity', 'value': 'B'},
+             'e2': {'attr': 'Activity', 'value': 'D'}},
+            {'constraint': AlternateResponse,
+             'e': {'attr': 'Activity', 'value': 'C'},
+             'e2': {'attr': 'Activity', 'value': 'D'}},
+            {'constraint': Precedence,
+             'e': {'attr': 'Activity', 'value': 'A'},
+             'e2': {'attr': 'Activity', 'value': 'B'}},
+            {'constraint': Precedence,
+             'e': {'attr': 'Activity', 'value': 'A'},
+             'e2': {'attr': 'Activity', 'value': 'C'}},
+            {'constraint': Coexistence,
+             'e': {'attr': 'Activity', 'value': 'B'},
+             'e2': {'attr': 'Activity', 'value': 'C'}},
+            {'constraint': ChainResponse,
+             'e': {'attr': 'Activity', 'value': 'F'},
+             'e2': {'attr': 'Activity', 'value': 'G'}},
+            {'constraint': ChainResponse,
+             'e': {'attr': 'Activity', 'value': 'E'},
+             'e2': {'attr': 'Activity', 'value': 'G'}},
+            {'constraint': ChainPrecedence,
+             'e': {'attr': 'Activity', 'value': 'G'},
+             'e2': {'attr': 'Activity', 'value': 'H'}},
+            {'constraint': ChainPrecedence,
+             'e': {'attr': 'Activity', 'value': 'I'},
+             'e2': {'attr': 'Activity', 'value': 'J'}},
+            {'constraint': NotChainSuccession,
+             'e': {'attr': 'Activity', 'value': 'D'},
+             'e2': {'attr': 'Activity', 'value': 'G'}},
+            {'constraint': NotSuccession,
+             'e': {'attr': 'Activity', 'value': 'J'},
+             'e2': {'attr': 'Activity', 'value': 'I'}},  # redundant?
+            {'constraint': ChainPrecedence,
+             'e': {'attr': 'Activity', 'value': 'J'},
+             'e2': {'attr': 'Activity', 'value': 'K'}},
+            {'constraint': RespondedExistence,
+             'e': {'attr': 'Activity', 'value': 'F'},
+             'e2': {'attr': 'Activity', 'value': 'G'}},
+            {'constraint': RespondedExistence,
+             'e': {'attr': 'Activity', 'value': 'E'},
+             'e2': {'attr': 'Activity', 'value': 'G'}},
+            {'constraint': RespondedExistence,
+             'e': {'attr': 'Activity', 'value': 'K'},
+             'e2': {'attr': 'Activity', 'value': 'L'}},
+            {'constraint': AlternatePrecedence,
+             'e': {'attr': 'Activity', 'value': 'H'},
+             'e2': {'attr': 'Activity', 'value': 'I'}},
+            {'constraint': AlternatePrecedence,
+             'e': {'attr': 'Activity', 'value': 'G'},
+             'e2': {'attr': 'Activity', 'value': 'H'}}
+        ]
+
+        result, measures = EventCorrelationEngine(start_event, data_file, constraints).generate()
+
+        self.text_edit.setText(str(result))
+        self.text_edit2.setText(str(measures))
+
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Event Correlation Engine")
         self.resize(WINDOW_WIDTH, WINDOW_HEIGHT)
 
-        layout = QGridLayout()
-        self.setLayout(layout)
+        grid_layout = QGridLayout()
+
+        grid_layout2 = QGridLayout()
 
         # file selection
-        file_browse = QPushButton('Browse')
-        file_browse.clicked.connect(self.open_file_dialog)
+        file_button = QPushButton('Browse')
+        file_button.clicked.connect(self.open_file_dialog)
         self.filename_edit = QLineEdit()
 
-        layout.addWidget(QLabel('File:'), 0, 0)
-        layout.addWidget(self.filename_edit, 0, 1)
-        layout.addWidget(file_browse, 0, 2)
+        grid_layout.addWidget(QLabel('Event log in csv:'), 0, 0)
+        grid_layout.addWidget(self.filename_edit, 0, 1)
+        grid_layout.addWidget(file_button, 0, 2)
+
+        generate_button = QPushButton('Generate')
+
+        grid_layout2.addWidget(generate_button, 0, 2)
+
+        main_layout = QVBoxLayout()
+        # text box
+        self.text_edit = QTextEdit()
+        self.text_edit2 = QTextEdit()
+
+        grid_layout3 = QGridLayout()
+
+        text_edit_label = QLabel("Assigned cases:")
+        text_edit_label2 = QLabel("Measures:")
+        grid_layout3.addWidget(text_edit_label, 0, 1)
+        grid_layout3.addWidget(text_edit_label2, 0, 2)
+        grid_layout3.addWidget(self.text_edit, 1, 1)
+        grid_layout3.addWidget(self.text_edit2, 1, 2)
+
+        generate_button.clicked.connect(self.set_generate_button)
+
+        main_layout.addLayout(grid_layout)
+        main_layout.addLayout(grid_layout2)
+        main_layout.addLayout(grid_layout3)
+        # main_layout.addWidget(self.text_edit)
+        # main_layout.addWidget(self.text_edit2)
+
+        # Set the layout on the application's window
+        self.setLayout(main_layout)
 
         # layout.addRow("Job:", QLineEdit())
         # emailLabel = QLabel("Email:")
         # layout.addRow(emailLabel, QLineEdit())
 
-        # Set the layout on the application's window
-        self.setLayout(layout)
-
 
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    start_event = {'attr': 'Activity', 'value': 'A'}
-    case_name = "CaseID"
-    timestamp_name = "Start Timestamp"
 
-    data_file = 'event_logs/check/data21.csv'
-
-    constraints = [
-        {'constraint': Existence,
-         'e': {'attr': 'Activity', 'value': 'A'}},
-        {'constraint': Existence,
-         'e': {'attr': 'Activity', 'value': 'L'}},
-        {'constraint': Existence,
-         'e': {'attr': 'Activity', 'value': 'B'}},
-        {'constraint': Existence,
-         'e': {'attr': 'Activity', 'value': 'C'}},
-        {'constraint': Existence,
-         'e': {'attr': 'Activity', 'value': 'G'}},
-        {'constraint': Existence,
-         'e': {'attr': 'Activity', 'value': 'I'}},
-        {'constraint': Existence,
-         'e': {'attr': 'Activity', 'value': 'D'}},
-        {'constraint': Absence,
-         'e': {'attr': 'Activity', 'value': 'K'}},
-        {'constraint': AlternateResponse,
-         'e': {'attr': 'Activity', 'value': 'B'},
-         'e2': {'attr': 'Activity', 'value': 'D'}},
-        {'constraint': AlternateResponse,
-         'e': {'attr': 'Activity', 'value': 'C'},
-         'e2': {'attr': 'Activity', 'value': 'D'}},
-        {'constraint': Precedence,
-         'e': {'attr': 'Activity', 'value': 'A'},
-         'e2': {'attr': 'Activity', 'value': 'B'}},
-        {'constraint': Precedence,
-         'e': {'attr': 'Activity', 'value': 'A'},
-         'e2': {'attr': 'Activity', 'value': 'C'}},
-        {'constraint': Coexistence,
-         'e': {'attr': 'Activity', 'value': 'B'},
-         'e2': {'attr': 'Activity', 'value': 'C'}},
-        {'constraint': ChainResponse,
-         'e': {'attr': 'Activity', 'value': 'F'},
-         'e2': {'attr': 'Activity', 'value': 'G'}},
-        {'constraint': ChainResponse,
-         'e': {'attr': 'Activity', 'value': 'E'},
-         'e2': {'attr': 'Activity', 'value': 'G'}},
-        {'constraint': ChainPrecedence,
-         'e': {'attr': 'Activity', 'value': 'G'},
-         'e2': {'attr': 'Activity', 'value': 'H'}},
-        {'constraint': ChainPrecedence,
-         'e': {'attr': 'Activity', 'value': 'I'},
-         'e2': {'attr': 'Activity', 'value': 'J'}},
-        {'constraint': NotChainSuccession,
-         'e': {'attr': 'Activity', 'value': 'D'},
-         'e2': {'attr': 'Activity', 'value': 'G'}},
-        {'constraint': NotSuccession,
-         'e': {'attr': 'Activity', 'value': 'J'},
-         'e2': {'attr': 'Activity', 'value': 'I'}},  # redundant?
-        {'constraint': ChainPrecedence,
-         'e': {'attr': 'Activity', 'value': 'J'},
-         'e2': {'attr': 'Activity', 'value': 'K'}},
-        {'constraint': RespondedExistence,
-         'e': {'attr': 'Activity', 'value': 'F'},
-         'e2': {'attr': 'Activity', 'value': 'G'}},
-        {'constraint': RespondedExistence,
-         'e': {'attr': 'Activity', 'value': 'E'},
-         'e2': {'attr': 'Activity', 'value': 'G'}},
-        {'constraint': RespondedExistence,
-         'e': {'attr': 'Activity', 'value': 'K'},
-         'e2': {'attr': 'Activity', 'value': 'L'}},
-        {'constraint': AlternatePrecedence,
-         'e': {'attr': 'Activity', 'value': 'H'},
-         'e2': {'attr': 'Activity', 'value': 'I'}},
-        {'constraint': AlternatePrecedence,
-         'e': {'attr': 'Activity', 'value': 'G'},
-         'e2': {'attr': 'Activity', 'value': 'H'}}
-    ]
-
-    engine = EventCorrelationEngine(start_event, data_file, constraints).generate()
-
-
-    # app = QApplication(sys.argv)
-    # window = Window()
-    # window.show()
-    # sys.exit(app.exec())
+    app = QApplication(sys.argv)
+    window = Window()
+    window.show()
+    sys.exit(app.exec())
 
 
 

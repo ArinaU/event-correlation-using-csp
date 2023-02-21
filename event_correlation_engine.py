@@ -27,6 +27,7 @@ class EventCorrelationEngine:
                 # problem.addVariable(id, list(range(1, iter)))
                 problem.addVariable(id, [f"Case{i}" for i in range(1, iter)])
 
+
     def prepare_data(self, str, timestamp='Timestamp'):
         data = pd.read_csv(str, sep=',')
         data = data.sort_values(by=timestamp, ascending=True)
@@ -75,21 +76,26 @@ class EventCorrelationEngine:
 
         self.generate_logs(data, result)
 
-        measure = LogToLogCaseMeasure(datadict, result, case_name).trace_to_trace_similarity()
-        measure2 = LogToLogCaseMeasure(datadict, result, case_name).case_similarity()
-        measure3 = LogToLogCaseMeasure(datadict, result, case_name).trace_to_trace_frequency_similarity()
-        measure4 = LogToLogCaseMeasure(datadict, result, case_name).partial_case_similarity()
-        measure5 = LogToLogCaseMeasure(datadict, result, case_name).bigram_similarity()
-        measure6 = LogToLogCaseMeasure(datadict, result, case_name).trigram_similarity()
-        measure7 = LogToLogTimeMeasure(timestamp_name, datadict, result, case_name).event_time_deviation()
-        measure8 = LogToLogTimeMeasure(timestamp_name, datadict, result, case_name).case_cycle_time_deviation()
+        measures = {}
+
+        measures["Trace-to-trace similarity"] = LogToLogCaseMeasure(datadict, result, case_name).trace_to_trace_similarity()
+        measures["Case similarity"] = LogToLogCaseMeasure(datadict, result, case_name).case_similarity()
+        measures["Trace-to-trace frequency similarity"] = LogToLogCaseMeasure(datadict, result, case_name).trace_to_trace_frequency_similarity()
+        measures["Partial case similarity"] = LogToLogCaseMeasure(datadict, result, case_name).partial_case_similarity()
+        measures["Bigram similarity"] = LogToLogCaseMeasure(datadict, result, case_name).bigram_similarity()
+        measures["Trigram similarity"] = LogToLogCaseMeasure(datadict, result, case_name).trigram_similarity()
+        measures["Event time deviation"] = LogToLogTimeMeasure(timestamp_name, datadict, result, case_name).event_time_deviation()
+        measures["Case cycle time deviation"] = LogToLogTimeMeasure(timestamp_name, datadict, result, case_name).case_cycle_time_deviation()
+
 
         print(f"Result: {result}")
-        print(f"Trace-to-trace similarity: {measure}")
-        print(f"Case similarity: {measure2}")
-        print(f"Trace-to-trace frequency similarity: {measure3}")
-        print(f"Partial case similarity: {measure4}")
-        print(f"Bigram similarity: {measure5}")
-        print(f"Trigram similarity: {measure6}")
-        print(f"Event time deviation: {measure7}")
-        print(f"Case cycle time deviation: {measure8}")
+        print(f"Trace-to-trace similarity: { measures['Trace-to-trace similarity'] }")
+        print(f"Case similarity: {measures['Case similarity']}")
+        print(f"Trace-to-trace frequency similarity: {measures['Trace-to-trace frequency similarity']}")
+        print(f"Partial case similarity: {measures['Partial case similarity']}")
+        print(f"Bigram similarity: {measures['Bigram similarity']}")
+        print(f"Trigram similarity: {measures['Trigram similarity']}")
+        print(f"Event time deviation: {measures['Event time deviation']}")
+        print(f"Case cycle time deviation: {measures['Case cycle time deviation']}")
+
+        return result, measures
