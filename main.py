@@ -30,28 +30,6 @@ WINDOW_HEIGHT = 550
 DISPLAY_HEIGHT = 35
 
 
-# class PyCalcWindow(QMainWindow):
-#     """PyCalc's main window (GUI or view)."""
-#     def __init__(self):
-#         super().__init__()
-#         self.setWindowTitle("Event Correlation Engine")
-#         self.setFixedSize(WINDOW_SIZE, WINDOW_SIZE)
-#         self.generalLayout = QVBoxLayout()
-#
-#         central_widget = QWidget(self)
-#         central_widget.setLayout(self.generalLayout)
-#         self.setCentralWidget(central_widget)
-#
-#         self._create_display()
-#         # self._create_buttons()
-#
-#     def _create_display(self):
-#         self.display = QLineEdit()
-#         self.display.setFixedHeight(DISPLAY_HEIGHT)
-#         self.display.setAlignment(Qt.AlignmentFlag.AlignRight)
-#         self.display.setReadOnly(True)
-#         self.generalLayout.addWidget(self.display)
-
 class Window(QWidget):
 
     def open_file_dialog(self):
