@@ -48,11 +48,6 @@ class Window(QWidget):
             text += f"{key}: { val } \n"
         return text
 
-    def get_formatted_constraints(self):
-        text = self.text_edit_constr.toPlainText()
-        json_constraints = json.loads(text)
-        return  json_constraints
-
 
     def set_generate_button(self):
         start_event = {'attr': 'Activity', 'value': 'A'}
@@ -62,84 +57,16 @@ class Window(QWidget):
         # data_file = 'event_logs/check/data21.csv'
         data_file = self.filename_edit.text()
 
-        constraints = self.get_formatted_constraints()
+        text = self.text_edit_constr.toPlainText()
+        json_constraints = json.loads(text)
 
-        result, measures = EventCorrelationEngine(start_event, data_file, constraints).generate()
+        result, measures = EventCorrelationEngine(start_event, data_file, json_constraints).generate()
 
         self.text_edit_result.setText(self.format_dict_to_text(result))
         self.text_edit_measures.setText(self.format_dict_to_text(measures))
 
     def __init__(self):
         super().__init__()
-        self.constraints2 = [
-            {'constraint': Existence,
-             'e': {'attr': 'Activity', 'value': 'A'}},
-            {'constraint': Existence,
-             'e': {'attr': 'Activity', 'value': 'L'}},
-            {'constraint': Existence,
-             'e': {'attr': 'Activity', 'value': 'B'}},
-            {'constraint': Existence,
-             'e': {'attr': 'Activity', 'value': 'C'}},
-            {'constraint': Existence,
-             'e': {'attr': 'Activity', 'value': 'G'}},
-            {'constraint': Existence,
-             'e': {'attr': 'Activity', 'value': 'I'}},
-            {'constraint': Existence,
-             'e': {'attr': 'Activity', 'value': 'D'}},
-            {'constraint': Absence,
-             'e': {'attr': 'Activity', 'value': 'K'}},
-            {'constraint': AlternateResponse,
-             'e': {'attr': 'Activity', 'value': 'B'},
-             'e2': {'attr': 'Activity', 'value': 'D'}},
-            {'constraint': AlternateResponse,
-             'e': {'attr': 'Activity', 'value': 'C'},
-             'e2': {'attr': 'Activity', 'value': 'D'}},
-            {'constraint': Precedence,
-             'e': {'attr': 'Activity', 'value': 'A'},
-             'e2': {'attr': 'Activity', 'value': 'B'}},
-            {'constraint': Precedence,
-             'e': {'attr': 'Activity', 'value': 'A'},
-             'e2': {'attr': 'Activity', 'value': 'C'}},
-            {'constraint': Coexistence,
-             'e': {'attr': 'Activity', 'value': 'B'},
-             'e2': {'attr': 'Activity', 'value': 'C'}},
-            {'constraint': ChainResponse,
-             'e': {'attr': 'Activity', 'value': 'F'},
-             'e2': {'attr': 'Activity', 'value': 'G'}},
-            {'constraint': ChainResponse,
-             'e': {'attr': 'Activity', 'value': 'E'},
-             'e2': {'attr': 'Activity', 'value': 'G'}},
-            {'constraint': ChainPrecedence,
-             'e': {'attr': 'Activity', 'value': 'G'},
-             'e2': {'attr': 'Activity', 'value': 'H'}},
-            {'constraint': ChainPrecedence,
-             'e': {'attr': 'Activity', 'value': 'I'},
-             'e2': {'attr': 'Activity', 'value': 'J'}},
-            {'constraint': NotChainSuccession,
-             'e': {'attr': 'Activity', 'value': 'D'},
-             'e2': {'attr': 'Activity', 'value': 'G'}},
-            {'constraint': NotSuccession,
-             'e': {'attr': 'Activity', 'value': 'J'},
-             'e2': {'attr': 'Activity', 'value': 'I'}},  # redundant?
-            {'constraint': ChainPrecedence,
-             'e': {'attr': 'Activity', 'value': 'J'},
-             'e2': {'attr': 'Activity', 'value': 'K'}},
-            {'constraint': RespondedExistence,
-             'e': {'attr': 'Activity', 'value': 'F'},
-             'e2': {'attr': 'Activity', 'value': 'G'}},
-            {'constraint': RespondedExistence,
-             'e': {'attr': 'Activity', 'value': 'E'},
-             'e2': {'attr': 'Activity', 'value': 'G'}},
-            {'constraint': RespondedExistence,
-             'e': {'attr': 'Activity', 'value': 'K'},
-             'e2': {'attr': 'Activity', 'value': 'L'}},
-            {'constraint': AlternatePrecedence,
-             'e': {'attr': 'Activity', 'value': 'H'},
-             'e2': {'attr': 'Activity', 'value': 'I'}},
-            {'constraint': AlternatePrecedence,
-             'e': {'attr': 'Activity', 'value': 'G'},
-             'e2': {'attr': 'Activity', 'value': 'H'}}
-        ]
 
         self.constraints = [
             {"constraint": "Existence",
@@ -234,7 +161,8 @@ class Window(QWidget):
         grid_layout2.addWidget(self.text_edit_constr, 1, 0)
         grid_layout2.addWidget(generate_button, 2, 0)
 
-        # self.text_edit_constr.setText(str(self.constraints))
+        # default constraints now
+        self.text_edit_constr.setText(json.dumps(self.constraints, indent=1))
 
         main_layout = QVBoxLayout()
         # text box
