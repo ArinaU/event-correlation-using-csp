@@ -2,9 +2,14 @@
 from constraint import *
 import pandas as pd
 import os
+import sys
 
 from measures.log_to_log_case_measure import *
 from measures.log_to_log_time_measure import *
+from constraints.existence_constraints import *
+from constraints.relation_constraints import *
+from constraints.mutual_relation_constraints import *
+from constraints.negative_relation_constraints import *
 
 class EventCorrelationEngine:
     def __init__(self, start_event, data_file, constraints):
@@ -42,7 +47,8 @@ class EventCorrelationEngine:
         self.declare_domains(problem, data, start_event)
 
         for const in constraints:
-            method = const['constraint']
+            # method = const['constraint']
+            method = getattr(sys.modules[__name__], const['constraint'])
             ev = const['e']
             ev2 = const.get('e2')
             if ev2:

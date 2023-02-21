@@ -2,6 +2,7 @@
 import sys
 import pandas as pd
 import os
+import json
 from pathlib import Path
 
 from event_correlation_engine import EventCorrelationEngine
@@ -14,19 +15,17 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QApplication,
     QGridLayout,
-    QFormLayout,
     QFileDialog,
     QLineEdit,
     QLabel,
     QTextEdit,
-    QMainWindow,
     QPushButton,
     QVBoxLayout,
     QWidget,
 )
 
-WINDOW_WIDTH = 700
-WINDOW_HEIGHT = 550
+WINDOW_WIDTH = 600
+WINDOW_HEIGHT = 500
 DISPLAY_HEIGHT = 35
 
 
@@ -47,8 +46,13 @@ class Window(QWidget):
         text = ""
         for key, val in dict.items():
             text += f"{key}: { val } \n"
-
         return text
+
+    def get_formatted_constraints(self):
+        text = self.text_edit_constr.toPlainText()
+        json_constraints = json.loads(text)
+        return  json_constraints
+
 
     def set_generate_button(self):
         start_event = {'attr': 'Activity', 'value': 'A'}
@@ -58,7 +62,16 @@ class Window(QWidget):
         # data_file = 'event_logs/check/data21.csv'
         data_file = self.filename_edit.text()
 
-        constraints = [
+        constraints = self.get_formatted_constraints()
+
+        result, measures = EventCorrelationEngine(start_event, data_file, constraints).generate()
+
+        self.text_edit_result.setText(self.format_dict_to_text(result))
+        self.text_edit_measures.setText(self.format_dict_to_text(measures))
+
+    def __init__(self):
+        super().__init__()
+        self.constraints2 = [
             {'constraint': Existence,
              'e': {'attr': 'Activity', 'value': 'A'}},
             {'constraint': Existence,
@@ -128,13 +141,76 @@ class Window(QWidget):
              'e2': {'attr': 'Activity', 'value': 'H'}}
         ]
 
-        result, measures = EventCorrelationEngine(start_event, data_file, constraints).generate()
+        self.constraints = [
+            {"constraint": "Existence",
+             "e": {"attr": "Activity", "value": "A"}},
+            {"constraint": "Existence",
+             "e": {"attr": "Activity", "value": "L"}},
+            {"constraint": "Existence",
+             "e": {"attr": "Activity", "value": "B"}},
+            {"constraint": "Existence",
+             "e": {"attr": "Activity", "value": "C"}},
+            {"constraint": "Existence",
+             "e": {"attr": "Activity", "value": "G"}},
+            {"constraint": "Existence",
+             "e": {"attr": "Activity", "value": "I"}},
+            {"constraint": "Existence",
+             "e": {"attr": "Activity", "value": "D"}},
+            {"constraint": "Absence",
+             "e": {"attr": "Activity", "value": "K"}},
+            {"constraint": "AlternateResponse",
+             "e": {"attr": "Activity", "value": "B"},
+             "e2": {"attr": "Activity", "value": "D"}},
+            {"constraint": "AlternateResponse",
+             "e": {"attr": "Activity", "value": "C"},
+             "e2": {"attr": "Activity", "value": "D"}},
+            {"constraint": "Precedence",
+             "e": {"attr": "Activity", "value": "A"},
+             "e2": {"attr": "Activity", "value": "B"}},
+            {"constraint": "Precedence",
+             "e": {"attr": "Activity", "value": "A"},
+             "e2": {"attr": "Activity", "value": "C"}},
+            {"constraint": "Coexistence",
+             "e": {"attr": "Activity", "value": "B"},
+             "e2": {"attr": "Activity", "value": "C"}},
+            {"constraint": "ChainResponse",
+             "e": {"attr": "Activity", "value": "F"},
+             "e2": {"attr": "Activity", "value": "G"}},
+            {"constraint": "ChainResponse",
+             "e": {"attr": "Activity", "value": "E"},
+             "e2": {"attr": "Activity", "value": "G"}},
+            {"constraint": "ChainPrecedence",
+             "e": {"attr": "Activity", "value": "G"},
+             "e2": {"attr": "Activity", "value": "H"}},
+            {"constraint": "ChainPrecedence",
+             "e": {"attr": "Activity", "value": "I"},
+             "e2": {"attr": "Activity", "value": "J"}},
+            {"constraint": "NotChainSuccession",
+             "e": {"attr": "Activity", "value": "D"},
+             "e2": {"attr": "Activity", "value": "G"}},
+            {"constraint": "NotSuccession",
+             "e": {"attr": "Activity", "value": "J"},
+             "e2": {"attr": "Activity", "value": "I"}},
+            {"constraint": "ChainPrecedence",
+             "e": {"attr": "Activity", "value": "J"},
+             "e2": {"attr": "Activity", "value": "K"}},
+            {"constraint": "RespondedExistence",
+             "e": {"attr": "Activity", "value": "F"},
+             "e2": {"attr": "Activity", "value": "G"}},
+            {"constraint": "RespondedExistence",
+             "e": {"attr": "Activity", "value": "E"},
+             "e2": {"attr": "Activity", "value": "G"}},
+            {"constraint": "RespondedExistence",
+             "e": {"attr": "Activity", "value": "K"},
+             "e2": {"attr": "Activity", "value": "L"}},
+            {"constraint": "AlternatePrecedence",
+             "e": {"attr": "Activity", "value": "H"},
+             "e2": {"attr": "Activity", "value": "I"}},
+            {"constraint": "AlternatePrecedence",
+             "e": {"attr": "Activity", "value": "G"},
+             "e2": {"attr": "Activity", "value": "H"}}
+        ]
 
-        self.text_edit.setText(self.format_dict_to_text(result))
-        self.text_edit2.setText(self.format_dict_to_text(measures))
-
-    def __init__(self):
-        super().__init__()
         self.setWindowTitle("Event Correlation Engine")
         self.resize(WINDOW_WIDTH, WINDOW_HEIGHT)
 
@@ -147,18 +223,24 @@ class Window(QWidget):
         file_button.clicked.connect(self.open_file_dialog)
         self.filename_edit = QLineEdit()
 
-        grid_layout.addWidget(QLabel('Event log in csv:'), 0, 0)
+        grid_layout.addWidget(QLabel('Event log in csv format:'), 0, 0)
         grid_layout.addWidget(self.filename_edit, 0, 1)
         grid_layout.addWidget(file_button, 0, 2)
 
         generate_button = QPushButton('Generate')
+        self.text_edit_constr = QTextEdit()
 
-        grid_layout2.addWidget(generate_button, 0, 2)
+        grid_layout2.addWidget(QLabel('Enter constraints in json format:'), 0, 0)
+        grid_layout2.addWidget(self.text_edit_constr, 1, 0)
+        grid_layout2.addWidget(generate_button, 2, 0)
+
+        # self.text_edit_constr.setText(str(self.constraints))
 
         main_layout = QVBoxLayout()
         # text box
-        self.text_edit = QTextEdit()
-        self.text_edit2 = QTextEdit()
+
+        self.text_edit_result = QTextEdit()
+        self.text_edit_measures = QTextEdit()
 
         grid_layout3 = QGridLayout()
 
@@ -166,8 +248,8 @@ class Window(QWidget):
         text_edit_label2 = QLabel("Measures:")
         grid_layout3.addWidget(text_edit_label, 0, 1)
         grid_layout3.addWidget(text_edit_label2, 0, 2)
-        grid_layout3.addWidget(self.text_edit, 1, 1)
-        grid_layout3.addWidget(self.text_edit2, 1, 2)
+        grid_layout3.addWidget(self.text_edit_result, 1, 1)
+        grid_layout3.addWidget(self.text_edit_measures, 1, 2)
 
         generate_button.clicked.connect(self.set_generate_button)
 
