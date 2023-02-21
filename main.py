@@ -25,7 +25,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-WINDOW_WIDTH = 500
+WINDOW_WIDTH = 700
 WINDOW_HEIGHT = 550
 DISPLAY_HEIGHT = 35
 
@@ -42,6 +42,13 @@ class Window(QWidget):
         if filename:
             path = Path(filename)
             self.filename_edit.setText(str(path))
+
+    def format_dict_to_text(self, dict):
+        text = ""
+        for key, val in dict.items():
+            text += f"{key}: { val } \n"
+
+        return text
 
     def set_generate_button(self):
         start_event = {'attr': 'Activity', 'value': 'A'}
@@ -123,8 +130,8 @@ class Window(QWidget):
 
         result, measures = EventCorrelationEngine(start_event, data_file, constraints).generate()
 
-        self.text_edit.setText(str(result))
-        self.text_edit2.setText(str(measures))
+        self.text_edit.setText(self.format_dict_to_text(result))
+        self.text_edit2.setText(self.format_dict_to_text(measures))
 
     def __init__(self):
         super().__init__()
@@ -167,15 +174,9 @@ class Window(QWidget):
         main_layout.addLayout(grid_layout)
         main_layout.addLayout(grid_layout2)
         main_layout.addLayout(grid_layout3)
-        # main_layout.addWidget(self.text_edit)
-        # main_layout.addWidget(self.text_edit2)
 
         # Set the layout on the application's window
         self.setLayout(main_layout)
-
-        # layout.addRow("Job:", QLineEdit())
-        # emailLabel = QLabel("Email:")
-        # layout.addRow(emailLabel, QLineEdit())
 
 
 
