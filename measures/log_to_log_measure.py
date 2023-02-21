@@ -1,9 +1,10 @@
 
 
 class LogToLogMeasure():
-    def __init__(self, data, assigned_cases, case_name = 'Case'):
+    def __init__(self, data, assigned_cases, case_name = 'Case', start_event = None):
         self._data = data
         self._assigned_cases = assigned_cases
+        self._start_event = start_event
         self._case_name = case_name
 
     def get_traces(self, assignments):
