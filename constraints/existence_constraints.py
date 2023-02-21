@@ -76,7 +76,7 @@ class Existence(BaseEventConstraint):
                             for value in domain[:]:
                                 if value in self._case_status:
                                     domain.hideValue(value)
-                                    domain.popState()
+                                    domain.resetState()
                             count += 1
 
             self._case_status[curr_case].append(curr_id)
