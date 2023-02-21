@@ -1,70 +1,93 @@
+
+import sys
 import pandas as pd
 import os
+from pathlib import Path
+
+from event_correlation_engine import EventCorrelationEngine
 from constraints.existence_constraints import *
 from constraints.relation_constraints import *
 from constraints.mutual_relation_constraints import *
 from constraints.negative_relation_constraints import *
-from measures.log_to_log_case_measure import *
-from measures.log_to_log_time_measure import *
+
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import (
+    QApplication,
+    QGridLayout,
+    QFormLayout,
+    QFileDialog,
+    QLineEdit,
+    QLabel,
+    QMainWindow,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
+)
+
+WINDOW_WIDTH = 500
+WINDOW_HEIGHT = 400
+DISPLAY_HEIGHT = 35
 
 
-def declare_domains(problem, data, start):
-    attr = start['attr']
-    value = start['value']
-    iter = 1
-    for id, val in data.items():
-        # if equal to start event
-        if val[attr] == value:
-            # problem.addVariable(id, [iter])
-            problem.addVariable(id, [f"Case{iter}"])
-            iter += 1
-        # if n-th events
-        else:
-            # problem.addVariable(id, list(range(1, iter)))
-            problem.addVariable(id, [f"Case{i}" for i in range(1, iter)])
+# class PyCalcWindow(QMainWindow):
+#     """PyCalc's main window (GUI or view)."""
+#     def __init__(self):
+#         super().__init__()
+#         self.setWindowTitle("Event Correlation Engine")
+#         self.setFixedSize(WINDOW_SIZE, WINDOW_SIZE)
+#         self.generalLayout = QVBoxLayout()
+#
+#         central_widget = QWidget(self)
+#         central_widget.setLayout(self.generalLayout)
+#         self.setCentralWidget(central_widget)
+#
+#         self._create_display()
+#         # self._create_buttons()
+#
+#     def _create_display(self):
+#         self.display = QLineEdit()
+#         self.display.setFixedHeight(DISPLAY_HEIGHT)
+#         self.display.setAlignment(Qt.AlignmentFlag.AlignRight)
+#         self.display.setReadOnly(True)
+#         self.generalLayout.addWidget(self.display)
 
+class Window(QWidget):
 
-def prepare_data(str, timestamp='Timestamp'):
-    data = pd.read_csv(str, sep=',')
-    data = data.sort_values(by=timestamp, ascending=True)
-    data['EventID'] = range(1, len(data) + 1)
-    data.set_index('EventID', inplace=True)
-    return data
+    def open_file_dialog(self):
+        filename, ok = QFileDialog.getOpenFileName(
+            self,
+            "Import CSV",
+            "",
+            "CSV data files (*.csv)"
+        )
+        if filename:
+            path = Path(filename)
+            self.filename_edit.setText(str(path))
 
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Event Correlation Engine")
+        self.resize(WINDOW_WIDTH, WINDOW_HEIGHT)
 
-def assign_cases(data, start_event, constraints):
-    solver = RecursiveBacktrackingSolver();
-    problem = Problem(solver)
+        layout = QGridLayout()
+        self.setLayout(layout)
 
-    declare_domains(problem, data, start_event)
+        # file selection
+        file_browse = QPushButton('Browse')
+        file_browse.clicked.connect(self.open_file_dialog)
+        self.filename_edit = QLineEdit()
 
-    # problem.addConstraint(Absence(data, {'attr': 'Activity', 'value': 'B'}))
+        layout.addWidget(QLabel('File:'), 0, 0)
+        layout.addWidget(self.filename_edit, 0, 1)
+        layout.addWidget(file_browse, 0, 2)
 
-    for const in constraints:
-        method = const['constraint']
-        ev = const['e']
-        ev2 = const.get('e2')
-        if ev2:
-            problem.addConstraint(method(data, ev, ev2, start_event))
-        else:
-            problem.addConstraint(method(data, ev, start_event))
+        # layout.addRow("Job:", QLineEdit())
+        # emailLabel = QLabel("Email:")
+        # layout.addRow(emailLabel, QLineEdit())
 
-    solutions = problem.getSolution()
+        # Set the layout on the application's window
+        self.setLayout(layout)
 
-    return solutions
-
-
-def generate_logs(data, assignments):
-    data['SuggestedCaseID'] = list(assignments.values())
-
-    outdir = './new_event_logs'
-    filename = f"data{len(data)}"
-    if not os.path.exists(outdir):
-        os.mkdir(outdir)
-
-    fullname = os.path.join(outdir, filename)
-
-    data.to_csv(fullname, sep=',')
 
 
 # Press the green button in the gutter to run the script.
@@ -73,11 +96,7 @@ if __name__ == '__main__':
     case_name = "CaseID"
     timestamp_name = "Start Timestamp"
 
-    data_file = 'event_logs/data105.csv'
-
-    data = prepare_data(data_file, timestamp_name)
-
-    datadict = data.to_dict(orient="index")
+    data_file = 'event_logs/check/data21.csv'
 
     constraints = [
         {'constraint': Existence,
@@ -149,33 +168,14 @@ if __name__ == '__main__':
          'e2': {'attr': 'Activity', 'value': 'H'}}
     ]
 
-    result = assign_cases(datadict, start_event, constraints)
-
-    generate_logs(data, result)
-
-    measure = LogToLogCaseMeasure(datadict, result, case_name).trace_to_trace_similarity()
-
-    measure2 = LogToLogCaseMeasure(datadict, result, case_name).case_similarity()
-
-    measure3 = LogToLogCaseMeasure(datadict, result, case_name).trace_to_trace_frequency_similarity()
-
-    measure4 = LogToLogCaseMeasure(datadict, result, case_name).partial_case_similarity()
-
-    measure5 = LogToLogCaseMeasure(datadict, result, case_name).bigram_similarity()
-
-    measure6 = LogToLogCaseMeasure(datadict, result, case_name).trigram_similarity()
-
-    measure7 = LogToLogTimeMeasure(timestamp_name, datadict, result, case_name).event_time_deviation()
-
-    measure8 = LogToLogTimeMeasure(timestamp_name, datadict, result, case_name).case_cycle_time_deviation()
+    engine = EventCorrelationEngine(start_event, data_file, constraints).generate()
 
 
-    print(f"Result: {result}")
-    print(f"Trace-to-trace similarity: {measure}")
-    print(f"Case similarity: {measure2}")
-    print(f"Trace-to-trace frequency similarity: {measure3}")
-    print(f"Partial case similarity: {measure4}")
-    print(f"Bigram similarity: {measure5}")
-    print(f"Trigram similarity: {measure6}")
-    print(f"Event time deviation: {measure7}")
-    print(f"Case cycle time deviation: {measure8}")
+    # app = QApplication(sys.argv)
+    # window = Window()
+    # window.show()
+    # sys.exit(app.exec())
+
+
+
+
