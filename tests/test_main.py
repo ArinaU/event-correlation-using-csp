@@ -5,7 +5,7 @@ from constraints.existence_constraints import *
 from constraints.relation_constraints import *
 from constraints.negative_relation_constraints import *
 from constraints.mutual_relation_constraints import *
-from main import assign_cases
+from event_correlation_engine import *
 
 
 class TestExistenceConstraints(unittest.TestCase, EventLogGenerationMixin):
@@ -16,54 +16,55 @@ class TestExistenceConstraints(unittest.TestCase, EventLogGenerationMixin):
 
     def test_absence_with_1_req_event(self):
         data = self.generate_log('A,B,A,B,C')
-        constraints = [{'constraint': Absence,
+        constraints = [{'constraint': 'Absence',
                              'e': {'attr': 'Activity', 'value': 'B'}}]
-        cases = assign_cases(data, self.start_event, constraints)
+
+        result = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
 
         expected_result = {1: 'Case1', 2: 'Case1', 3: 'Case2', 4: 'Case2', 5: 'Case1'}
-        self.assertEqual(cases, expected_result, "Incorrect cases")
+        self.assertEqual(result, expected_result, "Incorrect cases")
 
     def test_absence_with_2_req_events(self):
         data = self.generate_log('A,B,A,B,B')
-        constraints = [{'constraint': Absence,
+        constraints = [{'constraint': 'Absence',
                              'e': {'attr': 'Activity', 'value': 'B'}}]
 
-        cases = assign_cases(data, self.start_event, constraints)
+        cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
         self.assertIsNone(cases, "Incorrect cases")
 
     def test_absence_with_no_req_events_for_1_case(self):
         data = self.generate_log('A,B,A')
-        constraints = [{'constraint': Absence,
+        constraints = [{'constraint': 'Absence',
                              'e': {'attr': 'Activity', 'value': 'B'}}]
 
-        cases = assign_cases(data, self.start_event, constraints)
+        cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
         expected_result = {1: 'Case1', 2: 'Case1', 3: 'Case2'}
         self.assertEqual(cases, expected_result, "Incorrect cases")
 
     def test_existence_with_1_req_event(self):
         data = self.generate_log('A,B,A,B,C')
-        constraints = [{'constraint': Existence,
+        constraints = [{'constraint': 'Existence',
                              'e': {'attr': 'Activity', 'value': 'B'}}]
 
-        cases = assign_cases(data, self.start_event, constraints)
+        cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
         expected_result = {1: 'Case1', 2: 'Case1', 3: 'Case2', 4: 'Case2', 5: 'Case1'}
         self.assertEqual(cases, expected_result, "Incorrect cases")
 
     def test_existence_with_2_req_events(self):
         data = self.generate_log('A,B,A,B,B,C')
-        constraints = [{'constraint': Existence,
+        constraints = [{'constraint': 'Existence',
                              'e': {'attr': 'Activity', 'value': 'B'}}]
 
-        cases = assign_cases(data, self.start_event, constraints)
+        cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
         expected_result = {1: 'Case1', 2: 'Case1', 3: 'Case2', 4: 'Case2', 5: 'Case1', 6: 'Case1'}
         self.assertEqual(cases, expected_result, "Incorrect cases")
 
     def test_existence_with_no_req_events_for_1_case(self):
         data = self.generate_log('A,B,A,C')
-        constraints = [{'constraint': Existence,
+        constraints = [{'constraint': 'Existence',
                              'e': {'attr': 'Activity', 'value': 'B'}}]
 
-        cases = assign_cases(data, self.start_event, constraints)
+        cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
         self.assertIsNone(cases, "Incorrect cases")
 
 
@@ -79,14 +80,14 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
         data = self.generate_log('A,C,B,A,A,B,C,C,B')
 
         constraints = [
-            {'constraint': RespondedExistence,
+            {'constraint': 'RespondedExistence',
              'e': {'attr': 'Activity', 'value': 'B'},
              'e2': {'attr': 'Activity', 'value': 'C'}},
-            {'constraint': Absence,
+            {'constraint': 'Absence',
              'e': {'attr': 'Activity', 'value': 'B'}}
         ]
 
-        cases = assign_cases(data, self.start_event, constraints)
+        cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
 
         expected_result = {1: 'Case1', 2: 'Case1', 3: 'Case1', 4: 'Case2',
                            5: 'Case3', 6: 'Case2', 7: 'Case2', 8: 'Case3', 9: 'Case3'}
@@ -97,14 +98,14 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
         data = self.generate_log('A,A,B')
 
         constraints = [
-            {'constraint': RespondedExistence,
+            {'constraint': 'RespondedExistence',
              'e': {'attr': 'Activity', 'value': 'B'},
              'e2': {'attr': 'Activity', 'value': 'C'}},
-            {'constraint': Absence,
+            {'constraint': 'Absence',
              'e': {'attr': 'Activity', 'value': 'B'}}
         ]
 
-        cases = assign_cases(data, self.start_event, constraints)
+        cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
 
         expected_result = {1: 'Case1', 2: 'Case2', 3: 'Case1'}
         self.assertEqual(cases, expected_result, "Incorrect cases")
@@ -114,13 +115,13 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
         data = self.generate_log('A,C,A,B,C,C,A,B')
 
         constraints = [
-            {'constraint': Response,
+            {'constraint': 'Response',
              'e': {'attr': 'Activity', 'value': 'B'},
              'e2': {'attr': 'Activity', 'value': 'C'}},
-            {'constraint': Absence,
+            {'constraint': 'Absence',
              'e': {'attr': 'Activity', 'value': 'B'}}
         ]
-        cases = assign_cases(data, self.start_event, constraints)
+        cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
         expected_result = {1: 'Case1', 2: 'Case1', 3: 'Case2', 7: 'Case3',
                            4: 'Case2', 5: 'Case2', 6: 'Case1', 8: 'Case3'}
         self.assertEqual(cases, expected_result, "Incorrect cases")
@@ -129,13 +130,13 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
         data = self.generate_log('A,A,B,B,C,C,A,B')
 
         constraints = [
-            {'constraint': Response,
+            {'constraint': 'Response',
              'e': {'attr': 'Activity', 'value': 'B'},
              'e2': {'attr': 'Activity', 'value': 'C'}},
-            {'constraint': Absence,
+            {'constraint': 'Absence',
              'e': {'attr': 'Activity', 'value': 'B'}}
         ]
-        cases = assign_cases(data, self.start_event, constraints)
+        cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
         expected_result = {1: 'Case1', 2: 'Case2', 7: 'Case3', 3: 'Case1',
                            4: 'Case2', 5: 'Case1', 6: 'Case2', 8: 'Case3'}
         self.assertEqual(cases, expected_result, "Incorrect cases")
@@ -146,29 +147,29 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
         data = self.generate_log('A,A,B,B,C,C,A,B')
 
         constraints = [
-            {'constraint': Precedence,
+            {'constraint': 'Precedence',
              'e': {'attr': 'Activity', 'value': 'B'},
              'e2': {'attr': 'Activity', 'value': 'C'}},
-            {'constraint': Absence,
+            {'constraint': 'Absence',
              'e': {'attr': 'Activity', 'value': 'C'}}
         ]
-        cases = assign_cases(data, self.start_event, constraints)
+        cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
         expected_result = {1: 'Case1', 2: 'Case2', 7: 'Case3', 3: 'Case1',
                            4: 'Case2', 5: 'Case1', 6: 'Case2', 8: 'Case1'}
         self.assertEqual(cases, expected_result, "Incorrect cases")
 
     def test_precedence2(self):
-        # B should be reassigned for Absence(C) to work
+        # B should be reassigned for 'Absence'(C) to work
         data = self.generate_log('A,A,B,B,A,B,C,C,C')
 
         constraints = [
-            {'constraint': Precedence,
+            {'constraint': 'Precedence',
              'e': {'attr': 'Activity', 'value': 'B'},
              'e2': {'attr': 'Activity', 'value': 'C'}},
-            {'constraint': Absence,
+            {'constraint': 'Absence',
              'e': {'attr': 'Activity', 'value': 'C'}}
         ]
-        cases = assign_cases(data, self.start_event, constraints)
+        cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
         expected_result = {1: 'Case1', 2: 'Case2', 5: 'Case3', 3: 'Case1',
                            4: 'Case2', 6: 'Case3', 7: 'Case1', 8: 'Case2', 9: 'Case3'}
         self.assertEqual(cases, expected_result, "Incorrect cases")
@@ -177,14 +178,14 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
         data = self.generate_log('A,B,A,B,C,C')
 
         constraints = [
-            {'constraint': ChainResponse,
+            {'constraint': 'ChainResponse',
              'e': {'attr': 'Activity', 'value': 'B'},
              'e2': {'attr': 'Activity', 'value': 'C'}},
-            {'constraint': Absence,
+            {'constraint': 'Absence',
              'e': {'attr': 'Activity', 'value': 'B'}}
         ]
 
-        cases = assign_cases(data, self.start_event, constraints)
+        cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
         expected_result = {1: 'Case1', 2: 'Case1', 3: 'Case2', 4: 'Case2', 5: 'Case1', 6: 'Case2'}
         self.assertEqual(cases, expected_result, "Incorrect cases")
 
@@ -193,16 +194,16 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
         data = self.generate_log('A,B,A,D,C,B,A,D,C,C')
 
         constraints = [
-            {'constraint': ChainResponse,
+            {'constraint': 'ChainResponse',
              'e': {'attr': 'Activity', 'value': 'B'},
              'e2': {'attr': 'Activity', 'value': 'C'}},
-            {'constraint': Absence,
+            {'constraint': 'Absence',
              'e': {'attr': 'Activity', 'value': 'D'}},
-            {'constraint': Absence,
+            {'constraint': 'Absence',
              'e': {'attr': 'Activity', 'value': 'B'}}
         ]
 
-        cases = assign_cases(data, self.start_event, constraints)
+        cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
         expected_result = {1: 'Case1', 2: 'Case1', 3: 'Case2', 4: 'Case2', 5: 'Case1',
                            6: 'Case2', 7: 'Case3', 8: 'Case1', 9: 'Case2', 10: 'Case1'}
         self.assertEqual(cases, expected_result, "Incorrect cases")
@@ -212,19 +213,19 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
         data = self.generate_log('A,H,A,D,E,D,G,H')
 
         constraints = [
-            {'constraint': ChainResponse,
+            {'constraint': 'ChainResponse',
              'e': {'attr': 'Activity', 'value': 'E'},
              'e2': {'attr': 'Activity', 'value': 'G'}},
-            {'constraint': Absence,
+            {'constraint': 'Absence',
              'e': {'attr': 'Activity', 'value': 'H'}},
-            {'constraint': Absence,
+            {'constraint': 'Absence',
              'e': {'attr': 'Activity', 'value': 'D'}},
-            {'constraint': NotChainSuccession,
+            {'constraint': 'NotChainSuccession',
              'e': {'attr': 'Activity', 'value': 'D'},
              'e2': {'attr': 'Activity', 'value': 'H'}},
         ]
 
-        cases = assign_cases(data, self.start_event, constraints)
+        cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
         expected_result = {1: 'Case1', 2: 'Case1', 3: 'Case2', 4: 'Case2',
                            5: 'Case2', 6: 'Case1', 7: 'Case2', 8: 'Case2' }
         self.assertEqual(cases, expected_result, "Incorrect cases")
@@ -236,17 +237,17 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
         data = self.generate_log('A,A,G,A,F,E,G,G')
 
         constraints = [
-            {'constraint': Absence,
+            {'constraint': 'Absence',
              'e': {'attr': 'Activity', 'value': 'G'}},
-            {'constraint': ChainResponse,
+            {'constraint': 'ChainResponse',
              'e': {'attr': 'Activity', 'value': 'F'},
              'e2': {'attr': 'Activity', 'value': 'G'}},
-            {'constraint': ChainResponse,
+            {'constraint': 'ChainResponse',
              'e': {'attr': 'Activity', 'value': 'E'},
              'e2': {'attr': 'Activity', 'value': 'G'}}
         ]
 
-        cases = assign_cases(data, self.start_event, constraints)
+        cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
         expected_result = {1: 'Case1', 2: 'Case2', 3: 'Case1', 4: 'Case3',
                            5: 'Case2', 6: 'Case3', 7: 'Case2', 8: 'Case3' }
         self.assertEqual(cases, expected_result, "Incorrect cases")
@@ -256,14 +257,14 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
         data = self.generate_log('A,A,B,B,C,C')
 
         constraints = [
-            {'constraint': ChainPrecedence,
+            {'constraint': 'ChainPrecedence',
              'e': {'attr': 'Activity', 'value': 'B'},
              'e2': {'attr': 'Activity', 'value': 'C'}},
-            {'constraint': Absence,
+            {'constraint': 'Absence',
              'e': {'attr': 'Activity', 'value': 'B'}}
         ]
 
-        cases = assign_cases(data, self.start_event, constraints)
+        cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
         expected_result = {1: 'Case1', 2: 'Case2', 3: 'Case1', 4: 'Case2', 5: 'Case1', 6: 'Case2'}
         self.assertEqual(cases, expected_result, "Incorrect cases")
 
@@ -271,16 +272,16 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
         data = self.generate_log('A,B,A,D,B,C,D,C')
 
         constraints = [
-            {'constraint': ChainPrecedence,
+            {'constraint': 'ChainPrecedence',
              'e': {'attr': 'Activity', 'value': 'B'},
              'e2': {'attr': 'Activity', 'value': 'C'}},
-            {'constraint': Absence,
+            {'constraint': 'Absence',
              'e': {'attr': 'Activity', 'value': 'D'}},
-            {'constraint': Absence,
+            {'constraint': 'Absence',
              'e': {'attr': 'Activity', 'value': 'B'}}
         ]
 
-        cases = assign_cases(data, self.start_event, constraints)
+        cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
         expected_result = {1: 'Case1', 2: 'Case1', 3: 'Case2', 4: 'Case2',
                            5: 'Case2', 6: 'Case1', 7: 'Case1', 8: 'Case2'}
         self.assertEqual(cases, expected_result, "Incorrect cases")
@@ -290,19 +291,19 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
         data = self.generate_log('A,H,A,D,B,D,C,H')
 
         constraints = [
-            {'constraint': ChainPrecedence,
+            {'constraint': 'ChainPrecedence',
              'e': {'attr': 'Activity', 'value': 'B'},
              'e2': {'attr': 'Activity', 'value': 'C'}},
-            {'constraint': Absence,
+            {'constraint': 'Absence',
              'e': {'attr': 'Activity', 'value': 'H'}},
-            {'constraint': Absence,
+            {'constraint': 'Absence',
              'e': {'attr': 'Activity', 'value': 'D'}},
-            {'constraint': NotChainSuccession,
+            {'constraint': 'NotChainSuccession',
              'e': {'attr': 'Activity', 'value': 'D'},
              'e2': {'attr': 'Activity', 'value': 'H'}},
         ]
 
-        cases = assign_cases(data, self.start_event, constraints)
+        cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
         expected_result = {1: 'Case1', 2: 'Case1', 3: 'Case2', 4: 'Case2',
                            5: 'Case2', 6: 'Case1', 7: 'Case2', 8: 'Case2' }
         self.assertEqual(cases, expected_result, "Incorrect cases")
@@ -313,13 +314,13 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
         data = self.generate_log('A,A,B,D,C,A,B,C,B')
 
         constraints = [
-            {'constraint': AlternateResponse,
+            {'constraint': 'AlternateResponse',
              'e': {'attr': 'Activity', 'value': 'B'},
              'e2': {'attr': 'Activity', 'value': 'C'}},
-            {'constraint': Absence,
+            {'constraint': 'Absence',
              'e': {'attr': 'Activity', 'value': 'B'}}
         ]
-        cases = assign_cases(data, self.start_event, constraints)
+        cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
         expected_result = {1: 'Case1', 2: 'Case2', 6: 'Case3', 3: 'Case1',
                            4: 'Case1', 5: 'Case1', 7: 'Case2', 8: 'Case2', 9: 'Case3'}
         self.assertEqual(cases, expected_result, "Incorrect cases")
@@ -328,11 +329,11 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
         data = self.generate_log('A,A,B,B,C')
 
         constraints = [
-            {'constraint': AlternateResponse,
+            {'constraint': 'AlternateResponse',
              'e': {'attr': 'Activity', 'value': 'B'},
              'e2': {'attr': 'Activity', 'value': 'C'}}
         ]
-        cases = assign_cases(data, self.start_event, constraints)
+        cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
         expected_result = {1: 'Case1', 2: 'Case2', 3: 'Case1', 4: 'Case2', 5: 'Case1'}
         self.assertEqual(cases, expected_result, "Incorrect cases")
 
@@ -341,13 +342,13 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
         data = self.generate_log('A,A,B,B,C,C')
 
         constraints = [
-            {'constraint': AlternatePrecedence,
+            {'constraint': 'AlternatePrecedence',
              'e': {'attr': 'Activity', 'value': 'B'},
              'e2': {'attr': 'Activity', 'value': 'C'}},
-            {'constraint': Absence,
+            {'constraint': 'Absence',
              'e': {'attr': 'Activity', 'value': 'B'}}
         ]
-        cases = assign_cases(data, self.start_event, constraints)
+        cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
         expected_result = {1: 'Case1', 2: 'Case2', 3: 'Case1', 4: 'Case2', 5: 'Case1', 6: 'Case2'}
         self.assertEqual(cases, expected_result, "Incorrect cases")
 
@@ -355,11 +356,11 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
         data = self.generate_log('A,B,C,C')
 
         constraints = [
-            {'constraint': AlternatePrecedence,
+            {'constraint': 'AlternatePrecedence',
              'e': {'attr': 'Activity', 'value': 'B'},
              'e2': {'attr': 'Activity', 'value': 'C'}}
         ]
-        cases = assign_cases(data, self.start_event, constraints)
+        cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
         expected_result = None
         self.assertEqual(cases, expected_result, "Incorrect cases")
 
@@ -367,11 +368,11 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
         data = self.generate_log('A,C,C')
 
         constraints = [
-            {'constraint': AlternatePrecedence,
+            {'constraint': 'AlternatePrecedence',
              'e': {'attr': 'Activity', 'value': 'B'},
              'e2': {'attr': 'Activity', 'value': 'C'}}
         ]
-        cases = assign_cases(data, self.start_event, constraints)
+        cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
         expected_result = None
         self.assertEqual(cases, expected_result, "Incorrect cases")
 
@@ -387,13 +388,13 @@ class TestNegativeRelationConstraints(unittest.TestCase, EventLogGenerationMixin
         data = self.generate_log('A,A,B,B,A,C,C,C')
 
         constraints = [
-            {'constraint': NotSuccession,
+            {'constraint': 'NotSuccession',
              'e': {'attr': 'Activity', 'value': 'B'},
              'e2': {'attr': 'Activity', 'value': 'C'}},
-            {'constraint': Absence,
+            {'constraint': 'Absence',
              'e': {'attr': 'Activity', 'value': 'B'}}
         ]
-        cases = assign_cases(data, self.start_event, constraints)
+        cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
 
         expected_result = {1: 'Case1', 2: 'Case2', 3: 'Case1', 4: 'Case2',
                            5: 'Case3', 6: 'Case3', 7: 'Case3', 8: 'Case3'}
@@ -404,14 +405,14 @@ class TestNegativeRelationConstraints(unittest.TestCase, EventLogGenerationMixin
         data = self.generate_log('A,A,B,B,A,C,C')
 
         constraints = [
-            {'constraint': NotChainSuccession,
+            {'constraint': 'NotChainSuccession',
              'e': {'attr': 'Activity', 'value': 'A'},
              'e2': {'attr': 'Activity', 'value': 'C'}},
-            {'constraint': Absence,
+            {'constraint': 'Absence',
              'e': {'attr': 'Activity', 'value': 'C'}}
         ]
 
-        cases = assign_cases(data, self.start_event, constraints)
+        cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
 
         expected_result = {1: 'Case1', 2: 'Case2', 5: 'Case3', 3: 'Case1',
                            4: 'Case2', 6: 'Case1', 7: 'Case2'}
@@ -422,14 +423,14 @@ class TestNegativeRelationConstraints(unittest.TestCase, EventLogGenerationMixin
         data = self.generate_log('A,A,A,B,C,B')
 
         constraints = [
-            {'constraint': NotCoexistence,
+            {'constraint': 'NotCoexistence',
              'e': {'attr': 'Activity', 'value': 'B'},
              'e2': {'attr': 'Activity', 'value': 'C'}},
-            {'constraint': Absence,
+            {'constraint': 'Absence',
              'e': {'attr': 'Activity', 'value': 'B'}}
         ]
 
-        cases = assign_cases(data, self.start_event, constraints)
+        cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
 
         expected_result = {1: 'Case1', 2: 'Case2', 3: 'Case3', 4: 'Case1', 5: 'Case2', 6: 'Case3'}
         self.assertEqual(cases, expected_result, "Incorrect cases")
@@ -444,14 +445,14 @@ class TestMutualRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
         data = self.generate_log('A,A,A,B,C,B,C,C,C')
 
         constraints = [
-            {'constraint': Coexistence,
+            {'constraint': 'Coexistence',
              'e': {'attr': 'Activity', 'value': 'B'},
              'e2': {'attr': 'Activity', 'value': 'C'}},
-            {'constraint': Absence,
+            {'constraint': 'Absence',
              'e': {'attr': 'Activity', 'value': 'B'}}
         ]
 
-        cases = assign_cases(data, self.start_event, constraints)
+        cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
 
         expected_result = {1: 'Case1', 2: 'Case2', 3: 'Case3', 4: 'Case1',
                            5: 'Case1', 6: 'Case2', 7: 'Case2', 8: 'Case1', 9: 'Case1'}
@@ -463,12 +464,12 @@ class TestMutualRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
         data = self.generate_log('A,A,A,B,C,B')
 
         constraints = [
-            {'constraint': Coexistence,
+            {'constraint': 'Coexistence',
              'e': {'attr': 'Activity', 'value': 'B'},
              'e2': {'attr': 'Activity', 'value': 'C'}}
         ]
 
-        cases = assign_cases(data, self.start_event, constraints)
+        cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
 
         expected_result = {1: 'Case1', 2: 'Case2', 3: 'Case3', 4: 'Case1', 5: 'Case1', 6: 'Case1'}
         self.assertEqual(cases, expected_result, "Incorrect cases")
@@ -482,20 +483,20 @@ class TestCompoundConstraints(unittest.TestCase, EventLogGenerationMixin):
     def test_existence_not_coexistence_2_chain_precedences(self):
         data = self.generate_log('A,A,B,C,A,C,A,A,B,D,C,D,E,E,F,F')
 
-        constraints = [{'constraint': Existence,
+        constraints = [{'constraint': 'Existence',
                         'e': {'attr': 'Activity', 'value': 'A'}},
-                       {'constraint': NotCoexistence,
+                       {'constraint': 'NotCoexistence',
                         'e': {'attr': 'Activity', 'value': 'B'},
                         'e2': {'attr': 'Activity', 'value': 'C'}},
-                       {'constraint': ChainPrecedence,
+                       {'constraint': 'ChainPrecedence',
                         'e': {'attr': 'Activity', 'value': 'A'},
                         'e2': {'attr': 'Activity', 'value': 'C'}},
-                       {'constraint': ChainPrecedence,
+                       {'constraint': 'ChainPrecedence',
                         'e': {'attr': 'Activity', 'value': 'A'},
                         'e2': {'attr': 'Activity', 'value': 'B'}}
                        ]
 
-        cases = assign_cases(data, self.start_event, constraints)
+        cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
 
         expected_result = {1: 'Case1', 2: 'Case2', 5: 'Case3', 7: 'Case4', 8: 'Case5', 3: 'Case1',
                            4: 'Case2', 6: 'Case3', 9: 'Case4', 10: 'Case1', 11: 'Case5',

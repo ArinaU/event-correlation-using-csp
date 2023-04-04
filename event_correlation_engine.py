@@ -12,10 +12,39 @@ from constraints.mutual_relation_constraints import *
 from constraints.negative_relation_constraints import *
 
 class EventCorrelationEngine:
-    def __init__(self, start_event, data_file, constraints):
+    def __init__(self, start_event, constraints):
         self._start_event = start_event
-        self._data_file = data_file
         self._constraints = constraints
+        self._case_name = "CaseID"  # TODO
+        self._timestamp_name = "Start Timestamp"
+        self._data = None
+
+    @property
+    def data(self):
+        return self._data
+
+    @data.setter
+    def data(self, input_data = None):
+        if isinstance(input_data, pd.DataFrame):
+            self._data = input_data
+        # elif self._data_file:
+        elif isinstance(input_data, str):
+            data = pd.read_csv(input_data, sep=',')
+            data = data.sort_values(by=self._timestamp_name, ascending=True)
+            data['EventID'] = range(1, len(data) + 1)
+            data.set_index('EventID', inplace=True)
+            self._data = data
+        else:
+            raise ValueError("Input must be a dataframe or a csv file.")
+
+    # def prepare_data(self, str, timestamp='Timestamp'):
+    #     # data = self.prepare_data(self._data_file, timestamp_name)
+    #     data = pd.read_csv(str, sep=',')
+    #     data = data.sort_values(by=timestamp, ascending=True)
+    #     data['EventID'] = range(1, len(data) + 1)
+    #     data.set_index('EventID', inplace=True)
+    #     return data
+
 
     def declare_domains(self, problem, data, start):
         attr = start['attr']
@@ -33,66 +62,56 @@ class EventCorrelationEngine:
                 problem.addVariable(id, [f"Case{i}" for i in range(1, iter)])
 
 
-    def prepare_data(self, str, timestamp='Timestamp'):
-        data = pd.read_csv(str, sep=',')
-        data = data.sort_values(by=timestamp, ascending=True)
-        data['EventID'] = range(1, len(data) + 1)
-        data.set_index('EventID', inplace=True)
-        return data
-
-
-    def assign_cases(self, data, start_event, constraints):
+    def assign_cases(self, datadict):
         solver = RecursiveBacktrackingSolver(False)
         problem = Problem(solver)
-        self.declare_domains(problem, data, start_event)
+        self.declare_domains(problem, datadict, self._start_event)
 
-        for const in constraints:
+        for const in self._constraints:
             # method = const['constraint']
             method = getattr(sys.modules[__name__], const['constraint'])
             ev = const['e']
             ev2 = const.get('e2')
             if ev2:
-                problem.addConstraint(method(data, ev, ev2, start_event))
+                problem.addConstraint(method(datadict, ev, ev2, self._start_event))
             else:
-                problem.addConstraint(method(data, ev, start_event))
+                problem.addConstraint(method(datadict, ev, self._start_event))
 
         solutions = problem.getSolution()
         return solutions
 
-    def generate_logs(self, data, assignments):
-        data['SuggestedCaseID'] = list(assignments.values())
+    def generate_logs(self, assignments):
+        generated_data = self.data.copy()
+        generated_data['SuggestedCaseID'] = list(assignments.values())
 
         outdir = './new_event_logs'
-        filename = f"data{len(data)}"
+        filename = f"data{len(generated_data)}"
         if not os.path.exists(outdir):
             os.mkdir(outdir)
 
         fullname = os.path.join(outdir, filename)
-        data.to_csv(fullname, sep=',')
+        generated_data.to_csv(fullname, sep=',')
 
 
-    def generate(self):
-        case_name = "CaseID" #TODO
-        timestamp_name = "Start Timestamp"
+    def generate(self, input_data = None):
+        self.data = input_data # set data
 
-        data = self.prepare_data(self._data_file, timestamp_name)
-        datadict = data.to_dict(orient="index")
+        # data = self.prepare_data(self._data_file, timestamp_name)
+        datadict = self.data.to_dict(orient="index")
 
-        result = self.assign_cases(datadict, self._start_event, self._constraints)
+        result = self.assign_cases(datadict)
 
-        self.generate_logs(data, result)
+        self.generate_logs(result)
 
         measures = {}
-
-        measures["Trace-to-trace similarity"] = LogToLogCaseMeasure(datadict, result, case_name).trace_to_trace_similarity()
-        measures["Case similarity"] = LogToLogCaseMeasure(datadict, result, case_name).case_similarity()
-        measures["Trace-to-trace frequency similarity"] = LogToLogCaseMeasure(datadict, result, case_name).trace_to_trace_frequency_similarity()
-        measures["Partial case similarity"] = LogToLogCaseMeasure(datadict, result, case_name).partial_case_similarity()
-        measures["Bigram similarity"] = LogToLogCaseMeasure(datadict, result, case_name).bigram_similarity()
-        measures["Trigram similarity"] = LogToLogCaseMeasure(datadict, result, case_name).trigram_similarity()
-        measures["Event time deviation"] = LogToLogTimeMeasure(timestamp_name, datadict, result, case_name).event_time_deviation()
-        measures["Case cycle time deviation"] = LogToLogTimeMeasure(timestamp_name, datadict, result, case_name).case_cycle_time_deviation()
-
+        measures["Trace-to-trace similarity"] = LogToLogCaseMeasure(datadict, result, self._case_name).trace_to_trace_similarity()
+        measures["Case similarity"] = LogToLogCaseMeasure(datadict, result, self._case_name).case_similarity()
+        measures["Trace-to-trace frequency similarity"] = LogToLogCaseMeasure(datadict, result, self._case_name).trace_to_trace_frequency_similarity()
+        measures["Partial case similarity"] = LogToLogCaseMeasure(datadict, result, self._case_name).partial_case_similarity()
+        measures["Bigram similarity"] = LogToLogCaseMeasure(datadict, result, self._case_name).bigram_similarity()
+        measures["Trigram similarity"] = LogToLogCaseMeasure(datadict, result, self._case_name).trigram_similarity()
+        measures["Event time deviation"] = LogToLogTimeMeasure(self._timestamp_name, datadict, result, self._case_name).event_time_deviation()
+        measures["Case cycle time deviation"] = LogToLogTimeMeasure(self._timestamp_name, datadict, result, self._case_name).case_cycle_time_deviation()
 
         print(f"Result: {result}")
         print(f"Trace-to-trace similarity: { measures['Trace-to-trace similarity'] }")

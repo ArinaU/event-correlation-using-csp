@@ -60,7 +60,7 @@ class Window(QWidget):
         text = self.text_edit_constr.toPlainText()
         json_constraints = json.loads(text)
 
-        result, measures = EventCorrelationEngine(start_event, data_file, json_constraints).generate()
+        result, measures = EventCorrelationEngine(start_event, json_constraints).generate(data_file)
 
         self.text_edit_result.setText(self.format_dict_to_text(result))
         self.text_edit_measures.setText(self.format_dict_to_text(measures))
@@ -149,6 +149,8 @@ class Window(QWidget):
         file_button = QPushButton('Browse')
         file_button.clicked.connect(self.open_file_dialog)
         self.filename_edit = QLineEdit()
+        # TODO remove next line
+        self.filename_edit.setText('/Users/arinaulanova/PycharmProjects/pythonProject1/event_logs/data48.csv')
 
         grid_layout.addWidget(QLabel('Event log in csv format:'), 0, 0)
         grid_layout.addWidget(self.filename_edit, 0, 1)
