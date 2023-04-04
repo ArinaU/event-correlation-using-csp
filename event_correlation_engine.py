@@ -1,4 +1,3 @@
-
 from constraint import *
 import pandas as pd
 import os
@@ -11,12 +10,13 @@ from constraints.relation_constraints import *
 from constraints.mutual_relation_constraints import *
 from constraints.negative_relation_constraints import *
 
+
 class EventCorrelationEngine:
-    def __init__(self, start_event, constraints):
+    def __init__(self, start_event, constraints, case_name='CaseID', timestamp_name='Start Timestamp'):
         self._start_event = start_event
         self._constraints = constraints
-        self._case_name = "CaseID"  # TODO
-        self._timestamp_name = "Start Timestamp"
+        self._case_name = case_name
+        self._timestamp_name = timestamp_name
         self._data = None
 
     @property
@@ -24,7 +24,7 @@ class EventCorrelationEngine:
         return self._data
 
     @data.setter
-    def data(self, input_data = None):
+    def data(self, input_data=None):
         if isinstance(input_data, pd.DataFrame):
             self._data = input_data
         # elif self._data_file:
@@ -45,7 +45,6 @@ class EventCorrelationEngine:
     #     data.set_index('EventID', inplace=True)
     #     return data
 
-
     def declare_domains(self, problem, data, start):
         attr = start['attr']
         value = start['value']
@@ -60,7 +59,6 @@ class EventCorrelationEngine:
             else:
                 # problem.addVariable(id, list(range(1, iter)))
                 problem.addVariable(id, [f"Case{i}" for i in range(1, iter)])
-
 
     def assign_cases(self, datadict):
         solver = RecursiveBacktrackingSolver(False)
@@ -92,9 +90,8 @@ class EventCorrelationEngine:
         fullname = os.path.join(outdir, filename)
         generated_data.to_csv(fullname, sep=',')
 
-
-    def generate(self, input_data = None):
-        self.data = input_data # set data
+    def generate(self, input_data=None):
+        self.data = input_data  # set data
 
         # data = self.prepare_data(self._data_file, timestamp_name)
         datadict = self.data.to_dict(orient="index")
@@ -104,17 +101,22 @@ class EventCorrelationEngine:
         self.generate_logs(result)
 
         measures = {}
-        measures["Trace-to-trace similarity"] = LogToLogCaseMeasure(datadict, result, self._case_name).trace_to_trace_similarity()
+        measures["Trace-to-trace similarity"] = LogToLogCaseMeasure(datadict, result,
+                                                                    self._case_name).trace_to_trace_similarity()
         measures["Case similarity"] = LogToLogCaseMeasure(datadict, result, self._case_name).case_similarity()
-        measures["Trace-to-trace frequency similarity"] = LogToLogCaseMeasure(datadict, result, self._case_name).trace_to_trace_frequency_similarity()
-        measures["Partial case similarity"] = LogToLogCaseMeasure(datadict, result, self._case_name).partial_case_similarity()
+        measures["Trace-to-trace frequency similarity"] = LogToLogCaseMeasure(datadict, result,
+                                                                              self._case_name).trace_to_trace_frequency_similarity()
+        measures["Partial case similarity"] = LogToLogCaseMeasure(datadict, result,
+                                                                  self._case_name).partial_case_similarity()
         measures["Bigram similarity"] = LogToLogCaseMeasure(datadict, result, self._case_name).bigram_similarity()
         measures["Trigram similarity"] = LogToLogCaseMeasure(datadict, result, self._case_name).trigram_similarity()
-        measures["Event time deviation"] = LogToLogTimeMeasure(self._timestamp_name, datadict, result, self._case_name).event_time_deviation()
-        measures["Case cycle time deviation"] = LogToLogTimeMeasure(self._timestamp_name, datadict, result, self._case_name).case_cycle_time_deviation()
+        measures["Event time deviation"] = LogToLogTimeMeasure(self._timestamp_name, datadict, result,
+                                                               self._case_name).event_time_deviation()
+        measures["Case cycle time deviation"] = LogToLogTimeMeasure(self._timestamp_name, datadict, result,
+                                                                    self._case_name).case_cycle_time_deviation()
 
         print(f"Result: {result}")
-        print(f"Trace-to-trace similarity: { measures['Trace-to-trace similarity'] }")
+        print(f"Trace-to-trace similarity: {measures['Trace-to-trace similarity']}")
         print(f"Case similarity: {measures['Case similarity']}")
         print(f"Trace-to-trace frequency similarity: {measures['Trace-to-trace frequency similarity']}")
         print(f"Partial case similarity: {measures['Partial case similarity']}")
