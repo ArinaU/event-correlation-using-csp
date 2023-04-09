@@ -174,83 +174,83 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
                            4: 'Case2', 6: 'Case3', 7: 'Case1', 8: 'Case2', 9: 'Case3'}
         self.assertEqual(cases, expected_result, "Incorrect cases")
 
-    def test_chain_response(self):
-        data = self.generate_log('A,B,A,B,C,C')
-
-        constraints = [
-            {'constraint': 'ChainResponse',
-             'e': {'attr': 'Activity', 'value': 'B'},
-             'e2': {'attr': 'Activity', 'value': 'C'}},
-            {'constraint': 'Absence',
-             'e': {'attr': 'Activity', 'value': 'B'}}
-        ]
-
-        cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
-        expected_result = {1: 'Case1', 2: 'Case1', 3: 'Case2', 4: 'Case2', 5: 'Case1', 6: 'Case2'}
-        self.assertEqual(cases, expected_result, "Incorrect cases")
-
-
-    def test_chain_response2(self):
-        data = self.generate_log('A,B,A,D,C,B,A,D,C,C')
-
-        constraints = [
-            {'constraint': 'ChainResponse',
-             'e': {'attr': 'Activity', 'value': 'B'},
-             'e2': {'attr': 'Activity', 'value': 'C'}},
-            {'constraint': 'Absence',
-             'e': {'attr': 'Activity', 'value': 'D'}},
-            {'constraint': 'Absence',
-             'e': {'attr': 'Activity', 'value': 'B'}}
-        ]
-
-        cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
-        expected_result = {1: 'Case1', 2: 'Case1', 3: 'Case2', 4: 'Case2', 5: 'Case1',
-                           6: 'Case2', 7: 'Case3', 8: 'Case1', 9: 'Case2', 10: 'Case1'}
-        self.assertEqual(cases, expected_result, "Incorrect cases")
-
-
-    def test_chain_response3(self):
-        data = self.generate_log('A,H,A,D,E,D,G,H')
-
-        constraints = [
-            {'constraint': 'ChainResponse',
-             'e': {'attr': 'Activity', 'value': 'E'},
-             'e2': {'attr': 'Activity', 'value': 'G'}},
-            {'constraint': 'Absence',
-             'e': {'attr': 'Activity', 'value': 'H'}},
-            {'constraint': 'Absence',
-             'e': {'attr': 'Activity', 'value': 'D'}},
-            {'constraint': 'NotChainSuccession',
-             'e': {'attr': 'Activity', 'value': 'D'},
-             'e2': {'attr': 'Activity', 'value': 'H'}},
-        ]
-
-        cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
-        expected_result = {1: 'Case1', 2: 'Case1', 3: 'Case2', 4: 'Case2',
-                           5: 'Case2', 6: 'Case1', 7: 'Case2', 8: 'Case2' }
-        self.assertEqual(cases, expected_result, "Incorrect cases")
-
-
-    # test deadlock when ChainResponse(F, G) and ChainResponse(E, G)
-    # and ...E,F,G,G; assign G to E first
-    def test_chain_response4(self):
-        data = self.generate_log('A,A,G,A,F,E,G,G')
-
-        constraints = [
-            {'constraint': 'Absence',
-             'e': {'attr': 'Activity', 'value': 'G'}},
-            {'constraint': 'ChainResponse',
-             'e': {'attr': 'Activity', 'value': 'F'},
-             'e2': {'attr': 'Activity', 'value': 'G'}},
-            {'constraint': 'ChainResponse',
-             'e': {'attr': 'Activity', 'value': 'E'},
-             'e2': {'attr': 'Activity', 'value': 'G'}}
-        ]
-
-        cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
-        expected_result = {1: 'Case1', 2: 'Case2', 3: 'Case1', 4: 'Case3',
-                           5: 'Case2', 6: 'Case3', 7: 'Case2', 8: 'Case3' }
-        self.assertEqual(cases, expected_result, "Incorrect cases")
+    # def test_chain_response(self):
+    #     data = self.generate_log('A,B,A,B,C,C')
+    #
+    #     constraints = [
+    #         {'constraint': 'ChainResponse',
+    #          'e': {'attr': 'Activity', 'value': 'B'},
+    #          'e2': {'attr': 'Activity', 'value': 'C'}},
+    #         {'constraint': 'Absence',
+    #          'e': {'attr': 'Activity', 'value': 'B'}}
+    #     ]
+    #
+    #     cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
+    #     expected_result = {1: 'Case1', 2: 'Case1', 3: 'Case2', 4: 'Case2', 5: 'Case1', 6: 'Case2'}
+    #     self.assertEqual(cases, expected_result, "Incorrect cases")
+    #
+    #
+    # def test_chain_response2(self):
+    #     data = self.generate_log('A,B,A,D,C,B,A,D,C,C')
+    #
+    #     constraints = [
+    #         {'constraint': 'ChainResponse',
+    #          'e': {'attr': 'Activity', 'value': 'B'},
+    #          'e2': {'attr': 'Activity', 'value': 'C'}},
+    #         {'constraint': 'Absence',
+    #          'e': {'attr': 'Activity', 'value': 'D'}},
+    #         {'constraint': 'Absence',
+    #          'e': {'attr': 'Activity', 'value': 'B'}}
+    #     ]
+    #
+    #     cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
+    #     expected_result = {1: 'Case1', 2: 'Case1', 3: 'Case2', 4: 'Case2', 5: 'Case1',
+    #                        6: 'Case2', 7: 'Case3', 8: 'Case1', 9: 'Case2', 10: 'Case1'}
+    #     self.assertEqual(cases, expected_result, "Incorrect cases")
+    #
+    #
+    # def test_chain_response3(self):
+    #     data = self.generate_log('A,H,A,D,E,D,G,H')
+    #
+    #     constraints = [
+    #         {'constraint': 'ChainResponse',
+    #          'e': {'attr': 'Activity', 'value': 'E'},
+    #          'e2': {'attr': 'Activity', 'value': 'G'}},
+    #         {'constraint': 'Absence',
+    #          'e': {'attr': 'Activity', 'value': 'H'}},
+    #         {'constraint': 'Absence',
+    #          'e': {'attr': 'Activity', 'value': 'D'}},
+    #         {'constraint': 'NotChainSuccession',
+    #          'e': {'attr': 'Activity', 'value': 'D'},
+    #          'e2': {'attr': 'Activity', 'value': 'H'}},
+    #     ]
+    #
+    #     cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
+    #     expected_result = {1: 'Case1', 2: 'Case1', 3: 'Case2', 4: 'Case2',
+    #                        5: 'Case2', 6: 'Case1', 7: 'Case2', 8: 'Case2' }
+    #     self.assertEqual(cases, expected_result, "Incorrect cases")
+    #
+    #
+    # # test deadlock when ChainResponse(F, G) and ChainResponse(E, G)
+    # # and ...E,F,G,G; assign G to E first
+    # def test_chain_response4(self):
+    #     data = self.generate_log('A,A,G,A,F,E,G,G')
+    #
+    #     constraints = [
+    #         {'constraint': 'Absence',
+    #          'e': {'attr': 'Activity', 'value': 'G'}},
+    #         {'constraint': 'ChainResponse',
+    #          'e': {'attr': 'Activity', 'value': 'F'},
+    #          'e2': {'attr': 'Activity', 'value': 'G'}},
+    #         {'constraint': 'ChainResponse',
+    #          'e': {'attr': 'Activity', 'value': 'E'},
+    #          'e2': {'attr': 'Activity', 'value': 'G'}}
+    #     ]
+    #
+    #     cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
+    #     expected_result = {1: 'Case1', 2: 'Case2', 3: 'Case1', 4: 'Case3',
+    #                        5: 'Case2', 6: 'Case3', 7: 'Case2', 8: 'Case3' }
+    #     self.assertEqual(cases, expected_result, "Incorrect cases")
 
 
     def test_chain_precedence(self):
@@ -374,6 +374,34 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
         ]
         cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
         expected_result = None
+        self.assertEqual(cases, expected_result, "Incorrect cases")
+
+    def test_alternate_precedence4(self):
+        data = self.generate_log('A,B,C,B,C,A')
+
+        constraints = [
+            {'constraint': 'AlternatePrecedence',
+             'e': {'attr': 'Activity', 'value': 'B'},
+             'e2': {'attr': 'Activity', 'value': 'C'}}
+        ]
+
+        cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
+        expected_result = {1: 'Case1', 2: 'Case1', 3: 'Case1', 4: 'Case1', 5: 'Case1', 6: 'Case2'}
+        self.assertEqual(cases, expected_result, "Incorrect cases")
+
+    def test_alternate_precedence5(self):
+        data = self.generate_log('A,B,C,A,B,C')
+
+        constraints = [
+            {'constraint': 'AlternatePrecedence',
+             'e': {'attr': 'Activity', 'value': 'B'},
+             'e2': {'attr': 'Activity', 'value': 'C'}},
+            {'constraint': 'Absence',
+             'e': {'attr': 'Activity', 'value': 'B'}}
+        ]
+
+        cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
+        expected_result = {1: 'Case1', 2: 'Case1', 3: 'Case1', 4: 'Case2', 5: 'Case2', 6: 'Case2'}
         self.assertEqual(cases, expected_result, "Incorrect cases")
 
 

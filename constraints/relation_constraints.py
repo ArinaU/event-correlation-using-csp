@@ -27,8 +27,8 @@ class RespondedExistence(BaseEventConstraint):
 
         curr_case = assignments[curr_id]
 
-        self.clean_case_status(assignments)
-        self.clean_buf(assignments)
+        self._case_status = self.clean_struct(assignments, self._case_status)
+        self.clean_buf2(assignments)
 
         if not self._case_status.get(curr_case, None):
             self._case_status[curr_case] = {}
@@ -74,7 +74,7 @@ class Response(BaseEventConstraint):
         curr_id = list(assignments)[-1]
         curr_case = assignments[curr_id]
 
-        self.clean_case_status(assignments)
+        self._case_status = self.clean_struct(assignments, self._case_status)
 
         if not self._case_status.get(curr_case, None):
             self._case_status[curr_case] = {}
@@ -121,17 +121,24 @@ class Precedence(BaseEventConstraint):
         curr_id = list(assignments)[-1]
         curr_case = assignments[curr_id]
 
-        self.clean_case_status(assignments)
+        self._case_status = self.clean_struct(assignments, self._case_status)
 
         if not self._case_status.get(curr_case, None):
-            self._case_status[curr_case] = {}
+            self._case_status[curr_case] = []
 
         # if B
         if data[curr_id][required_attr] == required_value:
-            self._case_status[curr_case].setdefault('e', []).append(curr_id)
+            self._case_status[curr_case].append({'e': curr_id})
         # if C
         elif data[curr_id][required_attr2] == required_value2:
-            if not self._case_status[curr_case].get('e'):
+            # if B was before
+            flag = False
+            for pair in self._case_status[curr_case]:
+                if not (flag or 'e2' in pair):
+                    pair['e2'] = curr_id
+                    flag = True
+
+            if not flag:
                 return False
 
         return True
@@ -149,17 +156,17 @@ class ChainResponse(BaseEventConstraint):
         self._case_status = {}
 
 
-    def clean_case_status(self, assignments):
+    def clean_struct(self, assignments, case_status):
         assigned_events = list(assignments.keys())[:-1]
 
-        for k, v in deepcopy(self._case_status).items():
+        for k, v in deepcopy(case_status).items():
             for a, b in v.items():
                 if a not in assigned_events:
                     self._case_status[k][a] = None
                 elif b not in assigned_events:
                     self._case_status[k][a] = False
 
-        self._case_status = self.strip(self._case_status)
+        return self.strip(case_status)
 
 
     def find_solutions(self, all_domains, case_status, events, other_event = None):
@@ -184,7 +191,7 @@ class ChainResponse(BaseEventConstraint):
         if ChainResponse.lock.get(curr_id) == self:
             ChainResponse.lock[curr_id] = None
 
-        self.clean_case_status(assignments)
+        self._case_status = self.clean_struct(assignments, self._case_status)
 
         if not self._case_status.get(curr_case, None):
             self._case_status[curr_case] = {}
@@ -234,7 +241,7 @@ class ChainPrecedence(BaseEventConstraint):
         curr_id = list(assignments)[-1]
         curr_case = assignments[curr_id]
 
-        self.clean_case_status(assignments)
+        self._case_status = self.clean_struct(assignments, self._case_status)
 
         if not self._case_status.get(curr_case, None):
             self._case_status[curr_case] = {}
@@ -273,7 +280,7 @@ class AlternateResponse(BaseEventConstraint):
         curr_id = list(assignments)[-1]
         curr_case = assignments[curr_id]
 
-        self.clean_case_status(assignments)
+        self._case_status = self.clean_struct(assignments, self._case_status)
 
         if not self._case_status.get(curr_case, None):
             self._case_status[curr_case] = {}
@@ -318,7 +325,6 @@ class AlternatePrecedence(BaseEventConstraint):
         self._start_event = start_event
         self._case_status = {}
 
-
     def __call__(self, events, domains, assignments, forwardcheck=False):
         data = self._data
         required_attr = self._required_event['attr']
@@ -329,22 +335,23 @@ class AlternatePrecedence(BaseEventConstraint):
         curr_id = list(assignments)[-1]
         curr_case = assignments[curr_id]
 
-        self.clean_case_status(assignments)
+        self._case_status = self.clean_struct(assignments, self._case_status)
 
         if not self._case_status.get(curr_case, None):
             self._case_status[curr_case] = {}
 
         # if B
         if data[curr_id][required_attr] == required_value:
-            self._case_status[curr_case].setdefault('e', []).append(curr_id)
+            self._case_status[curr_case]['e'] = curr_id
+            # self._case_status[curr_case].setdefault('e', []).append(curr_id)
         # if C
         elif data[curr_id][required_attr2] == required_value2:
             # if C was already
-            if self._case_status[curr_case].get('e2', []):
+            if self._case_status[curr_case].get('e2'):
                 return False
             # if B was already
-            elif self._case_status[curr_case].get('e', []):
-                self._case_status[curr_case].get('e', []).pop()
+            elif self._case_status[curr_case].get('e'):
+                del self._case_status[curr_case]
             else:
                 return False
 

@@ -23,8 +23,8 @@ class Coexistence(BaseEventConstraint):
         curr_id = list(assignments)[-1]
         curr_case = assignments[curr_id]
 
-        self.clean_case_status(assignments)
-        self.clean_buf(assignments)
+        self._case_status = self.clean_struct(assignments, self._case_status)
+        self.clean_buf2(assignments)
 
         if not self._case_status.get(curr_case, None):
             self._case_status[curr_case] = {}

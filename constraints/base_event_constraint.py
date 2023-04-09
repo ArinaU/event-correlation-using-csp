@@ -16,31 +16,56 @@ class BaseEventConstraint(Constraint):
                 arr.append(event)
         return arr
 
+    #
+    # def strip(self, data):
+    #     new_data = {}
+    #     for k, v in data.items():
+    #         if isinstance(v, dict):
+    #             v = self.strip(v)
+    #         if not v in (u'', None, {}, []):
+    #             new_data[k] = v
+    #     return new_data
+    #
+    #
+    # def clean_case_status(self, assignments):
+    #     assigned_events = list(assignments.keys())[:-1]
+    #
+    #     for k, v in deepcopy(self._case_status).items():
+    #         if isinstance(v, dict):
+    #             for a, b in v.items():
+    #                 self._case_status[k][a] = [x for x in b if x in assigned_events]
+    #         elif isinstance(v, list):
+    #             self._case_status[k] = [x for x in v if x in assigned_events]
+    #
+    #     self._case_status = self.strip(self._case_status)
 
-    def strip(self, data):
-        new_data = {}
-        for k, v in data.items():
-            if isinstance(v, dict):
-                v = self.strip(v)
-            if not v in (u'', None, {}, []):
-                new_data[k] = v
-        return new_data
+    def clean_struct(self, assignments, case_status):
+        # Remove keys where values are '', None, {}, []
+        for key, value in list(case_status.items()):
+            if value in ('', None, {}, []):
+                del case_status[key]
 
+            # Recursively remove unused numbers
+        last_key = list(assignments.keys())[-1]
+        for key, value in list(case_status.items()):
+            if isinstance(value, dict):
+                case_status[key] = self.clean_struct(assignments, value)
+            elif isinstance(value, list):
+                new_list = []
+                for item in value:
+                    if isinstance(item, dict):
+                        new_dict = self.clean_struct(assignments, item)
+                        if new_dict:
+                            new_list.append(new_dict)
+                    elif isinstance(item, int) and item < last_key:
+                        new_list.append(item)
+                case_status[key] = new_list
+            elif isinstance(value, int) and value >= last_key:
+                del case_status[key]
 
-    def clean_case_status(self, assignments):
-        assigned_events = list(assignments.keys())[:-1]
+        return case_status
 
-        for k, v in deepcopy(self._case_status).items():
-            if isinstance(v, dict):
-                for a, b in v.items():
-                    self._case_status[k][a] = [x for x in b if x in assigned_events]
-            elif isinstance(v, list):
-                self._case_status[k] = [x for x in v if x in assigned_events]
-
-        self._case_status = self.strip(self._case_status)
-
-
-    def clean_buf(self, assignments):
+    def clean_buf2(self, assignments):
         buf = self._buf.copy()
         curr_id = list(assignments)[-1]
         # {'e2': [8]}
