@@ -338,22 +338,26 @@ class AlternatePrecedence(BaseEventConstraint):
         self._case_status = self.clean_struct(assignments, self._case_status)
 
         if not self._case_status.get(curr_case, None):
-            self._case_status[curr_case] = {}
+            self._case_status[curr_case] = []
 
         # if B
         if data[curr_id][required_attr] == required_value:
-            self._case_status[curr_case]['e'] = curr_id
-            # self._case_status[curr_case].setdefault('e', []).append(curr_id)
+            self._case_status[curr_case].append({'e': curr_id})
+
         # if C
         elif data[curr_id][required_attr2] == required_value2:
-            # if C was already
-            if self._case_status[curr_case].get('e2'):
-                return False
-            # if B was already
-            elif self._case_status[curr_case].get('e'):
-                del self._case_status[curr_case]
-            else:
-                return False
+            if self._case_status[curr_case]:
+                max_val = 0
+                pair_ind = None
+                for ind, pair in enumerate(self._case_status[curr_case]):
+                    for event, val in pair.items():
+                        if val > max_val:
+                            max_val = val
+                            pair_ind = ind
+                if 'e2' in self._case_status[curr_case][pair_ind]:
+                    return False
+                else:
+                    self._case_status[curr_case][pair_ind]['e2'] = curr_id
 
         return True
 
