@@ -358,6 +358,8 @@ class AlternatePrecedence(BaseEventConstraint):
                     return False
                 else:
                     self._case_status[curr_case][pair_ind]['e2'] = curr_id
+            else:
+                return False
 
         return True
 
