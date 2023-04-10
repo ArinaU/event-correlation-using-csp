@@ -405,7 +405,6 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
         self.assertEqual(cases, expected_result, "Incorrect cases")
 
 
-
 class TestNegativeRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
 
     def setUp(self):

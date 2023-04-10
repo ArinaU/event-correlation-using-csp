@@ -343,21 +343,14 @@ class AlternatePrecedence(BaseEventConstraint):
         # if B
         if data[curr_id][required_attr] == required_value:
             self._case_status[curr_case].append({'e': curr_id})
-
         # if C
         elif data[curr_id][required_attr2] == required_value2:
             if self._case_status[curr_case]:
-                max_val = 0
-                pair_ind = None
-                for ind, pair in enumerate(self._case_status[curr_case]):
-                    for event, val in pair.items():
-                        if val > max_val:
-                            max_val = val
-                            pair_ind = ind
-                if 'e2' in self._case_status[curr_case][pair_ind]:
+                last_pair = self._case_status[curr_case][-1]
+                if 'e2' in last_pair:
                     return False
                 else:
-                    self._case_status[curr_case][pair_ind]['e2'] = curr_id
+                    last_pair['e2'] = curr_id
             else:
                 return False
 

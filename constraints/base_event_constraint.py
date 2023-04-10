@@ -42,10 +42,10 @@ class BaseEventConstraint(Constraint):
     def clean_struct(self, assignments, case_status):
         # Remove keys where values are '', None, {}, []
         for key, value in list(case_status.items()):
-            if value in ('', None, {}, []):
+            if value in (u'', None, {}, []):
                 del case_status[key]
 
-            # Recursively remove unused numbers
+        # Recursively remove unused events
         last_key = list(assignments.keys())[-1]
         for key, value in list(case_status.items()):
             if isinstance(value, dict):
