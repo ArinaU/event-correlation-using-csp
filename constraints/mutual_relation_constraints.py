@@ -33,7 +33,7 @@ class Coexistence(BaseEventConstraint):
         if data[curr_id][required_attr] == required_value:
             # if B already exists
             if self._case_status[curr_case].get('e'):
-                if self.find_solutions(domains, self._case_status, [curr_id], 'e'):
+                if self.has_available_solutions(domains, self._case_status, curr_id, 'e'):
                     return False
                 else:
                     buf.setdefault('e', []).append(curr_id)
@@ -44,7 +44,7 @@ class Coexistence(BaseEventConstraint):
         elif data[curr_id][required_attr2] == required_value2:
             if self._case_status[curr_case].get('e2'):
                 # if C already exists
-                if self.find_solutions(domains, self._case_status, [curr_id], 'e2'):
+                if self.has_available_solutions(domains, self._case_status, curr_id, 'e2'):
                     return False
                 else:
                     buf.setdefault('e2', []).append(curr_id)
@@ -53,10 +53,10 @@ class Coexistence(BaseEventConstraint):
                 self._case_status[curr_case].setdefault('e2', []).append(curr_id)
 
         if buf.get('e', None):
-            if self.find_solutions(domains, self._case_status, buf['e'], 'e'):
+            if self.has_available_solutions(domains, self._case_status, buf['e'], 'e'):
                 return False
         elif buf.get('e2', None):
-            if self.find_solutions(domains, self._case_status, buf['e2'], 'e2'):
+            if self.has_available_solutions(domains, self._case_status, buf['e2'], 'e2'):
                 return False
 
         return True

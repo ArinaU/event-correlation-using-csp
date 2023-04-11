@@ -13,12 +13,32 @@ class RespondedExistence(BaseEventConstraint):
         self._required_event2 = required_event2
         self._start_event = start_event
         self._case_status = {}
-        self._buf = {}
+        # self._buf = {}
 
+
+    def has_available_solutions(self, all_domains, case_status, events, other_event):
+        if not isinstance(events, list):
+            events = [events]
+        # cases yet without 'e2' or 'e'
+        # free_cases = [c for c,v in case_status.items() if case_status[c] and other_event not in case_status[c]]
+        free_cases = []
+        for case, pairs in case_status.items():
+            for pair in pairs:
+                if other_event not in pair:
+                    free_cases.append(case)
+                    break
+
+        # check if there are events that can be assigned to free cases
+        for event in events:
+            domains = all_domains[event]
+            if set(free_cases) & set(domains):
+                return True
+
+        return False
 
     def __call__(self, events, domains, assignments, forwardcheck=False):
         data = self._data
-        buf = self._buf
+        # buf = self._buf
         required_attr = self._required_event['attr']
         required_value = self._required_event['value']
         required_attr2 = self._required_event2['attr']
@@ -28,28 +48,32 @@ class RespondedExistence(BaseEventConstraint):
         curr_case = assignments[curr_id]
 
         self._case_status = self.clean_struct(assignments, self._case_status)
-        self.clean_buf2(assignments)
+        # self.clean_buf2(assignments)
 
         if not self._case_status.get(curr_case, None):
-            self._case_status[curr_case] = {}
+            self._case_status[curr_case] = []
 
         # if B
         if data[curr_id][required_attr] == required_value:
-            self._case_status[curr_case].setdefault('e', []).append(curr_id)
-        # if C
-        elif data[curr_id][required_attr2] == required_value2:
-            # if case_status[curr_case].get('e2'):
-            if 'e2' in self._case_status[curr_case]: # if C already exists
-                if self.find_solutions(domains, self._case_status, [curr_id], 'e2'):
+            target_pair = self.find_pair(curr_case, 'e')
+            if target_pair:
+                target_pair['e'] = curr_id
+            else:
+                if self.has_available_solutions(domains, self._case_status, curr_id, 'e'):
                     return False
                 else:
-                    buf.setdefault('e2', []).append(curr_id)
+                    self._case_status[curr_case].append({'e': curr_id})
+        # if C
+        # A,C,B,A,A,B,C,C,B
+        elif data[curr_id][required_attr2] == required_value2:
+            target_pair = self.find_pair(curr_case, 'e2')
+            if target_pair:
+                target_pair['e2'] = curr_id
             else:
-                self._case_status[curr_case].setdefault('e2', []).append(curr_id)
-
-        if buf:
-            if self.find_solutions(domains, self._case_status, [curr_id], 'e2'):
-                return False
+                if self.has_available_solutions(domains, self._case_status, curr_id, 'e2'):
+                    return False
+                else:
+                    self._case_status[curr_case].append({'e2': curr_id})
 
         return True
 
@@ -94,7 +118,7 @@ class Response(BaseEventConstraint):
             if not self._case_status[curr_case].get('e') or \
                     (self._case_status[curr_case].get('e') and self._case_status[curr_case].get('e2')):
                 # find other cases without C
-                if self.find_solutions(domains, self._case_status, [curr_id], 'e2'):
+                if self.has_available_solutions(domains, self._case_status, curr_id, 'e2'):
                     return False
 
             self._case_status[curr_case].setdefault('e2', []).append(curr_id)
@@ -103,6 +127,7 @@ class Response(BaseEventConstraint):
 
 
 # B occurs only if preceded by A: <C, A, C, B, B>, <A, C, C>
+# C occurs only if preceded by B
 class Precedence(BaseEventConstraint):
     def __init__(self, data, required_event, required_event2, start_event = None):
         self._data = data
@@ -131,14 +156,10 @@ class Precedence(BaseEventConstraint):
             self._case_status[curr_case].append({'e': curr_id})
         # if C
         elif data[curr_id][required_attr2] == required_value2:
-            # if B was before
-            flag = False
-            for pair in self._case_status[curr_case]:
-                if not (flag or 'e2' in pair):
-                    pair['e2'] = curr_id
-                    flag = True
-
-            if not flag:
+            target_pair = self.find_pair(curr_case, 'e2')
+            if target_pair:
+                target_pair['e2'] = curr_id
+            else:
                 return False
 
         return True
@@ -169,7 +190,7 @@ class ChainResponse(BaseEventConstraint):
         return self.strip(case_status)
 
 
-    def find_solutions(self, all_domains, case_status, events, other_event = None):
+    def has_available_solutions(self, all_domains, case_status, events, other_event = None):
         left_cases = [c for c, v in case_status.items() if case_status[c] and False in case_status[c].values()]
         arr = []
         for event in events:
@@ -207,7 +228,7 @@ class ChainResponse(BaseEventConstraint):
                 ChainResponse.lock[curr_id] = self
             else:
                 # check other cases
-                if not ChainResponse.lock.get(curr_id) and self.find_solutions(domains, self._case_status, [curr_id]):
+                if not ChainResponse.lock.get(curr_id) and self.has_available_solutions(domains, self._case_status, curr_id):
                     return False
 
         else: # if B or any other Activity
@@ -307,7 +328,7 @@ class AlternateResponse(BaseEventConstraint):
                     # pop everything
                     del self._case_status[curr_case]
                     return True
-            if self.find_solutions(domains, self._case_status, [curr_id], 'e2'):
+            if self.has_available_solutions(domains, self._case_status, curr_id, 'e2'):
                 return False
 
         return True

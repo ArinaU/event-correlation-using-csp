@@ -7,14 +7,25 @@ class BaseEventConstraint(Constraint):
         self._data = data
         self._start_event = start_event
 
-    def find_solutions(self, all_domains, case_status, events, other_event):
-        left_cases = [c for c,v in case_status.items() if case_status[c] and other_event not in case_status[c]]
-        arr = []
+    def has_available_solutions(self, all_domains, case_status, events, other_event):
+        if not isinstance(events, list):
+            events = [events]
+        # cases yet without 'e2' or 'e'
+        free_cases = [c for c,v in case_status.items() if case_status[c] and other_event not in case_status[c]]
+
+        # check if there are events that can be assigned to free cases
         for event in events:
             domains = all_domains[event]
-            if set(left_cases) & set(domains):
-                arr.append(event)
-        return arr
+            if set(free_cases) & set(domains):
+                return True
+
+        return False
+
+    def find_pair(self, curr_case, target_event):
+        for pair in self._case_status[curr_case]:
+            if target_event not in pair:
+                return pair
+        return None
 
     #
     # def strip(self, data):
@@ -39,17 +50,17 @@ class BaseEventConstraint(Constraint):
     #
     #     self._case_status = self.strip(self._case_status)
 
-    def clean_struct(self, assignments, case_status):
+    def clean_struct(self, assignments, struct):
         # Remove keys where values are '', None, {}, []
-        for key, value in list(case_status.items()):
+        for key, value in list(struct.items()):
             if value in (u'', None, {}, []):
-                del case_status[key]
+                del struct[key]
 
         # Recursively remove unused events
         last_key = list(assignments.keys())[-1]
-        for key, value in list(case_status.items()):
+        for key, value in list(struct.items()):
             if isinstance(value, dict):
-                case_status[key] = self.clean_struct(assignments, value)
+                struct[key] = self.clean_struct(assignments, value)
             elif isinstance(value, list):
                 new_list = []
                 for item in value:
@@ -59,11 +70,11 @@ class BaseEventConstraint(Constraint):
                             new_list.append(new_dict)
                     elif isinstance(item, int) and item < last_key:
                         new_list.append(item)
-                case_status[key] = new_list
+                struct[key] = new_list
             elif isinstance(value, int) and value >= last_key:
-                del case_status[key]
+                del struct[key]
 
-        return case_status
+        return struct
 
     def clean_buf2(self, assignments):
         buf = self._buf.copy()
@@ -74,3 +85,5 @@ class BaseEventConstraint(Constraint):
             # if it's empty after reassignment, only elmts >= curr_event were there
             if not self._buf[key]:
                 del self._buf[key]
+        # self._buf = self.clean_struct(assignments, self._buf)
+        # self._buf =
