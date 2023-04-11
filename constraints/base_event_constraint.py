@@ -7,6 +7,10 @@ class BaseEventConstraint(Constraint):
         self._data = data
         self._start_event = start_event
 
+    # @staticmethod
+    # def set_other_event(event):
+    #     return 'e2' if event == 'e' else 'e'
+
     def has_available_solutions(self, all_domains, case_status, events, other_event):
         if not isinstance(events, list):
             events = [events]
@@ -21,11 +25,33 @@ class BaseEventConstraint(Constraint):
 
         return False
 
-    def find_pair(self, curr_case, target_event):
+
+    def find_pairs_with_event(self, curr_case, target_event):
+        pairs = []
+        for pair in self._case_status[curr_case]:
+            if target_event in pair:
+                pairs.append(pair)
+        return pairs
+
+
+    def find_suitable_pair(self, curr_case, target_event):
+        # get first available pair
         for pair in self._case_status[curr_case]:
             if target_event not in pair:
                 return pair
         return None
+
+    #
+    # def search_pair(self, curr_case, target_event, with_existing_pairs = False):
+    #     other_event = self.set_other_event(target_event)
+    #
+    #     for pair in self._case_status[curr_case]:
+    #         if target_event in pair:
+    #             if with_existing_pairs and other_event not in pair:
+    #             return pair
+    #
+    #
+    #     return None
 
     #
     # def strip(self, data):
