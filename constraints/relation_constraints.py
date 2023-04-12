@@ -338,6 +338,7 @@ class ChainPrecedence(BaseEventConstraint):
             case_events = [e for e, c in assignments.items() if c == curr_case and e < curr_id]
             if case_events:
                 prev_id = case_events[-1]
+                # if prev event was not B
                 if not data[prev_id][required_attr] == required_value:
                     return False
 
@@ -391,36 +392,6 @@ class AlternateResponse(BaseEventConstraint):
         if not self._case_status.get(curr_case, None):
             self._case_status[curr_case] = []
 
-        # # if B
-        # if data[curr_id][required_attr] == required_value:
-        #     # if C was before
-        #     if self._case_status[curr_case].get('e2'):
-        #         # pop everything and add new B
-        #         self._case_status[curr_case] = {'e': [curr_id] }
-        #     # only B was before, no C
-        #     elif self._case_status[curr_case].get('e'):
-        #         return False
-        #     # first time B
-        #     else:
-        #         self._case_status[curr_case].setdefault('e', []).append(curr_id)
-        # # if C
-        # elif data[curr_id][required_attr2] == required_value2:
-        #     # add C after B
-        #     # if B was before
-        #     if self._case_status[curr_case].get('e'):
-        #         # if it's first C
-        #         if not self._case_status[curr_case].get('e2'):
-        #             # pop everything
-        #             del self._case_status[curr_case]
-        #             return True
-        #     if self.has_available_solutions(domains, self._case_status, curr_id, 'e2'):
-        #         return False
-
-        # A, A, B, D, C, A, B, C, B
-        # 1  2  1  1  1  3  2  2  3
-
-        # A, A, B, B, C
-        # 1  2  1  2  1
 
         # if B
         if data[curr_id][required_attr] == required_value:
