@@ -125,6 +125,7 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
         self.assertEqual(cases, expected_result, "Incorrect cases")
 
 
+    # If B occurs, then C occurs after B
     def test_response(self):
         data = self.generate_log('A,C,A,B,C,C,A,B')
 
@@ -136,8 +137,8 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
              'e': {'attr': 'Activity', 'value': 'B'}}
         ]
         cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
-        expected_result = {1: 'Case1', 2: 'Case1', 3: 'Case2', 7: 'Case3',
-                           4: 'Case2', 5: 'Case2', 6: 'Case1', 8: 'Case3'}
+        expected_result = {1: 'Case1', 2: 'Case1', 3: 'Case2', 4: 'Case2',
+                           5: 'Case2', 6: 'Case1', 7: 'Case3', 8: 'Case3'}
         self.assertEqual(cases, expected_result, "Incorrect cases")
 
     def test_response2(self):
