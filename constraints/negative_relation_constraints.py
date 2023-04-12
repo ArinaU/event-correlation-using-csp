@@ -25,22 +25,22 @@ class NotCoexistence(BaseEventConstraint):
         self._case_status = self.clean_struct(assignments, self._case_status)
 
         if not self._case_status.get(curr_case, None):
-            self._case_status[curr_case] = {}
+            self._case_status[curr_case] = []
 
         # if B
         if data[curr_id][required_attr] == required_value:
-            # if C already exists
-            if self._case_status.get(curr_case, {}).get('e2'):
+            not_target_event = self.find_single_event(curr_case, 'e2')
+            if not_target_event:
                 return False
-            # if add new B
-            self._case_status[curr_case].setdefault('e', []).append(curr_id)
+
+            self._case_status[curr_case].append({'e': curr_id})
         # if C
         elif data[curr_id][required_attr2] == required_value2:
-            # if B already exists
-            if self._case_status.get(curr_case, {}).get('e'):
+            not_target_event = self.find_single_event(curr_case, 'e')
+            if not_target_event:
                 return False
-            # if add new C
-            self._case_status[curr_case].setdefault('e2', []).append(curr_id)
+
+            self._case_status[curr_case].append({'e2': curr_id})
 
         return True
 
@@ -68,15 +68,17 @@ class NotSuccession(BaseEventConstraint):
         self._case_status = self.clean_struct(assignments, self._case_status)
 
         if not self._case_status.get(curr_case, None):
-            self._case_status[curr_case] = {}
+            self._case_status[curr_case] = []
 
         # if B
         if data[curr_id][required_attr] == required_value:
-            self._case_status[curr_case].setdefault('e', []).append(curr_id)
+            self._case_status[curr_case].append({'e': curr_id})
         # if C
         elif data[curr_id][required_attr2] == required_value2:
-            if self._case_status.get(curr_case, {}).get('e'):
+            not_target_event = self.find_single_event(curr_case, 'e')
+            if not_target_event:
                 return False
+            self._case_status[curr_case].append({'e2': curr_id})
 
         return True
 
