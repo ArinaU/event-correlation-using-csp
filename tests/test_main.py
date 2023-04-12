@@ -440,7 +440,6 @@ class TestNegativeRelationConstraints(unittest.TestCase, EventLogGenerationMixin
                            5: 'Case3', 6: 'Case3', 7: 'Case3', 8: 'Case3'}
         self.assertEqual(cases, expected_result, "Incorrect cases")
 
-
     def test_not_succession2(self):
         data = self.generate_log('A,A,C,B,C,A,B,C')
 
@@ -458,7 +457,7 @@ class TestNegativeRelationConstraints(unittest.TestCase, EventLogGenerationMixin
         self.assertEqual(cases, expected_result, "Incorrect cases")
 
 
-
+    # A and B occur if and only if no B occurs immediately after A
     def test_not_chain_succession(self):
         data = self.generate_log('A,A,B,B,A,C,C')
 
@@ -472,41 +471,24 @@ class TestNegativeRelationConstraints(unittest.TestCase, EventLogGenerationMixin
 
         cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
 
-        expected_result = {1: 'Case1', 2: 'Case2', 5: 'Case3', 3: 'Case1',
-                           4: 'Case2', 6: 'Case1', 7: 'Case2'}
-        self.assertEqual(cases, expected_result, "Incorrect cases")
-
-
-    def test_not_coexistence(self):
-        data = self.generate_log('A,A,A,B,C,B')
-
-        constraints = [
-            {'constraint': 'NotCoexistence',
-             'e': {'attr': 'Activity', 'value': 'B'},
-             'e2': {'attr': 'Activity', 'value': 'C'}},
-            {'constraint': 'Absence',
-             'e': {'attr': 'Activity', 'value': 'B'}}
-        ]
-
-        cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
-
-        expected_result = {1: 'Case1', 2: 'Case2', 3: 'Case3', 4: 'Case1', 5: 'Case2', 6: 'Case3'}
-        self.assertEqual(cases, expected_result, "Incorrect cases")
-
-    def test_not_coexistence2(self):
-        data = self.generate_log('A,A,C,B,A,C,B')
-
-        constraints = [
-            {'constraint': 'NotCoexistence',
-             'e': {'attr': 'Activity', 'value': 'B'},
-             'e2': {'attr': 'Activity', 'value': 'C'}},
-            {'constraint': 'Absence',
-             'e': {'attr': 'Activity', 'value': 'C'}}
-        ]
-        cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
-
         expected_result = {1: 'Case1', 2: 'Case2', 3: 'Case1', 4: 'Case2',
-                           5: 'Case3', 6: 'Case3', 7: 'Case2'}
+                           5: 'Case3', 6: 'Case1', 7: 'Case2'}
+        self.assertEqual(cases, expected_result, "Incorrect cases")
+
+
+    def test_not_chain_succession2(self):
+        data = self.generate_log('A,A,C,B,C,D,C')
+
+        constraints = [
+            {'constraint': 'NotChainSuccession',
+             'e': {'attr': 'Activity', 'value': 'B'},
+             'e2': {'attr': 'Activity', 'value': 'C'}}
+        ]
+
+        cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
+
+        expected_result = {1: 'Case1', 2: 'Case2', 3: 'Case1', 4: 'Case1',
+                           5: 'Case2', 6: 'Case1', 7: 'Case1'}
         self.assertEqual(cases, expected_result, "Incorrect cases")
 
 

@@ -106,18 +106,19 @@ class NotChainSuccession(BaseEventConstraint):
         self._case_status = self.clean_struct(assignments, self._case_status)
 
         if not self._case_status.get(curr_case, None):
-            self._case_status[curr_case] = {}
+            self._case_status[curr_case] = []
 
-        # if curr event C
-        if data[curr_id][required_attr2] == required_value2:
-            # if the key with CaseN exists
-            if self._case_status.get(curr_case, {}).get('e'):
-                # last event in CaseN
-                last_id = self._case_status[curr_case]['e'][-1]
-                # if last event in CaseN was A
-                if data[last_id][required_attr] == required_value:
+
+        # if A
+        if data[curr_id][required_attr] == required_value:
+            self._case_status[curr_case].append({'e': curr_id})
+        # if C
+        elif data[curr_id][required_attr2] == required_value2:
+            case_events = [e for e, c in assignments.items() if c == curr_case and e < curr_id]
+            if case_events:
+                prev_id = case_events[-1]
+                # if prev event was A
+                if data[prev_id][required_attr] == required_value:
                     return False
-
-        self._case_status[curr_case].setdefault('e', []).append(curr_id)
 
         return True
