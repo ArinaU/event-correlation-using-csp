@@ -13,19 +13,20 @@ class NotCoexistence(BaseEventConstraint):
         self._case_status = {}
 
     def __call__(self, events, domains, assignments, forwardcheck=False):
+        data = self._data
+        case_status = self._case_status
         required_attr = self._required_event['attr']
         required_value = self._required_event['value']
         required_attr2 = self._required_event2['attr']
         required_value2 = self._required_event2['value']
-        data = self._data
 
         curr_id = list(assignments)[-1]
         curr_case = assignments[curr_id]
 
-        self._case_status = self.clean_struct(assignments, self._case_status)
+        case_status = self.clean_struct(assignments, case_status)
 
-        if not self._case_status.get(curr_case, None):
-            self._case_status[curr_case] = []
+        if not case_status.get(curr_case, None):
+            case_status[curr_case] = []
 
         # if B
         if data[curr_id][required_attr] == required_value:
@@ -33,14 +34,14 @@ class NotCoexistence(BaseEventConstraint):
             if not_target_event:
                 return False
 
-            self._case_status[curr_case].append({'e': curr_id})
+            case_status[curr_case].append({'e': curr_id})
         # if C
         elif data[curr_id][required_attr2] == required_value2:
             not_target_event = self.find_single_event(curr_case, 'e')
             if not_target_event:
                 return False
 
-            self._case_status[curr_case].append({'e2': curr_id})
+            case_status[curr_case].append({'e2': curr_id})
 
         return True
 
@@ -57,6 +58,7 @@ class NotSuccession(BaseEventConstraint):
 
     def __call__(self, events, domains, assignments, forwardcheck=False):
         data = self._data
+        case_status = self._case_status
         required_attr = self._required_event['attr']
         required_value = self._required_event['value']
         required_attr2 = self._required_event2['attr']
@@ -65,20 +67,20 @@ class NotSuccession(BaseEventConstraint):
         curr_id = list(assignments)[-1]
         curr_case = assignments[curr_id]
 
-        self._case_status = self.clean_struct(assignments, self._case_status)
+        case_status = self.clean_struct(assignments, case_status)
 
-        if not self._case_status.get(curr_case, None):
-            self._case_status[curr_case] = []
+        if not case_status.get(curr_case, None):
+            case_status[curr_case] = []
 
         # if B
         if data[curr_id][required_attr] == required_value:
-            self._case_status[curr_case].append({'e': curr_id})
+            case_status[curr_case].append({'e': curr_id})
         # if C
         elif data[curr_id][required_attr2] == required_value2:
             not_target_event = self.find_single_event(curr_case, 'e')
             if not_target_event:
                 return False
-            self._case_status[curr_case].append({'e2': curr_id})
+            case_status[curr_case].append({'e2': curr_id})
 
         return True
 
@@ -95,6 +97,7 @@ class NotChainSuccession(BaseEventConstraint):
 
     def __call__(self, events, domains, assignments, forwardcheck=False):
         data = self._data
+        case_status = self._case_status
         required_attr = self._required_event['attr']
         required_value = self._required_event['value']
         required_attr2 = self._required_event2['attr']
@@ -103,15 +106,15 @@ class NotChainSuccession(BaseEventConstraint):
         curr_id = list(assignments)[-1]
         curr_case = assignments[curr_id]
 
-        self._case_status = self.clean_struct(assignments, self._case_status)
+        case_status = self.clean_struct(assignments, case_status)
 
-        if not self._case_status.get(curr_case, None):
-            self._case_status[curr_case] = []
+        if not case_status.get(curr_case, None):
+            case_status[curr_case] = []
 
 
         # if A
         if data[curr_id][required_attr] == required_value:
-            self._case_status[curr_case].append({'e': curr_id})
+            case_status[curr_case].append({'e': curr_id})
         # if C
         elif data[curr_id][required_attr2] == required_value2:
             case_events = [e for e, c in assignments.items() if c == curr_case and e < curr_id]
