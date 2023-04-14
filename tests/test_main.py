@@ -566,7 +566,7 @@ class TestMutualRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
 
 
     # plain simple test, 2 B's and 1 C
-    def test_coexistence_without_absence(self):
+    def test_coexistence2(self):
         data = self.generate_log('A,A,A,B,C,B')
 
         constraints = [
@@ -578,6 +578,36 @@ class TestMutualRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
         cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
 
         expected_result = {1: 'Case1', 2: 'Case2', 3: 'Case3', 4: 'Case1', 5: 'Case1', 6: 'Case1'}
+        self.assertEqual(cases, expected_result, "Incorrect cases")
+
+
+    def test_coexistence3(self):
+        data = self.generate_log('A,A,C,C')
+
+        constraints = [
+            {'constraint': 'Coexistence',
+             'e': {'attr': 'Activity', 'value': 'B'},
+             'e2': {'attr': 'Activity', 'value': 'C'}}
+        ]
+
+        cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
+
+        expected_result = {1: 'Case1', 2: 'Case2', 3: 'Case1', 4: 'Case1'}
+        self.assertEqual(cases, expected_result, "Incorrect cases")
+
+
+    def test_coexistence4(self):
+        data = self.generate_log('A,C,B,A,C')
+
+        constraints = [
+            {'constraint': 'Coexistence',
+             'e': {'attr': 'Activity', 'value': 'B'},
+             'e2': {'attr': 'Activity', 'value': 'C'}}
+        ]
+
+        cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
+
+        expected_result = {1: 'Case1', 2: 'Case1', 3: 'Case1', 4: 'Case2', 5: 'Case1'}
         self.assertEqual(cases, expected_result, "Incorrect cases")
 
 
