@@ -50,18 +50,19 @@ class BaseEventConstraint(Constraint):
                 return pair
         return None
 
-
     def clean_struct(self, assignments, struct):
-        # Remove keys where values are '', None, {}, []
+        # Remove values u'', None, {}, []
         for key, value in list(struct.items()):
             if value in (u'', None, {}, []):
                 del struct[key]
 
-        # Recursively remove unused events
+        # Remove prev events
         last_key = list(assignments.keys())[-1]
         for key, value in list(struct.items()):
             if isinstance(value, dict):
                 struct[key] = self.clean_struct(assignments, value)
+                if not struct[key]:
+                    del struct[key]
             elif isinstance(value, list):
                 new_list = []
                 for item in value:
@@ -72,7 +73,10 @@ class BaseEventConstraint(Constraint):
                     elif isinstance(item, int) and item < last_key:
                         new_list.append(item)
                 struct[key] = new_list
+                if not struct[key]:
+                    del struct[key]
             elif isinstance(value, int) and value >= last_key:
                 del struct[key]
 
         return struct
+
