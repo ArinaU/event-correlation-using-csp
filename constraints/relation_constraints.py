@@ -16,26 +16,6 @@ class RespondedExistence(BaseEventConstraint):
         # self._buf = {}
 
 
-    def has_available_solutions(self, all_domains, case_status, events, other_event):
-        if not isinstance(events, list):
-            events = [events]
-        # cases yet without 'e2' or 'e'
-        # free_cases = [c for c,v in case_status.items() if case_status[c] and other_event not in case_status[c]]
-        free_cases = []
-        for case, pairs in case_status.items():
-            for pair in pairs:
-                if other_event not in pair:
-                    free_cases.append(case)
-                    break
-
-        # check if there are events that can be assigned to free cases
-        for event in events:
-            domains = all_domains[event]
-            if set(free_cases) & set(domains):
-                return True
-
-        return False
-
     def __call__(self, events, domains, assignments, forwardcheck=False):
         data = self._data
         # buf = self._buf
@@ -88,26 +68,6 @@ class Response(BaseEventConstraint):
         self._start_event = start_event
         self._case_status = {}
 
-
-    def has_available_solutions(self, all_domains, case_status, events, other_event):
-        if not isinstance(events, list):
-            events = [events]
-        # cases yet without 'e2' or 'e'
-        # free_cases = [c for c,v in case_status.items() if case_status[c] and other_event not in case_status[c]]
-        free_cases = []
-        for case, pairs in case_status.items():
-            for pair in pairs:
-                if other_event not in pair:
-                    free_cases.append(case)
-                    break
-
-        # check if there are events that can be assigned to free cases
-        for event in events:
-            domains = all_domains[event]
-            if set(free_cases) & set(domains):
-                return True
-
-        return False
 
     def __call__(self, events, domains, assignments, forwardcheck=False):
         data = self._data
@@ -195,51 +155,6 @@ class ChainResponse(BaseEventConstraint):
         self._start_event = start_event
         self._case_status = {}
 
-
-    # def clean_struct(self, assignments, case_status):
-    #     assigned_events = list(assignments.keys())[:-1]
-    #
-    #     for k, v in deepcopy(case_status).items():
-    #         for a, b in v.items():
-    #             if a not in assigned_events:
-    #                 self._case_status[k][a] = None
-    #             elif b not in assigned_events:
-    #                 self._case_status[k][a] = False
-    #
-    #     return self.strip(case_status)
-    #
-    #
-    # def has_available_solutions(self, all_domains, case_status, events, other_event = None):
-    #     if not isinstance(events, list):
-    #         events = [events]
-    #
-    #     left_cases = [c for c, v in case_status.items() if case_status[c] and False in case_status[c].values()]
-    #     arr = []
-    #     for event in events:
-    #         domains = all_domains[event]
-    #         if set(left_cases) & set(domains):
-    #             arr.append(event)
-    #     return arr
-
-    def has_available_solutions(self, all_domains, case_status, events, other_event):
-        if not isinstance(events, list):
-            events = [events]
-        # cases yet without 'e2' or 'e'
-        # free_cases = [c for c,v in case_status.items() if case_status[c] and other_event not in case_status[c]]
-        free_cases = []
-        for case, pairs in case_status.items():
-            for pair in pairs:
-                if other_event not in pair:
-                    free_cases.append(case)
-                    break
-
-        # check if there are events that can be assigned to free cases
-        for event in events:
-            domains = all_domains[event]
-            if set(free_cases) & set(domains):
-                return True
-
-        return False
 
     def __call__(self, events, domains, assignments, forwardcheck=False):
         data = self._data
@@ -358,25 +273,6 @@ class AlternateResponse(BaseEventConstraint):
         self._start_event = start_event
         self._case_status = {}
 
-    def has_available_solutions(self, all_domains, case_status, events, other_event):
-        if not isinstance(events, list):
-            events = [events]
-        # cases yet without 'e2' or 'e'
-        # free_cases = [c for c,v in case_status.items() if case_status[c] and other_event not in case_status[c]]
-        free_cases = []
-        for case, pairs in case_status.items():
-            for pair in pairs:
-                if other_event not in pair:
-                    free_cases.append(case)
-                    break
-
-        # check if there are events that can be assigned to free cases
-        for event in events:
-            domains = all_domains[event]
-            if set(free_cases) & set(domains):
-                return True
-
-        return False
 
     def __call__(self, events, domains, assignments, forwardcheck=False):
         data = self._data
