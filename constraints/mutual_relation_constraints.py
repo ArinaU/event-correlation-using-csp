@@ -35,9 +35,9 @@ class Coexistence(BaseEventConstraint):
                 if target_event:
                     target_event.setdefault('e', []).append(curr_id)
                     return True
-                else:
-                    if self.has_available_solutions(domains, self._case_status, curr_id, 'e'):
-                        return False
+
+            if self.has_available_solutions(domains, self._case_status, curr_id, 'e'):
+                return False
             self._case_status[curr_case].append({'e': [curr_id]})
         # if C
         elif data[curr_id][required_attr2] == required_value2:
@@ -47,10 +47,9 @@ class Coexistence(BaseEventConstraint):
                 if target_event:
                     target_event.setdefault('e2', []).append(curr_id)
                     return True
-                else:
-                    if self.has_available_solutions(domains, self._case_status, curr_id, 'e2'):
-                        return False
-                self._case_status[curr_case].append({'e2': [curr_id]})
+            if self.has_available_solutions(domains, self._case_status, curr_id, 'e2'):
+                return False
+            self._case_status[curr_case].append({'e2': [curr_id]})
 
         return True
 
