@@ -4,14 +4,14 @@ from copy import deepcopy
 
 class BaseEventConstraint(Constraint):
 
-    def has_available_solutions(self, domains, case_status, events, target_event):
+    def has_available_solutions(self, domains, case_status, events, target_event_type):
         if not isinstance(events, list):
             events = [events]
         # cases yet without 'e2' or 'e'
         free_cases = []
         for case, pairs in case_status.items():
             for pair in pairs:
-                if target_event not in pair:
+                if target_event_type not in pair:
                     free_cases.append(case)
                     break
 
