@@ -8,17 +8,17 @@ class BaseEventConstraint(Constraint):
         if not isinstance(events, list):
             events = [events]
         # cases yet without 'e2' or 'e'
-        free_cases = []
+        available_cases = []
         for case, pairs in case_status.items():
             for pair in pairs:
                 if target_event_type not in pair:
-                    free_cases.append(case)
+                    available_cases.append(case)
                     break
 
         # check if there are events that can be assigned to free cases
         for event in events:
             event_domains = domains[event]
-            if set(free_cases) & set(domains):
+            if set(available_cases) & set(event_domains):
                 return True
 
         return False
