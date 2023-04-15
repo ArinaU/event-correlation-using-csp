@@ -1,6 +1,6 @@
 
 
-class LogToLogMeasure():
+class LogToLogMeasure:
     def __init__(self, data, assigned_cases, case_name = 'Case', start_event = None):
         self._data = data
         self._assigned_cases = assigned_cases
