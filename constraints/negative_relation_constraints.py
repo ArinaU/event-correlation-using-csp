@@ -30,14 +30,14 @@ class NotCoexistence(BaseEventConstraint):
 
         # if B
         if data[curr_id][required_attr] == required_value:
-            not_target_event = self.find_single_event(curr_case, 'e2')
+            not_target_event = self.find_single_target_event(curr_case, 'e2')
             if not_target_event:
                 return False
 
             case_status[curr_case].append({'e': curr_id})
         # if C
         elif data[curr_id][required_attr2] == required_value2:
-            not_target_event = self.find_single_event(curr_case, 'e')
+            not_target_event = self.find_single_target_event(curr_case, 'e')
             if not_target_event:
                 return False
 
@@ -77,7 +77,7 @@ class NotSuccession(BaseEventConstraint):
             case_status[curr_case].append({'e': curr_id})
         # if C
         elif data[curr_id][required_attr2] == required_value2:
-            not_target_event = self.find_single_event(curr_case, 'e')
+            not_target_event = self.find_single_target_event(curr_case, 'e')
             if not_target_event:
                 return False
             case_status[curr_case].append({'e2': curr_id})

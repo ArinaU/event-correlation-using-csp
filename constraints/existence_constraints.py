@@ -52,7 +52,7 @@ class Existence(BaseEventConstraint):
         curr_id = list(assignments)[-1]
         curr_case = assignments[curr_id]
 
-        case_status = self.clean_struct(assignments, self._case_status)
+        case_status = self.clean_struct(assignments, case_status)
 
         if not case_status.get(curr_case, None):
             case_status[curr_case] = []

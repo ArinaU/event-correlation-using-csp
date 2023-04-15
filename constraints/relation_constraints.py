@@ -35,7 +35,7 @@ class RespondedExistence(BaseEventConstraint):
 
         # if B
         if data[curr_id][required_attr] == required_value:
-            target_event = self.find_single_event(curr_case, 'e2')
+            target_event = self.find_single_target_event(curr_case, 'e2')
             if target_event:
                 target_event['e'] = curr_id
             else:
@@ -46,7 +46,7 @@ class RespondedExistence(BaseEventConstraint):
         # if C
         # A,C,B,A,A,B,C,C,B
         elif data[curr_id][required_attr2] == required_value2:
-            target_event = self.find_single_event(curr_case, 'e')
+            target_event = self.find_single_target_event(curr_case, 'e')
             if target_event:
                 target_event['e2'] = curr_id
             else:
@@ -91,14 +91,14 @@ class Response(BaseEventConstraint):
 
         if data[curr_id][required_attr] == required_value:
             # pair where there's no 'e2'
-            if self.find_pairs_with_event(curr_case, 'e2'):
+            if self.find_pairs_with_target_event(curr_case, 'e2'):
                 return False
             else:
                 case_status[curr_case].append({'e': curr_id})
         # if C
         # A,C,A,B,C,C,A,B
         elif data[curr_id][required_attr2] == required_value2:
-            target_event = self.find_single_event(curr_case, 'e')
+            target_event = self.find_single_target_event(curr_case, 'e')
             if target_event:
                 target_event['e2'] = curr_id
             else:
@@ -141,7 +141,7 @@ class Precedence(BaseEventConstraint):
             case_status[curr_case].append({'e': curr_id})
         # if C
         elif data[curr_id][required_attr2] == required_value2:
-            target_event = self.find_single_event(curr_case, 'e')
+            target_event = self.find_single_target_event(curr_case, 'e')
             if target_event:
                 target_event['e2'] = curr_id
             else:
@@ -214,14 +214,14 @@ class ChainResponse(BaseEventConstraint):
             case_status[curr_case].append({'e': curr_id})
         # if C
         elif data[curr_id][required_attr2] == required_value2:
-            target_event = self.find_single_event(curr_case, 'e')
+            target_event = self.find_single_target_event(curr_case, 'e')
             if target_event:
                 target_event['e2'] = curr_id
             else:
                 if self.has_available_solutions(domains, case_status, curr_id, 'e2'):
                     return False
         else:
-            if self.find_single_event(curr_case, 'e'):
+            if self.find_single_target_event(curr_case, 'e'):
                 return False
 
         return True
@@ -300,13 +300,13 @@ class AlternateResponse(BaseEventConstraint):
 
         # if B
         if data[curr_id][required_attr] == required_value:
-            not_target_event = self.find_single_event(curr_case, 'e')
+            not_target_event = self.find_single_target_event(curr_case, 'e')
             if not_target_event:
                 return False
             case_status[curr_case].append({'e': curr_id})
         # if C
         elif data[curr_id][required_attr2] == required_value2:
-            target_event = self.find_single_event(curr_case, 'e')
+            target_event = self.find_single_target_event(curr_case, 'e')
             if target_event:
                 target_event['e2'] = curr_id
             else:

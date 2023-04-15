@@ -30,9 +30,9 @@ class Coexistence(BaseEventConstraint):
 
         # if B
         if data[curr_id][required_attr] == required_value:
-            pairs = self.find_pairs_with_event(curr_case, 'e2')
+            pairs = self.find_pairs_with_target_event(curr_case, 'e2')
             if pairs:
-                target_event = self.find_single_event(curr_case, 'e2', pairs)
+                target_event = self.find_single_target_event(curr_case, 'e2', pairs)
                 if target_event:
                     target_event.setdefault('e', []).append(curr_id)
                     return True
@@ -42,9 +42,9 @@ class Coexistence(BaseEventConstraint):
             case_status[curr_case].append({'e': [curr_id]})
         # if C
         elif data[curr_id][required_attr2] == required_value2:
-            pairs = self.find_pairs_with_event(curr_case, 'e')
+            pairs = self.find_pairs_with_target_event(curr_case, 'e')
             if pairs:
-                target_event = self.find_single_event(curr_case, 'e', pairs)
+                target_event = self.find_single_target_event(curr_case, 'e', pairs)
                 if target_event:
                     target_event.setdefault('e2', []).append(curr_id)
                     return True
