@@ -76,7 +76,7 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
 
     # If A occurs, then B occurs: <B, C, A, A, C>, <B, C, C> NOT: <A, C, C>
     # If B occurs, then C occurs
-    def test_responded_existence_with_absence(self):
+    def test_responded_existence(self):
         data = self.generate_log('A,C,B,A,A,B,C,C,B')
 
         constraints = [
@@ -108,7 +108,8 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
         expected_result = {1: 'Case1', 2: 'Case1', 3: 'Case1' }
         self.assertEqual(cases, expected_result, "Incorrect cases")
 
-    def test_responded_existence_with_abrupted_event_log(self):
+    def test_responded_existence3(self):
+        # abrupted event log
         data = self.generate_log('A,A,B')
 
         constraints = [
@@ -122,6 +123,23 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
         cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
 
         expected_result = {1: 'Case1', 2: 'Case2', 3: 'Case1'}
+        self.assertEqual(cases, expected_result, "Incorrect cases")
+
+    def test_responded_existence4(self):
+        # abrupted event log
+        data = self.generate_log('A,B,A,C,C,B')
+
+        constraints = [
+            {'constraint': 'RespondedExistence',
+             'e': {'attr': 'Activity', 'value': 'B'},
+             'e2': {'attr': 'Activity', 'value': 'C'}},
+            {'constraint': 'Absence',
+             'e': {'attr': 'Activity', 'value': 'B'}}
+        ]
+
+        cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
+
+        expected_result = {1: 'Case1', 2: 'Case1', 3: 'Case2', 4: 'Case1', 5: 'Case2', 6: 'Case2'}
         self.assertEqual(cases, expected_result, "Incorrect cases")
 
 
