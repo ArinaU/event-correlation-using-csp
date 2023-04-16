@@ -34,8 +34,8 @@ class Existence(BaseEventConstraint):
 
     def find_cases(self, events, domains):
         required_attr = self._required_event['attr']
-
         cases = []
+
         for event in events:
             if self._data[event][required_attr] == self._start_event['value']:
                 cases.append(domains[event][0])
@@ -46,12 +46,6 @@ class Existence(BaseEventConstraint):
         required_attr = self._required_event['attr']
         required_value = self._required_event['value']
         data = self._data
-
-        # all_cases = []
-        # for k, v in data.items():
-        #     if v[self._start_event['attr']] == self._start_event['value']:
-        #         all_cases.append(domains[k][0])
-
         all_cases = self.find_cases(events, domains)
 
         for event in events:
@@ -84,37 +78,9 @@ class Existence(BaseEventConstraint):
 
         # if required element
         if data[curr_id][required_attr] == required_value:
-            # # if was before
-            # if not case_status[curr_case]:
-            #
-            #     count = 0
-            #     # how many cases in total
-            #     max_cases = [k for k, v in data.items() if v[self._start_event['attr']] == self._start_event['value']]
-            #     unassigned_cases = len(max_cases) - len(case_status)
-            #     for event in events:
-            #         if event not in assignments and data[event][required_attr] == required_value:
-            #             if count < unassigned_cases:
-            #                 domain = domains[event]
-            #                 for value in domain[:]:
-            #                     if value in case_status:
-            #                         domain.hideValue(value)
-            #                         domain.resetState()
-            #                 count += 1
 
             if case_status[curr_case]:
-
                 left_cases = self.find_cases(events[curr_id:], domains)
-
-                # # How many cases left
-                # left_cases = []
-                # for event in events[curr_id:]:
-                #     if data[event][required_attr] == self._start_event['value']:
-                #         left_cases.append(domains[event][0])
-
-                # 1 2 3 4 5 6 7 8
-                # A,A,B,B,B,A,B,B
-                # 1 2 1 2 1 3 3 1
-
                 for event in events[curr_id:]:
                     if left_cases:
                         # if required event
