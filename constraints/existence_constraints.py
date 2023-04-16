@@ -35,7 +35,6 @@ class Existence(BaseEventConstraint):
     def find_cases(self, events, domains):
         required_attr = self._required_event['attr']
         cases = []
-
         for event in events:
             if self._data[event][required_attr] == self._start_event['value']:
                 cases.append(domains[event][0])
@@ -61,7 +60,6 @@ class Existence(BaseEventConstraint):
             else:
                 break
 
-
     def __call__(self, events, domains, assignments, forwardcheck=False):
         data = self._data
         case_status = self._case_status
@@ -78,7 +76,7 @@ class Existence(BaseEventConstraint):
 
         # if required element
         if data[curr_id][required_attr] == required_value:
-
+            # if assigned to the existing case, check that enough req events left
             if case_status[curr_case]:
                 left_cases = self.find_cases(events[curr_id:], domains)
                 for event in events[curr_id:]:
