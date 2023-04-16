@@ -71,9 +71,9 @@ class EventCorrelationEngine:
             ev = const['e']
             ev2 = const.get('e2')
             if ev2:
-                problem.addConstraint(method(datadict, ev, ev2, self._start_event))
+                problem.addConstraint(method(datadict, self._start_event, ev, ev2))
             else:
-                problem.addConstraint(method(datadict, ev, self._start_event))
+                problem.addConstraint(method(datadict, self._start_event, ev))
 
         solutions = problem.getSolution()
         return solutions

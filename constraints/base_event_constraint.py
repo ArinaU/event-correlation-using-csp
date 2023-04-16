@@ -3,6 +3,12 @@ from copy import deepcopy
 
 
 class BaseEventConstraint(Constraint):
+    def __init__(self, data, start_event, required_event, required_event2=None):
+        self._data = data
+        self._required_event = required_event
+        self._required_event2 = required_event2
+        self._start_event = start_event
+        self._case_status = {}
 
     def has_available_solutions(self, domains, case_status, events, target_event_type):
         if not isinstance(events, list):

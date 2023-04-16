@@ -7,15 +7,6 @@ from copy import deepcopy
 # If A occurs, then B occurs: <B, C, A, A, C>, <B, C, C> NOT: <A, C, C>
 class RespondedExistence(BaseEventConstraint):
 
-    def __init__(self, data, required_event, required_event2, start_event = None):
-        self._data = data
-        self._required_event = required_event
-        self._required_event2 = required_event2
-        self._start_event = start_event
-        self._case_status = {}
-        # self._buf = {}
-
-
     def __call__(self, events, domains, assignments, forwardcheck=False):
         data = self._data
         case_status = self._case_status
@@ -61,13 +52,6 @@ class RespondedExistence(BaseEventConstraint):
 
 # If A occurs, then B occurs after A <C, A, A, C, B>, <B, C, C>
 class Response(BaseEventConstraint):
-    def __init__(self, data, required_event, required_event2, start_event = None):
-        self._data = data
-        self._required_event = required_event
-        self._required_event2 = required_event2
-        self._start_event = start_event
-        self._case_status = {}
-
 
     def __call__(self, events, domains, assignments, forwardcheck=False):
         data = self._data
@@ -113,12 +97,6 @@ class Response(BaseEventConstraint):
 # B occurs only if preceded by A: <C, A, C, B, B>, <A, C, C>
 # C occurs only if preceded by B
 class Precedence(BaseEventConstraint):
-    def __init__(self, data, required_event, required_event2, start_event = None):
-        self._data = data
-        self._required_event = required_event
-        self._required_event2 = required_event2
-        self._start_event = start_event
-        self._case_status = {}
 
     def __call__(self, events, domains, assignments, forwardcheck=False):
         data = self._data
@@ -153,14 +131,6 @@ class Precedence(BaseEventConstraint):
 # If A occurs, then B occurs immediately after A <A, B, B>, <A, B, C, A, B>
 class ChainResponse(BaseEventConstraint):
     lock = {}
-
-    def __init__(self, data, required_event, required_event2, start_event = None):
-        self._data = data
-        self._required_event = required_event
-        self._required_event2 = required_event2
-        self._start_event = start_event
-        self._case_status = {}
-
 
     def __call__(self, events, domains, assignments, forwardcheck=False):
         data = self._data
@@ -229,13 +199,6 @@ class ChainResponse(BaseEventConstraint):
 
 
 class ChainPrecedence(BaseEventConstraint):
-    def __init__(self, data, required_event, required_event2, start_event = None):
-        self._data = data
-        self._required_event = required_event
-        self._required_event2 = required_event2
-        self._start_event = start_event
-        self._case_status = {}
-
 
     # each time B occurs, A immediately beforehand
     def __call__(self, events, domains, assignments, forwardcheck=False):
@@ -274,13 +237,6 @@ class ChainPrecedence(BaseEventConstraint):
 # If A occurs, then B occurs afterwards, before A recurs: <A, B, C, A, C, B>, <A, B, B, A, B>
 # After each activity A at least one activity B is executed
 class AlternateResponse(BaseEventConstraint):
-    def __init__(self, data, required_event, required_event2, start_event = None):
-        self._data = data
-        self._required_event = required_event
-        self._required_event2 = required_event2
-        self._start_event = start_event
-        self._case_status = {}
-
 
     def __call__(self, events, domains, assignments, forwardcheck=False):
         data = self._data
@@ -323,12 +279,6 @@ class AlternateResponse(BaseEventConstraint):
 # Cannot be: <A, C, A, B, B>, <A, B, C, B>
 # After each activity A at least one activity B is executed
 class AlternatePrecedence(BaseEventConstraint):
-    def __init__(self, data, required_event, required_event2, start_event = None):
-        self._data = data
-        self._required_event = required_event
-        self._required_event2 = required_event2
-        self._start_event = start_event
-        self._case_status = {}
 
     def __call__(self, events, domains, assignments, forwardcheck=False):
         data = self._data
