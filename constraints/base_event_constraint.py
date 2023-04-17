@@ -9,10 +9,20 @@ class BaseEventConstraint(Constraint):
         self._required_event2 = required_event2
         self._start_event = start_event
         self._case_status = {}
+        self._buf = {}
 
-    def has_available_solutions(self, domains, case_status, events, target_event_type):
-        if not isinstance(events, list):
-            events = [events]
+    def find_cases(self, events, domains):
+        required_attr = self._required_event['attr']
+        cases = []
+        for event in events:
+            if self._data[event][required_attr] == self._start_event['value']:
+                cases.append(domains[event][0])
+
+        return cases
+
+    def has_available_solutions(self, domains, case_status, event, target_event_type):
+        # if not isinstance(events, list):
+        #     events = [events]
         # cases yet without 'e2' or 'e'
         available_cases = []
         for case, pairs in case_status.items():
@@ -22,14 +32,14 @@ class BaseEventConstraint(Constraint):
                     break
 
         # check if there are events that can be assigned to free cases
-        for event in events:
-            event_domains = domains[event]
-            if set(available_cases) & set(event_domains):
-                return True
+        event_domains = domains[event]
+        if set(available_cases) & set(event_domains):
+            return True
 
         return False
 
-    def find_pairs_with_target_event(self, curr_case, target_event):
+
+    def find_occurrences_of_target_event(self, curr_case, target_event):
         pairs = []
         for pair in self._case_status[curr_case]:
             if target_event in pair:

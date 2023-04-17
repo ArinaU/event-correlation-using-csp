@@ -32,15 +32,6 @@ class Absence(BaseEventConstraint):
 # A occurs at least once
 class Existence(BaseEventConstraint):
 
-    def find_cases(self, events, domains):
-        required_attr = self._required_event['attr']
-        cases = []
-        for event in events:
-            if self._data[event][required_attr] == self._start_event['value']:
-                cases.append(domains[event][0])
-
-        return cases
-
     def preProcess(self, events, domains, constraints, vconstraints):
         required_attr = self._required_event['attr']
         required_value = self._required_event['value']
