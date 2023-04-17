@@ -83,7 +83,7 @@ class Existence(BaseEventConstraint):
                 if left_cases:
                     return False
 
-        case_status[curr_case].append(curr_id)
+            case_status[curr_case].append(curr_id)
 
         # check at the last event
         if len(assignments) == len(events):

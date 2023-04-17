@@ -76,12 +76,12 @@ class BaseEventConstraint(Constraint):
                         new_dict = self.clean_struct(assignments, item)
                         if new_dict:
                             new_list.append(new_dict)
-                    elif isinstance(item, int) and item < last_key:
+                    elif isinstance(item, int) and item in assignments and item != last_key:
                         new_list.append(item)
                 struct[key] = new_list
                 if not struct[key]:
                     del struct[key]
-            elif isinstance(value, int) and value >= last_key:
+            elif isinstance(value, int) and (value not in assignments or value == last_key):
                 del struct[key]
 
         return struct

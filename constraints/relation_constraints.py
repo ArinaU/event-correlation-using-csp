@@ -7,6 +7,23 @@ from copy import deepcopy
 # If A occurs, then B occurs: <B, C, A, A, C>, <B, C, C> NOT: <A, C, C>
 class RespondedExistence(BaseEventConstraint):
 
+    def forward_check(self, events, domains, assignments, required_attr, required_value):
+        data = self._data
+        curr_id = list(assignments)[-1]
+        curr_case = assignments[curr_id]
+
+        for event in events:
+            # if another element
+            if data[event][required_attr] == required_value:
+                domain = domains[event]
+                if curr_case in domain:
+                    for value in domain[:]:
+                        if value != curr_case:
+                            domain.hideValue(value)
+                    return True
+        else:
+            return False
+
     def __call__(self, events, domains, assignments, forwardcheck=False):
         data = self._data
         case_status = self._case_status
@@ -25,47 +42,22 @@ class RespondedExistence(BaseEventConstraint):
         if not case_status.get(curr_case, None):
             case_status[curr_case] = []
 
-        # # if B
-        # if data[curr_id][required_attr] == required_value:
-        #     self._case_status[curr_case].setdefault('e', []).append(curr_id)
-        # # if C
-        # elif data[curr_id][required_attr2] == required_value2:
-        #     # if case_status[curr_case].get('e2'):
-        #     if 'e2' in self._case_status[curr_case]:  # if C already exists
-        #         if self.find_solutions(domains, self._case_status, [curr_id], 'e2'):
-        #             return False
-        #         else:
-        #             buf.setdefault('e2', []).append(curr_id)
-        #     else:
-        #         self._case_status[curr_case].setdefault('e2', []).append(curr_id)
-        #
-        # if buf:
-        #     if self.find_solutions(domains, self._case_status, [curr_id], 'e2'):
-        #         return False
-
         # 1 2 3 4 5 6 7 8 9
         # A,C,B,A,A,B,C,C,B
         # 1 1 1 2 3 2 2 3 3
-        # 1 1 1 2 3 2 1 1 3
 
         # if B
         if data[curr_id][required_attr] == required_value:
+            if not self.find_occurrences_of_target_event(curr_case, 'e2'):
+                # if no events left
+                if not self.forward_check(events[curr_id:], domains, assignments, required_attr2, required_value2):
+                    if self.has_available_solutions(domains, case_status, curr_id, 'e'):
+                        return False
+
             case_status[curr_case].append({'e': curr_id})
         # if C
         elif data[curr_id][required_attr2] == required_value2:
-            occurrences = [e['e2'] for e in case_status[curr_case] if 'e2' in e]
-            # if already exists
-            if occurrences:
-                if self.has_available_solutions(domains, case_status, curr_id, 'e2'):
-                    return False
-                else:
-                    buf.setdefault('e2', []).append(curr_id)
-            else:
-                case_status[curr_case].append({'e2': curr_id})
-
-        if buf:
-            if self.has_available_solutions(domains, case_status, curr_id, 'e2'):
-                return False
+            case_status[curr_case].append({'e2': curr_id})
 
         return True
 
@@ -73,6 +65,23 @@ class RespondedExistence(BaseEventConstraint):
 
 # If A occurs, then B occurs after A <C, A, A, C, B>, <B, C, C>
 class Response(BaseEventConstraint):
+
+    def forward_check(self, events, domains, assignments, required_attr, required_value):
+        data = self._data
+        curr_id = list(assignments)[-1]
+        curr_case = assignments[curr_id]
+
+        for event in events:
+            # if another element
+            if data[event][required_attr] == required_value:
+                domain = domains[event]
+                if curr_case in domain:
+                    for value in domain[:]:
+                        if value != curr_case:
+                            domain.hideValue(value)
+                    return True
+        else:
+            return False
 
     def __call__(self, events, domains, assignments, forwardcheck=False):
         data = self._data
@@ -90,27 +99,43 @@ class Response(BaseEventConstraint):
         if not case_status.get(curr_case, None):
             case_status[curr_case] = []
 
-        # 1 2 3 4 5 6 7 8
-        # A,C,A,B,C,C,A,B
-        # 1 1 2 2 2 1 3 3
+        # if data[curr_id][required_attr] == required_value:
+        #     # pair where there's no 'e2'
+        #     if self.find_occurrences_of_target_event(curr_case, 'e2'):
+        #         return False
+        #     else:
+        #         case_status[curr_case].append({'e': curr_id})
+        # # if C
+        # # A,C,A,B,C,C,A,B
+        # elif data[curr_id][required_attr2] == required_value2:
+        #     target_event = self.find_single_target_event(curr_case, 'e')
+        #     if target_event:
+        #         target_event['e2'] = curr_id
+        #     else:
+        #         if self.has_available_solutions(domains, case_status, curr_id, 'e2'):
+        #             return False
+        #         else:
+        #             case_status[curr_case].append({'e2': curr_id})
 
+            # 1 2 3 4 5 6 7 8
+            # A,C,A,B,C,C,A,B
+            # 1 1 2 2 2 1 3 3
+
+        # if B
         if data[curr_id][required_attr] == required_value:
-            # pair where there's no 'e2'
+            # if C was before
             if self.find_occurrences_of_target_event(curr_case, 'e2'):
                 return False
             else:
+                if not self.forward_check(events[curr_id:], domains, assignments, required_attr2, required_value2):
+                    if self.has_available_solutions(domains, case_status, curr_id, 'e'):
+                        return False
+
                 case_status[curr_case].append({'e': curr_id})
+
         # if C
-        # A,C,A,B,C,C,A,B
         elif data[curr_id][required_attr2] == required_value2:
-            target_event = self.find_single_target_event(curr_case, 'e')
-            if target_event:
-                target_event['e2'] = curr_id
-            else:
-                if self.has_available_solutions(domains, case_status, curr_id, 'e2'):
-                    return False
-                else:
-                    case_status[curr_case].append({'e2': curr_id})
+            case_status[curr_case].append({'e2': curr_id})
 
         return True
 
@@ -151,7 +176,32 @@ class Precedence(BaseEventConstraint):
 
 # If A occurs, then B occurs immediately after A <A, B, B>, <A, B, C, A, B>
 class ChainResponse(BaseEventConstraint):
-    lock = {}
+
+    def forward_check(self, events, domains, assignments, required_attr, required_value):
+        data = self._data
+        curr_id = list(assignments)[-1]
+        curr_case = assignments[curr_id]
+
+        for event in events:
+            # if 2nd element next
+            if data[event][required_attr] == required_value:
+                domain = domains[event]
+                if curr_case in domain:
+                    for value in domain[:]:
+                        if value != curr_case:
+                            domain.hideValue(value)
+                    return True
+            # if not
+            else:
+                domain = domains[event]
+                if curr_case in domain:
+                    for value in domain[:]:
+                        if value == curr_case:
+                            domain.hideValue(value)
+                    return True
+        else:
+            return False
+
 
     def __call__(self, events, domains, assignments, forwardcheck=False):
         data = self._data
@@ -164,56 +214,38 @@ class ChainResponse(BaseEventConstraint):
         curr_id = list(assignments)[-1]
         curr_case = assignments[curr_id]
 
-        # if ChainResponse.lock.get(curr_id) == self:
-        #     ChainResponse.lock[curr_id] = None
-
         case_status = self.clean_struct(assignments, case_status)
 
         if not case_status.get(curr_case, None):
             case_status[curr_case] = []
 
-        # case_events = sorted([e for e, c in assignments.items() if c == curr_case])
-        # last_id = case_events[-2] if len(case_events) > 1 else None
+        # 1 2 3 4 5 6 7 8
+        # A,A,G,A,F,E,G,G
+        # 1 2 1 3 2 3 2 3
 
-        # # if curr element is C
-        # if data[curr_id][required_attr2] == required_value2:
-        #     # if available B is found
-        #     if last_id and data[last_id][required_attr] == required_value:
-        #         case_status[curr_case][last_id] = curr_id
-        #         ChainResponse.lock[curr_id] = self
-        #     else:
-        #         # check other cases
-        #         if not ChainResponse.lock.get(curr_id) and self.has_available_solutions(domains, case_status,
-        #                                                                                 curr_id, ):
-        #             return False
-        #
-        # else: # if B or any other Activity
-        #     if False in case_status[curr_case].values():
-        #         return False
-        #
-        #     # if curr element is B
-        #     if data[curr_id][required_attr] == required_value:
-        #         case_status[curr_case][curr_id] = False
-
-        # if curr element is B
-        # if B
-
+        # ChainResp(B, C) Absence(D, B)
+        # 1 2 3 4 5 6 7 8 9 10
         # A,B,A,D,C,B,A,D,C,C
+        # 1 1 2 2 1 2 3 1 2 1
 
         # if B
         if data[curr_id][required_attr] == required_value:
+            if not self.forward_check(events[curr_id:], domains, assignments, required_attr2, required_value2):
+                return False
             case_status[curr_case].append({'e': curr_id})
         # if C
         elif data[curr_id][required_attr2] == required_value2:
             target_event = self.find_single_target_event(curr_case, 'e')
             if target_event:
                 target_event['e2'] = curr_id
-            else:
-                if self.has_available_solutions(domains, case_status, curr_id, 'e2'):
-                    return False
         else:
-            if self.find_single_target_event(curr_case, 'e'):
-                return False
+            case_events = [e for e, c in assignments.items() if c == curr_case and e < curr_id]
+            if case_events:
+                prev_id = case_events[-1]
+                # if prev event was not B
+                if data[prev_id][required_attr] == required_value:
+                    return False
+
 
         return True
 
