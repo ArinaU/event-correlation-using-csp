@@ -14,17 +14,17 @@ class TestExistenceConstraints(unittest.TestCase, EventLogGenerationMixin):
         self.start_event = {'attr': 'Activity', 'value': 'A'}
         self.required_event = {'attr': 'Activity', 'value': 'B'}
 
-    def test_absence_with_1_req_event(self):
+    def test_absence(self):
         data = self.generate_log('A,B,A,B,C')
         constraints = [{'constraint': 'Absence',
                              'e': {'attr': 'Activity', 'value': 'B'}}]
 
-        result = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
+        cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
 
         expected_result = {1: 'Case1', 2: 'Case1', 3: 'Case2', 4: 'Case2', 5: 'Case1'}
-        self.assertEqual(result, expected_result, "Incorrect cases")
+        self.assertEqual(expected_result, cases, "Incorrect cases")
 
-    def test_absence_with_2_req_events(self):
+    def test_absence2(self):
         data = self.generate_log('A,B,A,B,B')
         constraints = [{'constraint': 'Absence',
                              'e': {'attr': 'Activity', 'value': 'B'}}]
@@ -32,34 +32,34 @@ class TestExistenceConstraints(unittest.TestCase, EventLogGenerationMixin):
         cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
         self.assertIsNone(cases, "Incorrect cases")
 
-    def test_absence_with_no_req_events_for_1_case(self):
+    def test_absence3(self):
         data = self.generate_log('A,B,A')
         constraints = [{'constraint': 'Absence',
                              'e': {'attr': 'Activity', 'value': 'B'}}]
 
         cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
         expected_result = {1: 'Case1', 2: 'Case1', 3: 'Case2'}
-        self.assertEqual(cases, expected_result, "Incorrect cases")
+        self.assertEqual(expected_result, cases, "Incorrect cases")
 
-    def test_existence_with_1_req_event(self):
+    def test_existence(self):
         data = self.generate_log('A,B,A,B,C')
         constraints = [{'constraint': 'Existence',
                              'e': {'attr': 'Activity', 'value': 'B'}}]
 
         cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
         expected_result = {1: 'Case1', 2: 'Case1', 3: 'Case2', 4: 'Case2', 5: 'Case1'}
-        self.assertEqual(cases, expected_result, "Incorrect cases")
+        self.assertEqual(expected_result, cases, "Incorrect cases")
 
-    def test_existence_with_2_req_events(self):
+    def test_existence2(self):
         data = self.generate_log('A,B,A,B,B,C')
         constraints = [{'constraint': 'Existence',
                              'e': {'attr': 'Activity', 'value': 'B'}}]
 
         cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
         expected_result = {1: 'Case1', 2: 'Case1', 3: 'Case2', 4: 'Case2', 5: 'Case1', 6: 'Case1'}
-        self.assertEqual(cases, expected_result, "Incorrect cases")
+        self.assertEqual(expected_result, cases, "Incorrect cases")
 
-    def test_existence_with_no_req_events_for_1_case(self):
+    def test_existence3(self):
         data = self.generate_log('A,B,A,C')
         constraints = [{'constraint': 'Existence',
                              'e': {'attr': 'Activity', 'value': 'B'}}]
@@ -91,7 +91,7 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
 
         expected_result = {1: 'Case1', 2: 'Case1', 3: 'Case1', 4: 'Case2',
                            5: 'Case3', 6: 'Case2', 7: 'Case2', 8: 'Case3', 9: 'Case3'}
-        self.assertEqual(cases, expected_result, "Incorrect cases")
+        self.assertEqual(expected_result, cases, "Incorrect cases")
 
 
     def test_responded_existence2(self):
@@ -106,7 +106,7 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
         cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
 
         expected_result = {1: 'Case1', 2: 'Case1', 3: 'Case1' }
-        self.assertEqual(cases, expected_result, "Incorrect cases")
+        self.assertEqual(expected_result, cases, "Incorrect cases")
 
     def test_responded_existence3(self):
         # abrupted event log
@@ -123,7 +123,7 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
         cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
 
         expected_result = {1: 'Case1', 2: 'Case2', 3: 'Case1'}
-        self.assertEqual(cases, expected_result, "Incorrect cases")
+        self.assertEqual(expected_result, cases, "Incorrect cases")
 
     def test_responded_existence4(self):
         # abrupted event log
@@ -140,7 +140,7 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
         cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
 
         expected_result = {1: 'Case1', 2: 'Case1', 3: 'Case2', 4: 'Case1', 5: 'Case2', 6: 'Case2'}
-        self.assertEqual(cases, expected_result, "Incorrect cases")
+        self.assertEqual(expected_result, cases, "Incorrect cases")
 
 
     # If B occurs, then C occurs after B
@@ -157,7 +157,7 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
         cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
         expected_result = {1: 'Case1', 2: 'Case1', 3: 'Case2', 4: 'Case2',
                            5: 'Case2', 6: 'Case1', 7: 'Case3', 8: 'Case3'}
-        self.assertEqual(cases, expected_result, "Incorrect cases")
+        self.assertEqual(expected_result, cases, "Incorrect cases")
 
     def test_response2(self):
         data = self.generate_log('A,A,B,B,C,C,A,C')
@@ -172,7 +172,7 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
         cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
         expected_result = {1: 'Case1', 2: 'Case2', 7: 'Case3', 3: 'Case1',
                            4: 'Case2', 5: 'Case1', 6: 'Case2', 8: 'Case3'}
-        self.assertEqual(cases, expected_result, "Incorrect cases")
+        self.assertEqual(expected_result, cases, "Incorrect cases")
 
 
     def test_precedence(self):
@@ -189,7 +189,7 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
         cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
         expected_result = {1: 'Case1', 2: 'Case2', 7: 'Case3', 3: 'Case1',
                            4: 'Case2', 5: 'Case1', 6: 'Case2', 8: 'Case1'}
-        self.assertEqual(cases, expected_result, "Incorrect cases")
+        self.assertEqual(expected_result, cases, "Incorrect cases")
 
     def test_precedence2(self):
         # B should be reassigned for 'Absence'(C) to work
@@ -205,7 +205,7 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
         cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
         expected_result = {1: 'Case1', 2: 'Case2', 5: 'Case3', 3: 'Case1',
                            4: 'Case2', 6: 'Case3', 7: 'Case1', 8: 'Case2', 9: 'Case3'}
-        self.assertEqual(cases, expected_result, "Incorrect cases")
+        self.assertEqual(expected_result, cases, "Incorrect cases")
 
     def test_precedence3(self):
         data = self.generate_log('A,C,C')
@@ -233,7 +233,7 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
 
         cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
         expected_result = {1: 'Case1', 2: 'Case1', 3: 'Case2', 4: 'Case2', 5: 'Case1', 6: 'Case2'}
-        self.assertEqual(cases, expected_result, "Incorrect cases")
+        self.assertEqual(expected_result, cases, "Incorrect cases")
 
 
     def test_chain_response2(self):
@@ -252,7 +252,7 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
         cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
         expected_result = {1: 'Case1', 2: 'Case1', 3: 'Case2', 4: 'Case2', 5: 'Case1',
                            6: 'Case2', 7: 'Case3', 8: 'Case3', 9: 'Case2', 10: 'Case1'}
-        self.assertEqual(cases, expected_result, "Incorrect cases")
+        self.assertEqual(expected_result, cases, "Incorrect cases")
 
 
     def test_chain_response3(self):
@@ -274,7 +274,7 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
         cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
         expected_result = {1: 'Case1', 2: 'Case1', 3: 'Case2', 4: 'Case2',
                            5: 'Case2', 6: 'Case1', 7: 'Case2', 8: 'Case2' }
-        self.assertEqual(cases, expected_result, "Incorrect cases")
+        self.assertEqual(expected_result, cases, "Incorrect cases")
 
 
     # test deadlock when ChainResponse(F, G) and ChainResponse(E, G)
@@ -296,7 +296,7 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
         cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
         expected_result = {1: 'Case1', 2: 'Case2', 3: 'Case1', 4: 'Case3',
                            5: 'Case2', 6: 'Case3', 7: 'Case2', 8: 'Case3' }
-        self.assertEqual(cases, expected_result, "Incorrect cases")
+        self.assertEqual(expected_result, cases, "Incorrect cases")
 
 
     def test_chain_precedence(self):
@@ -312,7 +312,7 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
 
         cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
         expected_result = {1: 'Case1', 2: 'Case2', 3: 'Case1', 4: 'Case2', 5: 'Case1', 6: 'Case2'}
-        self.assertEqual(cases, expected_result, "Incorrect cases")
+        self.assertEqual(expected_result, cases, "Incorrect cases")
 
     def test_chain_precedence2(self):
         data = self.generate_log('A,B,A,D,B,C,D,C')
@@ -330,7 +330,7 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
         cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
         expected_result = {1: 'Case1', 2: 'Case1', 3: 'Case2', 4: 'Case2',
                            5: 'Case2', 6: 'Case1', 7: 'Case1', 8: 'Case2'}
-        self.assertEqual(cases, expected_result, "Incorrect cases")
+        self.assertEqual(expected_result, cases, "Incorrect cases")
 
 
     def test_chain_precedence3(self):
@@ -352,7 +352,7 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
         cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
         expected_result = {1: 'Case1', 2: 'Case1', 3: 'Case2', 4: 'Case2',
                            5: 'Case2', 6: 'Case1', 7: 'Case2', 8: 'Case2' }
-        self.assertEqual(cases, expected_result, "Incorrect cases")
+        self.assertEqual(expected_result, cases, "Incorrect cases")
 
 
     # If B occurs, then C occurs afterwards, before B recurs
@@ -369,7 +369,7 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
         cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
         expected_result = {1: 'Case1', 2: 'Case2', 6: 'Case3', 3: 'Case1',
                            4: 'Case1', 5: 'Case1', 7: 'Case2', 8: 'Case2', 9: 'Case3'}
-        self.assertEqual(cases, expected_result, "Incorrect cases")
+        self.assertEqual(expected_result, cases, "Incorrect cases")
 
     def test_alternate_response(self):
         data = self.generate_log('A,A,B,B,D,C,A,B,C')
@@ -384,7 +384,7 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
         cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
         expected_result = {1: 'Case1', 2: 'Case2', 3: 'Case1', 4: 'Case2',
                            5: 'Case1', 6: 'Case1', 7: 'Case3', 8: 'Case3', 9: 'Case2'}
-        self.assertEqual(cases, expected_result, "Incorrect cases")
+        self.assertEqual(expected_result, cases, "Incorrect cases")
 
     def test_alternate_response2(self):
         data = self.generate_log('A,A,B,B,C')
@@ -396,7 +396,7 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
         ]
         cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
         expected_result = {1: 'Case1', 2: 'Case2', 3: 'Case1', 4: 'Case2', 5: 'Case1'}
-        self.assertEqual(cases, expected_result, "Incorrect cases")
+        self.assertEqual(expected_result, cases, "Incorrect cases")
 
 
     def test_alternate_precedence(self):
@@ -411,7 +411,7 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
         ]
         cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
         expected_result = {1: 'Case1', 2: 'Case2', 3: 'Case1', 4: 'Case2', 5: 'Case1', 6: 'Case2'}
-        self.assertEqual(cases, expected_result, "Incorrect cases")
+        self.assertEqual(expected_result, cases, "Incorrect cases")
 
     def test_alternate_precedence2(self):
         data = self.generate_log('A,B,C,C')
@@ -423,7 +423,7 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
         ]
         cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
         expected_result = None
-        self.assertEqual(cases, expected_result, "Incorrect cases")
+        self.assertEqual(expected_result, cases, "Incorrect cases")
 
     def test_alternate_precedence3(self):
         data = self.generate_log('A,C,C')
@@ -447,7 +447,7 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
 
         cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
         expected_result = {1: 'Case1', 2: 'Case1', 3: 'Case1', 4: 'Case1', 5: 'Case1', 6: 'Case2'}
-        self.assertEqual(cases, expected_result, "Incorrect cases")
+        self.assertEqual(expected_result, cases, "Incorrect cases")
 
     def test_alternate_precedence5(self):
         data = self.generate_log('A,B,B,C,B,C,A,B,C')
@@ -463,7 +463,7 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
         cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
         expected_result = {1: 'Case1', 2: 'Case1', 3: 'Case1', 4: 'Case1',
                            5: 'Case1', 6: 'Case1', 7: 'Case2', 8: 'Case2', 9: 'Case2'}
-        self.assertEqual(cases, expected_result, "Incorrect cases")
+        self.assertEqual(expected_result, cases, "Incorrect cases")
 
 
 class TestNegativeRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
@@ -487,7 +487,7 @@ class TestNegativeRelationConstraints(unittest.TestCase, EventLogGenerationMixin
         cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
 
         expected_result = {1: 'Case1', 2: 'Case2', 3: 'Case3', 4: 'Case1', 5: 'Case2', 6: 'Case3'}
-        self.assertEqual(cases, expected_result, "Incorrect cases")
+        self.assertEqual(expected_result, cases, "Incorrect cases")
 
     def test_not_coexistence2(self):
         data = self.generate_log('A,A,C,B,A,C,B')
@@ -503,7 +503,7 @@ class TestNegativeRelationConstraints(unittest.TestCase, EventLogGenerationMixin
 
         expected_result = {1: 'Case1', 2: 'Case2', 3: 'Case1', 4: 'Case2',
                            5: 'Case3', 6: 'Case3', 7: 'Case2'}
-        self.assertEqual(cases, expected_result, "Incorrect cases")
+        self.assertEqual(expected_result, cases, "Incorrect cases")
 
 
     # B cannot occur after A: [^A]*(A[^B]*)* <B, B, C, A, A>, <B, B, C>, <A, A, C>
@@ -521,7 +521,7 @@ class TestNegativeRelationConstraints(unittest.TestCase, EventLogGenerationMixin
 
         expected_result = {1: 'Case1', 2: 'Case2', 3: 'Case1', 4: 'Case2',
                            5: 'Case3', 6: 'Case3', 7: 'Case3', 8: 'Case3'}
-        self.assertEqual(cases, expected_result, "Incorrect cases")
+        self.assertEqual(expected_result, cases, "Incorrect cases")
 
     def test_not_succession2(self):
         data = self.generate_log('A,A,C,B,C,A,B,C')
@@ -537,7 +537,7 @@ class TestNegativeRelationConstraints(unittest.TestCase, EventLogGenerationMixin
 
         expected_result = {1: 'Case1', 2: 'Case2', 3: 'Case1', 4: 'Case1',
                            5: 'Case2', 6: 'Case3', 7: 'Case2', 8: 'Case3'}
-        self.assertEqual(cases, expected_result, "Incorrect cases")
+        self.assertEqual(expected_result, cases, "Incorrect cases")
 
 
     # A and B occur if and only if no B occurs immediately after A
@@ -556,7 +556,7 @@ class TestNegativeRelationConstraints(unittest.TestCase, EventLogGenerationMixin
 
         expected_result = {1: 'Case1', 2: 'Case2', 3: 'Case1', 4: 'Case2',
                            5: 'Case3', 6: 'Case1', 7: 'Case2'}
-        self.assertEqual(cases, expected_result, "Incorrect cases")
+        self.assertEqual(expected_result, cases, "Incorrect cases")
 
 
     def test_not_chain_succession2(self):
@@ -572,7 +572,7 @@ class TestNegativeRelationConstraints(unittest.TestCase, EventLogGenerationMixin
 
         expected_result = {1: 'Case1', 2: 'Case2', 3: 'Case1', 4: 'Case1',
                            5: 'Case2', 6: 'Case1', 7: 'Case1'}
-        self.assertEqual(cases, expected_result, "Incorrect cases")
+        self.assertEqual(expected_result, cases, "Incorrect cases")
 
 
 class TestMutualRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
@@ -595,7 +595,7 @@ class TestMutualRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
 
         expected_result = {1: 'Case1', 2: 'Case2', 3: 'Case3', 4: 'Case1',
                            5: 'Case1', 6: 'Case2', 7: 'Case2', 8: 'Case1', 9: 'Case1'}
-        self.assertEqual(cases, expected_result, "Incorrect cases")
+        self.assertEqual(expected_result, cases, "Incorrect cases")
 
 
     # plain simple test, 2 B's and 1 C
@@ -611,7 +611,7 @@ class TestMutualRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
         cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
 
         expected_result = {1: 'Case1', 2: 'Case2', 3: 'Case3', 4: 'Case1', 5: 'Case1', 6: 'Case1'}
-        self.assertEqual(cases, expected_result, "Incorrect cases")
+        self.assertEqual(expected_result, cases, "Incorrect cases")
 
 
     def test_coexistence3(self):
@@ -626,7 +626,7 @@ class TestMutualRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
         cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
 
         expected_result = {1: 'Case1', 2: 'Case2', 3: 'Case1', 4: 'Case1'}
-        self.assertEqual(cases, expected_result, "Incorrect cases")
+        self.assertEqual(expected_result, cases, "Incorrect cases")
 
 
     def test_coexistence4(self):
@@ -641,7 +641,7 @@ class TestMutualRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
         cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
 
         expected_result = {1: 'Case1', 2: 'Case1', 3: 'Case1', 4: 'Case2', 5: 'Case1'}
-        self.assertEqual(cases, expected_result, "Incorrect cases")
+        self.assertEqual(expected_result, cases, "Incorrect cases")
 
     def test_coexistence5(self):
         data = self.generate_log('A,C,B,A,C')
@@ -655,7 +655,7 @@ class TestMutualRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
         cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
 
         expected_result = {1: 'Case1', 2: 'Case1', 3: 'Case1', 4: 'Case2', 5: 'Case1'}
-        self.assertEqual(cases, expected_result, "Incorrect cases")
+        self.assertEqual(expected_result, cases, "Incorrect cases")
 
     def test_coexistence6(self):
         data = self.generate_log('A,A,B,C,C,A,B,C,B')
@@ -672,7 +672,7 @@ class TestMutualRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
 
         expected_result = {1: 'Case1', 2: 'Case2', 3: 'Case1', 4: 'Case1', 5: 'Case2',
                            6: 'Case3', 7: 'Case2', 8: 'Case3', 9: 'Case3'}
-        self.assertEqual(cases, expected_result, "Incorrect cases")
+        self.assertEqual(expected_result, cases, "Incorrect cases")
 
 
 class TestCompoundConstraints(unittest.TestCase, EventLogGenerationMixin):
@@ -701,7 +701,7 @@ class TestCompoundConstraints(unittest.TestCase, EventLogGenerationMixin):
         expected_result = {1: 'Case1', 2: 'Case2', 5: 'Case3', 7: 'Case4', 8: 'Case5', 3: 'Case1',
                            4: 'Case2', 6: 'Case3', 9: 'Case4', 10: 'Case1', 11: 'Case5',
                            12: 'Case1', 13: 'Case1', 14: 'Case1', 15: 'Case1', 16: 'Case1'}
-        self.assertEqual(cases, expected_result, "Incorrect cases")
+        self.assertEqual(expected_result, cases, "Incorrect cases")
     #
     # def test_all(self):
     #     data = self.generate_log('A,B,A,C,B,C,D,D,F,F,G,G,H,H,I,I,J,J,L,K,L')
@@ -729,7 +729,7 @@ class TestCompoundConstraints(unittest.TestCase, EventLogGenerationMixin):
     #                        13: 'Case4', 14: 'Case5', 15: 'Case4', 16: 'Case1', 17: 'Case5', 18: 'Case1',
     #                        19: 'Case1', 20: 'Case5', 21: 'Case1'
     #                        }
-    #     self.assertEqual(cases, expected_result, "Incorrect cases")
+    #     self.assertEqual(expected_result, cases, "Incorrect cases")
     #
     # def test_all2(self):
     #     data = self.generate_log('A,B,A,C,B,C,D,D,F,F,G,G,H,H,I,I,J,J,L,K,L')
@@ -804,7 +804,7 @@ class TestCompoundConstraints(unittest.TestCase, EventLogGenerationMixin):
     #                        13: 'Case4', 14: 'Case5', 15: 'Case4', 16: 'Case1', 17: 'Case5', 18: 'Case1',
     #                        19: 'Case1', 20: 'Case5', 21: 'Case1'
     #                        }
-    #     self.assertEqual(cases, expected_result, "Incorrect cases")
+    #     self.assertEqual(expected_result, cases, "Incorrect cases")
     #
     # def test_all3(self):
     #     data = self.generate_log("A,A,C,C,B,B,D,D,F,E,G,G")
@@ -849,7 +849,7 @@ class TestCompoundConstraints(unittest.TestCase, EventLogGenerationMixin):
     #
     #     expected_result = {1: 'Case1', 2: 'Case2', 3: 'Case1', 4: 'Case2', 5: 'Case3', 6: 'Case3',
     #                        7: 'Case4', 8: 'Case5', 9: 'Case4', 10: 'Case1', 11: 'Case5', 12: 'Case1'}
-    #     self.assertEqual(cases, expected_result, "Incorrect cases")
+    #     self.assertEqual(expected_result, cases, "Incorrect cases")
     #
     # def test_all4(self):
     #     data = self.generate_log("A,A,C,C,B,B,D,D,F,E,G,G,H,C,B,I,D,C,B,E,D,G,F,H,G,I,C,B,J,L")
@@ -933,7 +933,7 @@ class TestCompoundConstraints(unittest.TestCase, EventLogGenerationMixin):
     #                        19: 'Case1', 20: 'Case5', 21: 'Case1', 22: 'Case4', 23: 'Case5', 24: 'Case4',
     #                        25: 'Case1', 26: 'Case5', 27: 'Case1', 28: 'Case1', 29: 'Case5', 30: 'Case1'}
     #
-    #     self.assertEqual(cases, expected_result, "Incorrect cases")
+    #     self.assertEqual(expected_result, cases, "Incorrect cases")
     #
     #
     # def test_all5(self):
@@ -1023,7 +1023,7 @@ class TestCompoundConstraints(unittest.TestCase, EventLogGenerationMixin):
     #                        43: 'Case1', 44: 'Case5', 45: 'Case1', 46: 'Case1', 47: 'Case5', 48: 'Case1'
     #                        }
     #
-    #     self.assertEqual(cases, expected_result, "Incorrect cases")
+    #     self.assertEqual(expected_result, cases, "Incorrect cases")
 
 
 
