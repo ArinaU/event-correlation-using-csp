@@ -7,6 +7,24 @@ from constraints.base_event_constraint import BaseEventConstraint
 # A occurs at most once
 class Absence(BaseEventConstraint):
 
+    def preProcess(self, events, domains, constraints, vconstraints):
+        required_attr = self._required_event['attr']
+        required_value = self._required_event['value']
+        data = self._data
+        all_cases = self.find_cases(events, domains)
+
+        for event in events:
+            if all_cases:
+                if data[event][required_attr] == required_value:
+                    domain = domains[event]
+                    #iterate over domain of curr event
+                    for case in domain[:]:
+                        if case == all_cases[0]:
+                            domain.hideValue(case)
+                            break
+            else:
+                break
+
     def __call__(self, events, domains, assignments, forwardcheck=False):
         data = self._data
         case_status = self._case_status
