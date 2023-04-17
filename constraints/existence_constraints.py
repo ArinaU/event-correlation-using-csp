@@ -19,9 +19,9 @@ class Absence(BaseEventConstraint):
                     domain = domains[event]
                     #iterate over domain of curr event
                     for case in domain[:]:
-                        if case == all_cases[0]:
+                        if case != all_cases[0]:
                             domain.hideValue(case)
-                            break
+                    all_cases.pop(0)
             else:
                 break
 
@@ -34,6 +34,10 @@ class Absence(BaseEventConstraint):
         curr_case = assignments[curr_id]
 
         case_status = self.clean_struct(assignments, self._case_status)
+
+        # 1 2 3 4 5 6 7 8 9
+        # A,C,B,A,A,B,C,C,B
+        # 1 1 1 2 3 2 1 1 3
 
         if not case_status.get(curr_case, None):
             case_status[curr_case] = {}
