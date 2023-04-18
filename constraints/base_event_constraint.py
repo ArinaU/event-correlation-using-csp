@@ -9,30 +9,47 @@ class BaseEventConstraint(Constraint):
         self._required_event2 = required_event2
         self._start_event = start_event
         self._case_status = {}
-        self._buf = {}
+        self._prev_assignments = {}
+
 
     def find_cases(self, events, domains):
-        required_attr = self._required_event['attr']
+        attr = self._required_event['attr']
         cases = []
         for event in events:
-            if self._data[event][required_attr] == self._start_event['value']:
+            if self._data[event][attr] == self._start_event['value']:
                 cases.append(domains[event][0])
 
         return cases
 
-    def has_available_solutions(self, domains, case_status, event, target_event_type):
+    def has_future_solutions(self, domains, assignments, events, attr, val):
+        curr_case = assignments[list(assignments)[-1]]
+        for event in events:
+            if event not in assignments:
+                if self._data[event][attr] == val:
+                    domain = domains[event]
+                    if curr_case in domain:
+                        return True
+
+
+    def has_available_solutions(self, domains, assignments, case_status, target_event_type):
         # if not isinstance(events, list):
         #     events = [events]
-        # cases yet without 'e2' or 'e'
+        # existing cases yet without 'e2' or 'e'
+
+        curr_id = list(assignments)[-1]
+        curr_case = assignments[curr_id]
+
+        other_event_type = 'e2' if target_event_type == 'e' else 'e'
         available_cases = []
         for case, pairs in case_status.items():
             for pair in pairs:
-                if target_event_type not in pair:
+                if target_event_type not in pair and len(domains[pair[other_event_type]]) > 1:
                     available_cases.append(case)
                     break
 
         # check if there are events that can be assigned to free cases
-        event_domains = domains[event]
+        event_domains = domains[curr_id]
+        # event_domains[event_domains.index(curr_case):]
         if set(available_cases) & set(event_domains):
             return True
 
