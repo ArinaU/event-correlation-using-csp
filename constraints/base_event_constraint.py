@@ -10,6 +10,7 @@ class BaseEventConstraint(Constraint):
         self._start_event = start_event
         self._case_status = {}
         self._prev_assignments = {}
+        self._curr_event = None
 
 
     def find_cases(self, events, domains):
@@ -56,20 +57,21 @@ class BaseEventConstraint(Constraint):
         return False
 
 
-    def find_occurrences_of_target_event(self, curr_case, target_event):
+    def find_occurrences_of_target_event(self, events, assignments, target_type):
+        curr_case = assignments[self._curr_event]
         pairs = []
         for pair in self._case_status[curr_case]:
-            if target_event in pair:
+            if target_type in pair and pair[target_type] < self._curr_event:
                 pairs.append(pair)
         return pairs
 
-    def find_single_target_event(self, curr_case, target_event, pairs=None):  # e
+    def find_single_target_event(self, curr_case, target_type, pairs=None):  # e
         if not pairs:
             pairs = self._case_status[curr_case]
         # get first available pair
-        other_event = 'e2' if target_event == 'e' else 'e'
+        other_type = 'e2' if target_type == 'e' else 'e'
         for pair in pairs:
-            if other_event not in pair:
+            if other_type not in pair and pair[target_type] < self._curr_event:
                 return pair
         return None
 
