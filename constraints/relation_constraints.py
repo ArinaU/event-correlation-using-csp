@@ -143,16 +143,12 @@ class Precedence(BaseEventConstraint):
 # If A occurs, then B occurs immediately after A <A, B, B>, <A, B, C, A, B>
 class ChainResponse(BaseEventConstraint):
 
-    def forwardCheck(self, events, domains, assignments, _unassigned=Unassigned):
-        data = self._data
-        curr_id = list(assignments)[-1]
-        curr_case = assignments[curr_id]
-        required_attr2 = self._required_event2['attr']
-        required_value2 = self._required_event2['value']
+    def forwardCheckEvents(self, events, domains, assignments, attr=None, val=None):
+        curr_case = assignments[list(assignments)[-1]]
 
         for event in events:
             # if 2nd element next
-            if data[event][required_attr2] == required_value2:
+            if self.data[event][self.attr2] == self.val2:
                 domain = domains[event]
                 if curr_case in domain:
                     for value in domain[:]:
@@ -169,22 +165,14 @@ class ChainResponse(BaseEventConstraint):
         else:
             return False
 
-
     def __call__(self, events, domains, assignments, forwardcheck=False):
-        data = self._data
-        case_status = self._case_status
-        required_attr = self._required_event['attr']
-        required_value = self._required_event['value']
-        required_attr2 = self._required_event2['attr']
-        required_value2 = self._required_event2['value']
+        curr_event = list(assignments)[-1]
+        curr_case = assignments[curr_event]
 
-        curr_id = list(assignments)[-1]
-        curr_case = assignments[curr_id]
+        self.case_status = self.clean_struct(assignments, self.case_status)
 
-        case_status = self.clean_struct(assignments, case_status)
-
-        if not case_status.get(curr_case, None):
-            case_status[curr_case] = []
+        if not self.case_status.get(curr_case, None):
+            self.case_status[curr_case] = []
 
         # 1 2 3 4 5 6 7 8
         # A,A,G,A,F,E,G,G
@@ -196,23 +184,24 @@ class ChainResponse(BaseEventConstraint):
         # 1 1 2 2 1 2 3 3 2 1
 
         # if B
-        if data[curr_id][required_attr] == required_value:
-            if not self.forwardCheck(events[curr_id:], domains, assignments):
-                return True
-            case_status[curr_case].append({'e': curr_id})
+        if self.data[curr_event][self.attr] == self.val:
+            self.case_status[curr_case].append({'e': curr_event})
+
+            if forwardcheck:
+                self.forwardCheckEvents(events[curr_event:], domains, assignments)
         # if C
-        elif data[curr_id][required_attr2] == required_value2:
-            target_event = self.find_single_target_event(curr_case, 'e')
+        elif self.data[curr_event][self.attr2] == self.val2:
+            target_event = self.find_single_event(assignments, 'e')
             if target_event:
-                target_event['e2'] = curr_id
+                target_event['e2'] = curr_event
+
         else:
-            case_events = [e for e, c in assignments.items() if c == curr_case and e < curr_id]
+            case_events = [e for e, c in assignments.items() if c == curr_case and e < curr_event]
             if case_events:
                 prev_id = case_events[-1]
                 # if prev event was not B
-                if data[prev_id][required_attr] == required_value:
+                if self.data[prev_id][self.attr] == self.val:
                     return False
-
 
         return True
 
