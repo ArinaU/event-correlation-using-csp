@@ -26,27 +26,23 @@ class Absence(BaseEventConstraint):
     #             break
 
     def __call__(self, events, domains, assignments, forwardcheck=False):
-        data = self._data
-        case_status = self._case_status
-        required_attr = self._required_event['attr']
-        required_value = self._required_event['value']
-        curr_id = list(assignments)[-1]
-        curr_case = assignments[curr_id]
+        curr_event = list(assignments)[-1]
+        curr_case = assignments[curr_event]
 
-        case_status = self.clean_struct(assignments, self._case_status)
+        self.case_status = self.clean_struct(assignments, self.case_status)
 
         # 1 2 3 4 5 6 7 8 9
         # A,C,B,A,A,B,C,C,B
         # 1 1 1 2 3 2 1 1 3
 
-        if not case_status.get(curr_case, None):
-            case_status[curr_case] = {}
+        if not self.case_status.get(curr_case, None):
+            self.case_status[curr_case] = {}
 
-        if data[curr_id][required_attr] == required_value:
-            if case_status[curr_case]:
+        if self.data[curr_event][self.attr] == self.val:
+            if self.case_status[curr_case]:
                 return False
             else:
-                case_status[curr_case] = curr_id
+                self.case_status[curr_case] = curr_event
 
         return True
 
@@ -54,45 +50,28 @@ class Absence(BaseEventConstraint):
 # A occurs at least once
 class Existence(BaseEventConstraint):
 
-    def forwardCheckEvents(self, events, domains, assignments, attr, val):
-        data = self._data
-        # curr_id = list(assignments)[-1]
-        # curr_case = assignments[curr_id]
-        # required_attr2 = self._required_event['attr']
-        # required_value2 = self._required_event['value']
-
+    def forwardCheckEvents(self, events, domains, assignments):
         # if left_cases:
         for event in events:
             if event not in assignments:
-                if data[event][attr] == val:
+                if self.data[event][self.attr] == self.val:
                     domain = domains[event]
                     for case in domain:
-                        if case in self._case_status and len(domain) > 1:
+                        if case in self.case_status and len(domain) > 1:
                             domain.hideValue(case)
                     return True
         return True
 
 
-            # # if required event
-            # if data[event][required_attr] == required_value:
-            #     domain = domains[event]
-            #     intersect = list(set(left_cases) & set(domain))
-            #     left_cases = [c for c in left_cases if c not in intersect]
-
     def __call__(self, events, domains, assignments, forwardcheck=False):
-        data = self._data
-        case_status = self._case_status
-        attr = self._required_event['attr']
-        val = self._required_event['value']
+        curr_event = list(assignments)[-1]
+        curr_case = assignments[curr_event]
+        all_cases = self.get_all_cases(events, domains)
 
-        curr_id = list(assignments)[-1]
-        curr_case = assignments[curr_id]
-        all_cases = self.find_cases(events, domains)
+        self.case_status = self.clean_struct(assignments, self.case_status)
 
-        case_status = self.clean_struct(assignments, case_status)
-
-        if not case_status.get(curr_case, None):
-            case_status[curr_case] = []
+        if not self.case_status.get(curr_case, None):
+            self.case_status[curr_case] = []
 
         # A,B,A,B,B,C
         # 1 1 2 2 1 1
@@ -104,16 +83,15 @@ class Existence(BaseEventConstraint):
         # A,B,B,C,B,C,A,B,C
         # 1 1 1 1 1 1 2 2 1
 
-        if data[curr_id][attr] == val:
-            if forwardcheck and len(all_cases) != len(case_status):
-                self.forwardCheckEvents(events[curr_id:], domains, assignments, attr, val)
+        if self.data[curr_event][self.attr] == self.val:
+            if forwardcheck and len(all_cases) != len(self.case_status):
+                self.forwardCheckEvents(events[curr_event:], domains, assignments)
 
-            case_status[curr_case].append(curr_id)
-
+            self.case_status[curr_case].append(curr_event)
 
         if len(assignments) == len(events):
             for case in set(assignments.values()):
-                if not case_status.get(case):
+                if not self.case_status.get(case):
                     return False
 
         return True
