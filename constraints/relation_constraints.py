@@ -23,6 +23,32 @@ class RespondedExistence(BaseEventConstraint):
         else:
             return False
 
+    def has_available_solutions(self, domains, assignments, target_event_type):
+        curr_event = list(assignments)[-1]
+        curr_case = assignments[curr_event]
+
+        other_event_type = 'e2' if target_event_type == 'e' else 'e'
+        available_cases = []
+        for case, pairs in self.case_status.items():
+            flag = True
+            if not pairs:
+                flag = False
+            else:
+                for pair in pairs:
+                    if target_event_type in pair:
+                        flag = False
+                        break
+            if flag:
+                available_cases.append(case)
+
+        # check if there are events that can be assigned to free cases
+        event_domains = domains[curr_event]
+        # event_domains[event_domains.index(curr_case):]
+        if set(available_cases) & set(event_domains):
+            return True
+
+        return False
+
     def __call__(self, events, domains, assignments, forwardcheck=False):
         curr_event = list(assignments)[-1]
         curr_case = assignments[curr_event]
@@ -32,14 +58,21 @@ class RespondedExistence(BaseEventConstraint):
         if not self.case_status.get(curr_case, None):
             self.case_status[curr_case] = []
 
-        # 1 2 3 4 5 6 7 8 9
         # A,C,B,A,A,B,C,C,B
         # 1 1 1 2 3 2 2 3 3
 
         # if B
+
+        # A,C,B,A,A,B,B,C,C
+        # 1 1 1 2 3 2 3 2 3
+
+        # 1 2 3 4 5 6 7 8 9
+        # A,C,B,A,A,B,C,C,B
+        # 1 1 1 2 3 2 2 3 3
+
         if self.data[curr_event][self.attr] == self.val:
             # if no Cs yet
-            if not self.find_occurrences_of_event(assignments, 'e2'):
+            if not (self.find_event_type(assignments, 'e2') and not self.find_event_type(assignments, 'e')):
                 # if solutions among existing cases and no future ones
                 if self.has_available_solutions(domains, assignments, 'e') \
                         and self.prev_assignments[curr_event] != curr_case:
@@ -52,9 +85,15 @@ class RespondedExistence(BaseEventConstraint):
             self.case_status[curr_case].append({'e': curr_event})
         # if C
         elif self.data[curr_event][self.attr2] == self.val2:
-            # if not self.find_occurrences_of_target_event(assignments, 'e'):
-            #     if forwardcheck:
-            #         self.forwardCheckEvents(events[curr_id:], domains, assignments, attr, val)
+            # if there is e and no e2, then stay in this case, otherwise:
+            if not (self.find_event_type(assignments, 'e') and not self.find_event_type(assignments, 'e2')):
+                if self.has_available_solutions(domains, assignments, 'e2') \
+                        and self.prev_assignments[curr_event] != curr_case:
+                    self.prev_assignments[curr_event] = curr_case
+                    return False
+
+                if forwardcheck:
+                    self.forwardCheckEvents(events[curr_event:], domains, assignments, self.attr, self.val)
 
             self.case_status[curr_case].append({'e2': curr_event})
 
@@ -99,7 +138,7 @@ class Response(BaseEventConstraint):
         # if B
         if self.data[curr_event][self.attr] == self.val:
             # if C was before
-            if self.find_occurrences_of_event(assignments, 'e2'):
+            if self.find_event_type(assignments, 'e2'):
                 return False
             else:
                 if forwardcheck:
@@ -131,7 +170,7 @@ class Precedence(BaseEventConstraint):
             self.case_status[curr_case].append({'e': curr_event})
         # if C
         elif self.data[curr_event][self.attr2] == self.val2:
-            target_event = self.find_single_event(assignments, 'e')
+            target_event = self.find_single_event_type(assignments, 'e')
             if target_event:
                 target_event['e2'] = curr_event
             else:
@@ -196,7 +235,7 @@ class ChainResponse(BaseEventConstraint):
                 self.forwardCheckEvents(events[curr_event:], domains, assignments)
         # if C
         elif self.data[curr_event][self.attr2] == self.val2:
-            target_event = self.find_single_event(assignments, 'e')
+            target_event = self.find_single_event_type(assignments, 'e')
             if target_event:
                 target_event['e2'] = curr_event
             else:
@@ -230,26 +269,27 @@ class ChainPrecedence(BaseEventConstraint):
         required_attr2 = self._required_event2['attr']
         required_value2 = self._required_event2['value']
 
-        curr_id = list(assignments)[-1]
-        curr_case = assignments[curr_id]
+        self._curr_event = list(assignments)[-1]
+        curr_event = self._curr_event
+        curr_case = assignments[curr_event]
 
         case_status = self.clean_struct(assignments, case_status)
 
         if not case_status.get(curr_case, None):
             case_status[curr_case] = []
 
-        if data[curr_id][required_attr] == required_value:
-            case_status[curr_case].append({'e': curr_id})
+        if data[curr_event][required_attr] == required_value:
+            case_status[curr_case].append({'e': curr_event})
         # if C
-        elif data[curr_id][required_attr2] == required_value2:
-            case_events = [e for e, c in assignments.items() if c == curr_case and e < curr_id]
+        elif data[curr_event][required_attr2] == required_value2:
+            case_events = [e for e, c in assignments.items() if c == curr_case and e < curr_event]
             if case_events:
                 prev_id = case_events[-1]
                 # if prev event was not B
                 if not data[prev_id][required_attr] == required_value:
                     return False
 
-            case_status[curr_case].append({'e2': curr_id})
+            case_status[curr_case].append({'e2': curr_event})
 
         return True
 
@@ -261,8 +301,7 @@ class AlternateResponse(BaseEventConstraint):
 
     def forwardCheck(self, events, domains, assignments, _unassigned=Unassigned):
         data = self._data
-        curr_id = list(assignments)[-1]
-        curr_case = assignments[curr_id]
+        curr_case = assignments[self._curr_event]
         required_attr = self._required_event['attr']
         required_value = self._required_event['value']
         required_attr2 = self._required_event2['attr']
@@ -295,8 +334,9 @@ class AlternateResponse(BaseEventConstraint):
         required_attr2 = self._required_event2['attr']
         required_value2 = self._required_event2['value']
 
-        curr_id = list(assignments)[-1]
-        curr_case = assignments[curr_id]
+        self._curr_event = list(assignments)[-1]
+        curr_event = self._curr_event
+        curr_case = assignments[curr_event]
         case_status = self.clean_struct(assignments, case_status)
 
         if not case_status.get(curr_case, None):
@@ -316,22 +356,22 @@ class AlternateResponse(BaseEventConstraint):
         # (C,D)
 
         # if B
-        if data[curr_id][required_attr] == required_value:
-            not_target_event = self.find_single_target_event(curr_case, 'e')
+        if data[curr_event][required_attr] == required_value:
+            not_target_event = self.find_single_event_type(curr_case, 'e')
             if not_target_event:
                 return False
             else:
-                if not self.forwardCheck(events[curr_id:], domains, assignments):
+                if not self.forwardCheck(events[curr_event:], domains, assignments):
                     return True
-            case_status[curr_case].append({'e': curr_id})
+            case_status[curr_case].append({'e': curr_event})
 
         # if C
-        elif data[curr_id][required_attr2] == required_value2:
-            target_event = self.find_single_target_event(curr_case, 'e')
+        elif data[curr_event][required_attr2] == required_value2:
+            target_event = self.find_single_event_type(curr_case, 'e')
             if target_event:
-                target_event['e2'] = curr_id
+                target_event['e2'] = curr_event
             else:
-                case_status[curr_case].append({'e2': curr_id})
+                case_status[curr_case].append({'e2': curr_event})
 
 
         # # if B
@@ -369,8 +409,9 @@ class AlternatePrecedence(BaseEventConstraint):
         required_attr2 = self._required_event2['attr']
         required_value2 = self._required_event2['value']
 
-        curr_id = list(assignments)[-1]
-        curr_case = assignments[curr_id]
+        self._curr_event = list(assignments)[-1]
+        curr_event = self._curr_event
+        curr_case = assignments[curr_event]
 
         case_status = self.clean_struct(assignments, case_status)
 
@@ -384,16 +425,16 @@ class AlternatePrecedence(BaseEventConstraint):
         # 1 1 1 1 1 1 2 2 2
 
         # if B
-        if data[curr_id][required_attr] == required_value:
-            case_status[curr_case].append({'e': curr_id})
+        if data[curr_event][required_attr] == required_value:
+            case_status[curr_case].append({'e': curr_event})
         # if C
-        elif data[curr_id][required_attr2] == required_value2:
+        elif data[curr_event][required_attr2] == required_value2:
             if case_status[curr_case]:
                 last_pair = case_status[curr_case][-1]
                 if 'e2' in last_pair:
                     return False
                 else:
-                    last_pair['e2'] = curr_id
+                    last_pair['e2'] = curr_event
             else:
                 return False
 

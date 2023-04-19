@@ -60,8 +60,8 @@ class EventCorrelationEngine:
                 # problem.addVariable(id, list(range(1, iter)))
                 problem.addVariable(id, [f"Case{i}" for i in range(1, iter)])
 
-    def assign_cases(self, datadict):
-        solver = RecursiveBacktrackingSolver()
+    def assign_cases(self, datadict, forwardcheck=False):
+        solver = RecursiveBacktrackingSolver(forwardcheck)
         problem = Problem(solver)
         self.declare_domains(problem, datadict, self._start_event)
 

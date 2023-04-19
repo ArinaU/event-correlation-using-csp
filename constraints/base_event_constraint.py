@@ -114,7 +114,7 @@ class BaseEventConstraint(Constraint):
 
         return False
 
-    def find_occurrences_of_event(self, assignments, target_type):
+    def find_event_type(self, assignments, target_type):
         curr_event = list(assignments)[-1]
         curr_case = assignments[curr_event]
 
@@ -125,7 +125,7 @@ class BaseEventConstraint(Constraint):
 
         return pairs
 
-    def find_single_event(self, assignments, target_type, pairs=None):  # e
+    def find_single_event_type(self, assignments, target_type, pairs=None):  # e
         curr_event = list(assignments)[-1]
         curr_case = assignments[curr_event]
 

@@ -17,14 +17,14 @@ class NotCoexistence(BaseEventConstraint):
 
         # if B
         if self.data[curr_event][self.attr] == self.val:
-            not_target_event = self.find_single_event(assignments, 'e2')
+            not_target_event = self.find_single_event_type(assignments, 'e2')
             if not_target_event:
                 return False
 
             self.case_status[curr_case].append({'e': curr_event})
         # if C
         elif self.data[curr_event][self.attr2] == self.val2:
-            not_target_event = self.find_single_event(assignments, 'e')
+            not_target_event = self.find_single_event_type(assignments, 'e')
             if not_target_event:
                 return False
 
@@ -44,8 +44,9 @@ class NotSuccession(BaseEventConstraint):
         required_attr2 = self._required_event2['attr']
         required_value2 = self._required_event2['value']
 
-        curr_id = list(assignments)[-1]
-        curr_case = assignments[curr_id]
+        self._curr_event = list(assignments)[-1]
+        curr_event = self._curr_event
+        curr_case = assignments[curr_event]
 
         case_status = self.clean_struct(assignments, case_status)
 
@@ -53,14 +54,14 @@ class NotSuccession(BaseEventConstraint):
             case_status[curr_case] = []
 
         # if B
-        if data[curr_id][required_attr] == required_value:
-            case_status[curr_case].append({'e': curr_id})
+        if data[curr_event][required_attr] == required_value:
+            case_status[curr_case].append({'e': curr_event})
         # if C
-        elif data[curr_id][required_attr2] == required_value2:
-            not_target_event = self.find_single_target_event(curr_case, 'e')
+        elif data[curr_event][required_attr2] == required_value2:
+            not_target_event = self.find_single_event_type(curr_case, 'e')
             if not_target_event:
                 return False
-            case_status[curr_case].append({'e2': curr_id})
+            case_status[curr_case].append({'e2': curr_event})
 
         return True
 
