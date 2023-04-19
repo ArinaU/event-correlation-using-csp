@@ -8,15 +8,12 @@ from copy import deepcopy
 class RespondedExistence(BaseEventConstraint):
 
     def forwardCheckEvents(self, events, domains, assignments, attr, val):
-        data = self._data
-        curr_id = list(assignments)[-1]
-        curr_case = assignments[curr_id]
-        # required_attr2 = self._required_event2['attr']
-        # required_value2 = self._required_event2['value']
+        curr_event = list(assignments)[-1]
+        curr_case = assignments[curr_event]
 
         for event in events:
             if event not in assignments:
-                if data[event][attr] == val:
+                if self.data[event][attr] == val:
                     domain = domains[event]
                     if curr_case in domain and len(domain) > 1:
                         for value in domain[:]:
@@ -27,50 +24,42 @@ class RespondedExistence(BaseEventConstraint):
             return False
 
     def __call__(self, events, domains, assignments, forwardcheck=False):
-        data = self._data
-        prev_assignments = self._prev_assignments
-        case_status = self._case_status
-        attr = self._required_event['attr']
-        val = self._required_event['value']
-        attr2 = self._required_event2['attr']
-        val2 = self._required_event2['value']
-        curr_id = list(assignments)[-1]
-        curr_case = assignments[curr_id]
+        curr_event = list(assignments)[-1]
+        curr_case = assignments[curr_event]
 
-        case_status = self.clean_struct(assignments, case_status)
+        self.case_status = self.clean_struct(assignments, self.case_status)
 
-        if not case_status.get(curr_case, None):
-            case_status[curr_case] = []
+        if not self.case_status.get(curr_case, None):
+            self.case_status[curr_case] = []
 
         # 1 2 3 4 5 6 7 8 9
         # A,C,B,A,A,B,C,C,B
         # 1 1 1 2 3 2 2 3 3
 
         # if B
-        if data[curr_id][attr] == val:
+        if self.data[curr_event][self.attr] == self.val:
             # if no Cs yet
-            if not self.find_occurrences_of_target_event(events, assignments, 'e2'):
+            if not self.find_occurrences_of_event(assignments, 'e2'):
                 # if solutions among existing cases and no future ones
-                if self.has_available_solutions(domains, assignments, case_status, 'e') \
-                        and prev_assignments[curr_id] != curr_case:
-                    prev_assignments[curr_id] = curr_case
+                if self.has_available_solutions(domains, assignments, 'e') \
+                        and self.prev_assignments[curr_event] != curr_case:
+                    self.prev_assignments[curr_event] = curr_case
                     return False
 
                 if forwardcheck:
-                    self.forwardCheckEvents(events[curr_id:], domains, assignments, attr2, val2)
+                    self.forwardCheckEvents(events[curr_event:], domains, assignments, self.attr2, self.val2)
 
-            case_status[curr_case].append({'e': curr_id})
+            self.case_status[curr_case].append({'e': curr_event})
         # if C
-        elif data[curr_id][attr2] == val2:
-            # if not self.find_occurrences_of_target_event(events, assignments, 'e'):
+        elif self.data[curr_event][self.attr2] == self.val2:
+            # if not self.find_occurrences_of_target_event(assignments, 'e'):
             #     if forwardcheck:
             #         self.forwardCheckEvents(events[curr_id:], domains, assignments, attr, val)
 
-            case_status[curr_case].append({'e2': curr_id})
+            self.case_status[curr_case].append({'e2': curr_event})
 
-        prev_assignments[curr_id] = None
+        self.prev_assignments[curr_event] = None
         return True
-
 
 
 # If A occurs, then B occurs after A <C, A, A, C, B>, <B, C, C>
@@ -78,8 +67,7 @@ class Response(BaseEventConstraint):
 
     def forwardCheck(self, events, domains, assignments, _unassigned=Unassigned):
         data = self._data
-        curr_id = list(assignments)[-1]
-        curr_case = assignments[curr_id]
+        curr_case = assignments[self._curr_event]
         required_attr2 = self._required_event2['attr']
         required_value2 = self._required_event2['value']
 
