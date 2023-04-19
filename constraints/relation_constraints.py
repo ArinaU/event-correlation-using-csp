@@ -147,21 +147,22 @@ class ChainResponse(BaseEventConstraint):
         curr_case = assignments[list(assignments)[-1]]
 
         for event in events:
-            # if 2nd element next
-            if self.data[event][self.attr2] == self.val2:
-                domain = domains[event]
-                if curr_case in domain:
-                    for value in domain[:]:
-                        if value != curr_case:
-                            domain.hideValue(value)
-                    return True
-            # if not
-            else:
-                domain = domains[event]
-                if curr_case in domain:
-                    for value in domain[:]:
-                        if value == curr_case:
-                            domain.hideValue(value)
+            if event not in assignments:
+                # if 2nd element next
+                if self.data[event][self.attr2] == self.val2:
+                    domain = domains[event]
+                    if curr_case in domain:
+                        for value in domain[:]:
+                            if value != curr_case:
+                                domain.hideValue(value)
+                        return True
+                # if not
+                else:
+                    domain = domains[event]
+                    if curr_case in domain:
+                        for value in domain[:]:
+                            if value == curr_case:
+                                domain.hideValue(value)
         else:
             return False
 
