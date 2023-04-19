@@ -7,7 +7,7 @@ class BaseEventConstraint(Constraint):
         self._data = data
         self._start_event = start_event
         self._case_status = {}
-        self._prev_assignments = {}
+        self._prev_assignments = {event: None for event in self._data.keys()}
         self._attr = required_event['attr']
         self._val = required_event['value']
         if required_event2:
@@ -133,11 +133,11 @@ class BaseEventConstraint(Constraint):
             pairs = self.case_status[curr_case]
         # get first available pair
         other_type = 'e2' if target_type == 'e' else 'e'
-        for pair in pairs:
-            if other_type not in pair and pair[target_type] < curr_event:
-                pairs.append(pair)
 
-        return pairs
+        for pair in pairs[:]:
+            if other_type not in pair and pair[target_type] < curr_event:
+                return pair
+        return None
 
     def clean_struct(self, assignments, struct):
         # Remove values u'', None, {}, []
