@@ -184,6 +184,10 @@ class ChainResponse(BaseEventConstraint):
         # A,B,A,D,C,B,A,D,C,C
         # 1 1 2 2 1 2 3 3 2 1
 
+        # 1 2 3 4 5 6
+        # A,B,A,B,C,C
+        # 1 1 2 2 1 2
+
         # if B
         if self.data[curr_event][self.attr] == self.val:
             self.case_status[curr_case].append({'e': curr_event})
@@ -195,14 +199,21 @@ class ChainResponse(BaseEventConstraint):
             target_event = self.find_single_event(assignments, 'e')
             if target_event:
                 target_event['e2'] = curr_event
+            else:
+                if self.has_available_solutions(domains, assignments, 'e2') \
+                        and self.prev_assignments[curr_event] != curr_case:
+                    self.prev_assignments[curr_event] = curr_case
+                    return False
 
         else:
             case_events = [e for e, c in assignments.items() if c == curr_case and e < curr_event]
             if case_events:
-                prev_id = case_events[-1]
-                # if prev event was not B
-                if self.data[prev_id][self.attr] == self.val:
+                prev_event = case_events[-1]
+                # if prev event was B
+                if self.data[prev_event][self.attr] == self.val:
                     return False
+
+        self.prev_assignments[curr_event] = None
 
         return True
 
