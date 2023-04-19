@@ -135,11 +135,9 @@ class BaseEventConstraint(Constraint):
         other_type = 'e2' if target_type == 'e' else 'e'
         for pair in pairs:
             if other_type not in pair and pair[target_type] < curr_event:
-                if pair[target_type] < curr_event:
-                    pairs.append(pair)
+                pairs.append(pair)
 
-                return pair
-        return None
+        return pairs
 
     def clean_struct(self, assignments, struct):
         # Remove values u'', None, {}, []
