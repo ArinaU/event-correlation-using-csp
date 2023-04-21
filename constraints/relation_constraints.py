@@ -222,7 +222,8 @@ class ChainResponse(BaseEventConstraint):
 
         available_cases = []
         for case, events in self.case_status.items():
-            if case in event_domains[event_domains.index(curr_case)+1:]:
+            # if case in event_domains[event_domains.index(curr_case)+1:]:
+            if case in event_domains:
                 if not self.reject_conditions(curr_event, case, event_type):
                     available_cases.append(case)
 
@@ -279,17 +280,17 @@ class ChainResponse(BaseEventConstraint):
         # A,B,A,B,C,C
         # 1 1 2 2 1 2
 
-        # Absence(G)
-        # 1 2 3 4 5 6 7 8
-        # A,A,G,A,F,E,G,G
-        # 1 2 1 3 2 3 3 2
-        # 1 2 1 3 1 2 2 3
-
         # ChainResp(B, C) Absence(D, B)
         # 1 2 3 4 5 6 7 8 9 10
         # A,B,A,D,C,B,A,D,C,C
         # 1 1 2 2 1 2 3 1 1 2
         # 1 1 2 2 1 2 3 1 2 1
+
+        # Absence(G)
+        # 1 2 3 4 5 6 7 8
+        # A,A,G,A,F,E,G,G
+        # 1 2 1 3 2 3 3 2
+        # 1 2 1 3 1 2 2 3
 
         # if B
         if self.data[curr_event][self.attr] == self.val:
