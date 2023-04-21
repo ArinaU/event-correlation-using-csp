@@ -75,6 +75,42 @@ class BaseEventConstraint(Constraint):
     def val2(self):
         return self._val2
 
+    def has_available_cases(self, domains, assignments, event_type):
+        curr_event = list(assignments)[-1]
+        curr_case = assignments[curr_event]
+        event_domains = domains[curr_event]
+
+        available_cases = []
+        for case, events in self.case_status.items():
+            # if case in event_domains[event_domains.index(curr_case)+1:]:
+            if case in event_domains:
+                if not self.reject_conditions(curr_event, case, event_type):
+                    available_cases.append(case)
+
+        return available_cases
+
+    def check_rejection(self, domains, assignments, event_type):
+        curr_event = list(assignments)[-1]
+        curr_case = assignments[curr_event]
+        event_domains = domains[curr_event]
+        cases = self.has_available_cases(domains, assignments, event_type)
+
+        if not cases:
+            return False
+
+        for case in cases:
+            if event_domains.index(case) > event_domains.index(curr_case):
+                if self.prev_assignments[curr_event] != curr_case:
+                    self.prev_assignments[curr_event] = curr_case
+                    return True
+
+        if self.check_backtracking(domains, assignments, event_type) \
+                and self.prev_assignments[curr_event] != curr_case:
+            self.prev_assignments[curr_event] = curr_case
+            return True
+
+        return False
+
     def check_backtracking(self, domains, assignments, event_type):
         curr_event = list(assignments)[-1]
         curr_case = assignments[curr_event]
