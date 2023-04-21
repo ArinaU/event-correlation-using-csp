@@ -140,25 +140,36 @@ class BaseEventConstraint(Constraint):
 
         return events
 
-    def find_event_in_pairs(self, event, case, target_type, check_order=False, pairs=None):  # e
+    def find_event_in_pairs(self, event, case, target_type, check_order=False, pairs=False):
         other_type = 'e2' if target_type == 'e' else 'e'
+        case_events = self.case_status[case]
+        events = []
 
-        if not pairs:
-            pairs = self.case_status[case]
+        for event_pair in case_events:
+            is_pair = other_type in event_pair
 
-        # events = []
-        # get first available pair
-        for pair in pairs[:]:
-            if other_type not in pair:
-                if check_order:
-                    if pair[target_type] < event:
-                        # events.append(pair)
-                        return pair
-                else:
-                    # events.append(pair)
-                    return pair
+            if is_pair == pairs:
+                target_value = event_pair.get(target_type)
 
-        return None
+                if target_value is not None:
+                    if check_order:
+                        if target_value < event:
+                            events.append(event_pair)
+                    else:
+                        events.append(event_pair)
+
+        return events
+
+    def find_all_occurrences_of_event(self, assignments, target_type):
+        curr_event = list(assignments)[-1]
+        curr_case = assignments[curr_event]
+
+        pairs = []
+        for pair in self.case_status[curr_case]:
+            if target_type in pair and pair[target_type] < curr_event:
+                pairs.append(pair)
+
+        return pairs
 
     def clean_struct(self, assignments, struct):
         # Remove values u'', None, {}, []
