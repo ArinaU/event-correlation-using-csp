@@ -1,4 +1,3 @@
-
 from constraint import *
 from constraints.base_event_constraint import BaseEventConstraint
 from copy import deepcopy
@@ -6,7 +5,24 @@ from copy import deepcopy
 
 # If A occurs, then B occurs: <B, C, A, A, C>, <B, C, C> NOT: <A, C, C>
 class RespondedExistence(BaseEventConstraint):
+    def has_available_cases(self, domains, assignments, event_type):
+        curr_event = list(assignments)[-1]
+        curr_case = assignments[curr_event]
+        event_domains = domains[curr_event]
 
+        available_cases = []
+        for case, events in self.case_status.items():
+            if case in event_domains[event_domains.index(curr_case)+1:]:
+                if not self.conditions(case, event_type):
+                    available_cases.append(case)
+
+        return available_cases
+
+    def conditions(self, case, event_type):
+        event_type2 = 'e2' if event_type == 'e' else 'e'
+        events = self.case_status[case].setdefault(event_type, [])
+        events2 = self.case_status[case].setdefault(event_type2, [])
+        return (events2 and events) or (events and not events2)
 
     def __call__(self, events, domains, assignments, forwardcheck=False):
         curr_event = list(assignments)[-1]
@@ -20,28 +36,26 @@ class RespondedExistence(BaseEventConstraint):
         self.case_status[curr_case].setdefault('e', [])
         self.case_status[curr_case].setdefault('e2', [])
 
-        # if B
-
         # A,C,B,A,A,B,B,C,C
         # 1 1 1 2 3 2 3 2 3
 
         # 1 2 3 4 5 6 7 8 9
         # A,C,B,A,A,B,C,C,B
         # 1 1 1 2 3 2 2 3 3
-        if self.data[curr_event][self.attr] == self.val:
 
-            # if e and e2 exist or no e2
-            if (self.case_status[curr_case]['e2'] and self.case_status[curr_case]['e']) or self.case_status[curr_case]['e']:
-                if self.prev_assignments[curr_event] != curr_case and len(domains[curr_event]) > 1:
+        if self.data[curr_event][self.attr] == self.val:
+            if self.conditions(curr_case, 'e'):
+                if self.prev_assignments[curr_event] != curr_case \
+                        and self.has_available_cases(domains, assignments, 'e'): # and self.backtracking_available(domains, assignments):
                     self.prev_assignments[curr_event] = curr_case
                     return False
             self.case_status[curr_case]['e'].append(curr_event)
 
         # if C
         elif self.data[curr_event][self.attr2] == self.val2:
-            # if e and e2 exist or only e exist
-            if (self.case_status[curr_case]['e2'] and self.case_status[curr_case]['e']) or self.case_status[curr_case]['e2']:
-                if self.prev_assignments[curr_event] != curr_case and len(domains[curr_event]) > 1:
+            if self.conditions(curr_case, 'e2'):
+                if self.prev_assignments[curr_event] != curr_case \
+                        and self.has_available_cases(domains, assignments, 'e2'): # and self.backtracking_available(domains, assignments):
                     self.prev_assignments[curr_event] = curr_case
                     return False
 
