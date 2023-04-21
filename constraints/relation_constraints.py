@@ -22,8 +22,8 @@ class RespondedExistence(BaseEventConstraint):
         event_type2 = 'e2' if event_type == 'e' else 'e'
         # events = self.case_status[case].setdefault(event_type, [])
         # events2 = self.case_status[case].setdefault(event_type2, [])
-        events = self.find_events(event, case, event_type)
-        events2 = self.find_events(event, case, event_type2)
+        events = self.find_events_in_list(event, case, event_type)
+        events2 = self.find_events_in_list(event, case, event_type2)
         return (events2 and events) or (events and not events2)
 
     def __call__(self, events, domains, assignments, forwardcheck=False):
@@ -158,8 +158,8 @@ class Precedence(BaseEventConstraint):
 
     def conditions(self, event, case, event_type):
         event_type2 = 'e2' if event_type == 'e' else 'e'
-        events = self.find_events(event, case, event_type, True)
-        events2 = self.find_events(event, case, event_type2, True)
+        events = self.find_events_in_list(event, case, event_type, True)
+        events2 = self.find_events_in_list(event, case, event_type2, True)
         if event_type == 'e':
             return events
 
