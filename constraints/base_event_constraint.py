@@ -75,6 +75,16 @@ class BaseEventConstraint(Constraint):
     def val2(self):
         return self._val2
 
+    def backtracking_available(self, domains, assignments):
+        curr_event = list(assignments)[-1]
+
+        if len(domains[curr_event]) > 1:
+            for event in reversed(domains):
+                if event < curr_event:
+                    if domains[event].index(assignments[event]) < len(domains[event])-1:
+                        return True
+        return False
+
 
     def get_all_cases(self, events, domains):
         cases = []
@@ -84,15 +94,6 @@ class BaseEventConstraint(Constraint):
 
         return cases
 
-    # def has_future_solutions(self, events, domains, assignments, attr, val):
-    #     curr_case = assignments[list(assignments)[-1]]
-    #
-    #     for event in events:
-    #         if event not in assignments:
-    #             if self.data[event][attr] == val:
-    #                 domain = domains[event]
-    #                 if curr_case in domain:
-    #                     return True
 
     def has_available_solutions(self, domains, assignments, target_event_type):
         curr_event = list(assignments)[-1]
@@ -114,16 +115,16 @@ class BaseEventConstraint(Constraint):
 
         return False
 
-    def find_event_type(self, assignments, target_type):
+    def find_events(self, assignments, target_type):
         curr_event = list(assignments)[-1]
         curr_case = assignments[curr_event]
 
-        pairs = []
-        for pair in self.case_status[curr_case]:
-            if target_type in pair and pair[target_type] < curr_event:
-                pairs.append(pair)
+        events = []
+        for event in self.case_status[curr_case][target_type]:
+            if event < curr_event:
+                events.append(event)
 
-        return pairs
+        return events
 
     def find_single_event_type(self, assignments, target_type, pairs=None):  # e
         curr_event = list(assignments)[-1]
@@ -141,17 +142,17 @@ class BaseEventConstraint(Constraint):
 
     def clean_struct(self, assignments, struct):
         # Remove values u'', None, {}, []
-        for key, value in list(struct.items()):
-            if value in (u'', None, {}, []):
-                del struct[key]
+        # for key, value in list(struct.items()):
+        #     if value in (u'', None, {}, []):
+        #         del struct[key]
 
         # Remove prev events
         last_key = list(assignments.keys())[-1]
         for key, value in list(struct.items()):
             if isinstance(value, dict):
                 struct[key] = self.clean_struct(assignments, value)
-                if not struct[key]:
-                    del struct[key]
+                # if not struct[key]:
+                #     del struct[key]
             elif isinstance(value, list):
                 new_list = []
                 for item in value:
@@ -162,8 +163,8 @@ class BaseEventConstraint(Constraint):
                     elif isinstance(item, int) and item in assignments and item != last_key:
                         new_list.append(item)
                 struct[key] = new_list
-                if not struct[key]:
-                    del struct[key]
+                # if not struct[key]:
+                #     del struct[key]
             elif isinstance(value, int) and (value not in assignments or value == last_key):
                 del struct[key]
 
