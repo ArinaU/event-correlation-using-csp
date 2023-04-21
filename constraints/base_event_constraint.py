@@ -87,7 +87,7 @@ class BaseEventConstraint(Constraint):
 
         if len(domains) > curr_event:
             for event in domains:
-                if event not in assignments:
+                if event not in assignments and not self.prev_assignments[event]:
                     if self.data[event][attr] == val:
                         if curr_case in domains[event]:
                             return False
