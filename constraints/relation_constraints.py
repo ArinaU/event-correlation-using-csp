@@ -218,9 +218,9 @@ class ChainResponse(BaseEventConstraint):
     def reject_conditions(self, event, case, event_type):
         event_type2 = 'e2' if event_type == 'e' else 'e'
 
-        single_events = self.find_event_in_pairs(event, case, event_type, True, False)
-        pairs = self.find_event_in_pairs(event, case, event_type, True, True)
-        single_events2 = self.find_event_in_pairs(event, case, event_type2, True, False)
+        single_events = self.find_single_events_in_pairs(event, case, event_type, True, False)
+        pairs = self.find_single_events_in_pairs(event, case, event_type, True, True)
+        single_events2 = self.find_single_events_in_pairs(event, case, event_type2, True, False)
 
         if event_type == 'e2':
             return pairs or len(self.case_status[case]) == 0
@@ -263,7 +263,7 @@ class ChainResponse(BaseEventConstraint):
             self.case_status[curr_case].append({'e': curr_event})
         # if C
         elif self.data[curr_event][self.attr2] == self.val2:
-            target_event = self.find_event_in_pairs(curr_event, curr_case, 'e', True)
+            target_event = self.find_single_events_in_pairs(curr_event, curr_case, 'e', True)
             if target_event:
                 target_event[0]['e2'] = curr_event
             else:
@@ -286,7 +286,7 @@ class ChainResponse(BaseEventConstraint):
 class ChainPrecedence(BaseEventConstraint):
 
     def reject_conditions(self, event, case, event_type):
-        single_events = self.find_event_in_pairs(event, case, event_type, True, False)
+        single_events = self.find_single_events_in_pairs(event, case, event_type, True, False)
         if event_type == 'e':
             return single_events
 
@@ -317,7 +317,7 @@ class ChainPrecedence(BaseEventConstraint):
             self.case_status[curr_case].append({'e': curr_event})
         # if C
         elif self.data[curr_event][self.attr2] == self.val2:
-            single_events = self.find_event_in_pairs(curr_event, curr_case, 'e', True, False)
+            single_events = self.find_single_events_in_pairs(curr_event, curr_case, 'e', True, False)
             if not single_events:
                 return False
             case_events = [e for e, c in assignments.items() if c == curr_case and e < curr_event]
@@ -333,81 +333,46 @@ class ChainPrecedence(BaseEventConstraint):
 # If A occurs, then B occurs afterwards, before A recurs: <A, B, C, A, C, B>, <A, B, B, A, B>
 # After each activity A at least one activity B is executed
 class AlternateResponse(BaseEventConstraint):
-
-    def forwardCheck(self, events, domains, assignments, _unassigned=Unassigned):
-        data = self._data
-        curr_case = assignments[self._curr_event]
-        required_attr = self._required_event['attr']
-        required_value = self._required_event['value']
-        required_attr2 = self._required_event2['attr']
-        required_value2 = self._required_event2['value']
-
-        for event in events:
-            # if 2nd element next
-            if data[event][required_attr2] == required_value2:
-                domain = domains[event]
-                if curr_case in domain:
-                    for value in domain[:]:
-                        if value != curr_case:
-                            domain.hideValue(value)
-                    return True
-            # if 1st before 2nd
-            elif data[event][required_attr] == required_value:
-                domain = domains[event]
-                if curr_case in domain:
-                    for value in domain[:]:
-                        if value == curr_case:
-                            domain.hideValue(value)
-        else:
-            return False
+    def reject_conditions(self, event, case, event_type):
+        events = self.find_single_events_in_pairs(event, case, event_type, True, False)
+        return not events
 
     def __call__(self, events, domains, assignments, forwardcheck=False):
-        data = self._data
-        case_status = self._case_status
-        required_attr = self._required_event['attr']
-        required_value = self._required_event['value']
-        required_attr2 = self._required_event2['attr']
-        required_value2 = self._required_event2['value']
-
-        self._curr_event = list(assignments)[-1]
-        curr_event = self._curr_event
+        curr_event = list(assignments)[-1]
         curr_case = assignments[curr_event]
-        case_status = self.clean_struct(assignments, case_status)
 
-        if not case_status.get(curr_case, None):
-            case_status[curr_case] = []
+        self.case_status = self.clean_struct(assignments, self.case_status)
+
+        if not self.case_status.get(curr_case, None):
+            self.case_status[curr_case] = []
 
         # 1 2 3 4 5 6 7 8 9
         # A,A,B,B,D,C,A,B,C
-        # 1 2 1 2 1 1 3 3 2
+        # 1 2 1  1 1 3 3 2
         # 1 2 1 2 1 1 3 3 2
 
-        # 1 2 3 4 5 6 7 8 9 10  11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30
-        # A,A,C,C,B,B,D,D,F, E, G, G, H, C, B, I, D, C, B, E, D, G, F, H, G, I, C, B, J, L
-        # 1,2,1,2,1,2,1,2,1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1
-        #     1 2 3 4 1 2
+        # 1 2 3 4 5 6 7 8 9
+        # A,A,B,D,C,A,B,C,B
+        # 1 2 1 1 1 3 2 2 3
 
-        # (B,D)
-        # (C,D)
+        # 1 2 1 1 1 3 2 1 3
+
+        # B noB C
 
         # if B
-        if data[curr_event][required_attr] == required_value:
-            not_target_event = self.find_single_event_type(curr_case, 'e')
-            if not_target_event:
+        if self.data[curr_event][self.attr] == self.val:
+            another_event = self.find_single_events_in_pairs(curr_event, curr_case, 'e', True, False)
+            if another_event:
                 return False
             else:
-                if not self.forwardCheck(events[curr_event:], domains, assignments):
-                    return True
-            case_status[curr_case].append({'e': curr_event})
-
+                self.case_status[curr_case].append({'e': curr_event})
         # if C
-        elif data[curr_event][required_attr2] == required_value2:
-            target_event = self.find_single_event_type(curr_case, 'e')
+        elif self.data[curr_event][self.attr2] == self.val2:
+            target_event = self.find_single_events_in_pairs(curr_event, curr_case, 'e', True, False)
             if target_event:
-                target_event['e2'] = curr_event
+                target_event[0]['e2'] = curr_event
             else:
-                case_status[curr_case].append({'e2': curr_event})
-
+                self.case_status[curr_case].append({'e2': curr_event})
 
         # # if B
         # if data[curr_id][required_attr] == required_value:
