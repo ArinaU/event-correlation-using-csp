@@ -286,13 +286,9 @@ class ChainResponse(BaseEventConstraint):
 class ChainPrecedence(BaseEventConstraint):
 
     def reject_conditions(self, event, case, event_type):
-        event_type2 = 'e2' if event_type == 'e' else 'e'
         single_events = self.find_event_in_pairs(event, case, event_type, True, False)
-        single_events2 = self.find_event_in_pairs(event, case, event_type2, True, False)
         if event_type == 'e':
             return single_events
-
-        return (single_events and single_events2) or (single_events and not single_events2)
 
 
     # each time B occurs, A immediately beforehand
