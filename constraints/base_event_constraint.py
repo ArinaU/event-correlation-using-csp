@@ -75,14 +75,28 @@ class BaseEventConstraint(Constraint):
     def val2(self):
         return self._val2
 
-    def backtracking_available(self, domains, assignments):
+    def check_backtracking(self, domains, assignments, event_type):
         curr_event = list(assignments)[-1]
+        curr_case = assignments[curr_event]
+        if event_type == 'e':
+            attr = self.attr
+            val = self.val
+        else:
+            attr = self.attr2
+            val = self.val2
 
-        if len(domains[curr_event]) > 1:
-            for event in reversed(domains):
-                if event < curr_event:
-                    if domains[event].index(assignments[event]) < len(domains[event])-1:
-                        return True
+        if len(domains) > curr_event:
+            for event in domains:
+                if event not in assignments:
+                    if self.data[event][attr] == val:
+                        if curr_case in domains[event]:
+                            return False
+
+        #if len(domains[curr_event]) > 1:
+        for event in reversed(domains):
+            if event < curr_event:
+                if domains[event].index(assignments[event]) < len(domains[event])-1:
+                    return True
         return False
 
 
@@ -115,7 +129,7 @@ class BaseEventConstraint(Constraint):
 
         return False
 
-    def find_events(self, event, case, target_type, check_order=False):
+    def find_events_in_list(self, event, case, target_type, check_order=False):
         events = []
         for e in self.case_status[case][target_type]:
             if check_order:
@@ -126,18 +140,24 @@ class BaseEventConstraint(Constraint):
 
         return events
 
-    def find_single_event_type(self, assignments, target_type, pairs=None):  # e
-        curr_event = list(assignments)[-1]
-        curr_case = assignments[curr_event]
-
-        if not pairs:
-            pairs = self.case_status[curr_case]
-        # get first available pair
+    def find_event_in_pairs(self, event, case, target_type, check_order=False, pairs=None):  # e
         other_type = 'e2' if target_type == 'e' else 'e'
 
+        if not pairs:
+            pairs = self.case_status[case]
+
+        # events = []
+        # get first available pair
         for pair in pairs[:]:
-            if other_type not in pair and pair[target_type] < curr_event:
-                return pair
+            if other_type not in pair:
+                if check_order:
+                    if pair[target_type] < event:
+                        # events.append(pair)
+                        return pair
+                else:
+                    # events.append(pair)
+                    return pair
+
         return None
 
     def clean_struct(self, assignments, struct):
