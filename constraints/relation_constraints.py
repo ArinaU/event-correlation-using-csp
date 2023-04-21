@@ -84,10 +84,11 @@ class Response(BaseEventConstraint):
 
     def conditions(self, event, case, event_type):
         event_type2 = 'e2' if event_type == 'e' else 'e'
-        events = self.find_events(event, case, event_type, True)
-        events2 = self.find_events(event, case, event_type2, True)
+        events = self.find_events_in_list(event, case, event_type, True)
+        events2 = self.find_events_in_list(event, case, event_type2, True)
         if event_type == 'e':
-            return (events and not events2) or (events2 and not events)
+            # return (events and not events2) or (events2 and not events)
+            return events or events2
 
         return (events2 and events) or (events and not events2)
 
@@ -113,12 +114,15 @@ class Response(BaseEventConstraint):
 
         # if B
         if self.data[curr_event][self.attr] == self.val:
-            if self.conditions(curr_event, curr_case, 'e'):
-                if self.prev_assignments[curr_event] != curr_case \
+            if self.find_events_in_list(curr_event, curr_case, 'e2', True):
+                return False
+            else:
+                if self.conditions(curr_event, curr_case, 'e'):
+                    if self.prev_assignments[curr_event] != curr_case \
                         and self.has_available_cases(domains, assignments,
                                                      'e'):  # and self.backtracking_available(domains, assignments):
-                    self.prev_assignments[curr_event] = curr_case
-                    return False
+                        self.prev_assignments[curr_event] = curr_case
+                        return False
             self.case_status[curr_case]['e'].append(curr_event)
         # if C
         elif self.data[curr_event][self.attr2] == self.val2:
