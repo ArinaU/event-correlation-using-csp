@@ -115,14 +115,14 @@ class BaseEventConstraint(Constraint):
 
         return False
 
-    def find_events(self, assignments, target_type):
-        curr_event = list(assignments)[-1]
-        curr_case = assignments[curr_event]
-
+    def find_events(self, event, case, target_type, check_order=False):
         events = []
-        for event in self.case_status[curr_case][target_type]:
-            if event < curr_event:
-                events.append(event)
+        for e in self.case_status[case][target_type]:
+            if check_order:
+                if e < event:
+                    events.append(e)
+            else:
+                events.append(e)
 
         return events
 

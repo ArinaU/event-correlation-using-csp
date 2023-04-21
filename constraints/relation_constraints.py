@@ -13,15 +13,17 @@ class RespondedExistence(BaseEventConstraint):
         available_cases = []
         for case, events in self.case_status.items():
             if case in event_domains[event_domains.index(curr_case)+1:]:
-                if not self.conditions(case, event_type):
+                if not self.conditions(curr_event, case, event_type):
                     available_cases.append(case)
 
         return available_cases
 
-    def conditions(self, case, event_type):
+    def conditions(self, event, case, event_type):
         event_type2 = 'e2' if event_type == 'e' else 'e'
-        events = self.case_status[case].setdefault(event_type, [])
-        events2 = self.case_status[case].setdefault(event_type2, [])
+        # events = self.case_status[case].setdefault(event_type, [])
+        # events2 = self.case_status[case].setdefault(event_type2, [])
+        events = self.find_events(event, case, event_type)
+        events2 = self.find_events(event, case, event_type2)
         return (events2 and events) or (events and not events2)
 
     def __call__(self, events, domains, assignments, forwardcheck=False):
@@ -44,7 +46,7 @@ class RespondedExistence(BaseEventConstraint):
         # 1 1 1 2 3 2 2 3 3
 
         if self.data[curr_event][self.attr] == self.val:
-            if self.conditions(curr_case, 'e'):
+            if self.conditions(curr_event, curr_case, 'e'):
                 if self.prev_assignments[curr_event] != curr_case \
                         and self.has_available_cases(domains, assignments, 'e'): # and self.backtracking_available(domains, assignments):
                     self.prev_assignments[curr_event] = curr_case
@@ -53,7 +55,7 @@ class RespondedExistence(BaseEventConstraint):
 
         # if C
         elif self.data[curr_event][self.attr2] == self.val2:
-            if self.conditions(curr_case, 'e2'):
+            if self.conditions(curr_event, curr_case, 'e2'):
                 if self.prev_assignments[curr_event] != curr_case \
                         and self.has_available_cases(domains, assignments, 'e2'): # and self.backtracking_available(domains, assignments):
                     self.prev_assignments[curr_event] = curr_case
@@ -67,22 +69,28 @@ class RespondedExistence(BaseEventConstraint):
 
 # If A occurs, then B occurs after A <C, A, A, C, B>, <B, C, C>
 class Response(BaseEventConstraint):
+    def has_available_cases(self, domains, assignments, event_type):
+        curr_event = list(assignments)[-1]
+        curr_case = assignments[curr_event]
+        event_domains = domains[curr_event]
 
-    def forwardCheckEvents(self, events, domains, assignments, attr=None, val=None):
-        curr_case = assignments[list(assignments)[-1]]
+        available_cases = []
+        for case, events in self.case_status.items():
+            if case in event_domains[event_domains.index(curr_case)+1:]:
+                if not self.conditions(curr_event, case, event_type):
+                    available_cases.append(case)
 
-        for event in events:
-            # if another element
-            if event not in assignments:
-                if self.data[event][self.attr2] == self.val2:
-                    domain = domains[event]
-                    if curr_case in domain:
-                        for value in domain[:]:
-                            if value != curr_case:
-                                domain.hideValue(value)
-                        return True
-        else:
-            return False
+        return available_cases
+
+    def conditions(self, event, case, event_type):
+        event_type2 = 'e2' if event_type == 'e' else 'e'
+        events = self.find_events(event, case, event_type, True)
+        events2 = self.find_events(event, case, event_type2, True)
+        if event_type == 'e':
+            return (events and not events2) or (events2 and not events)
+
+        return (events2 and events) or (events and not events2)
+
 
     def __call__(self, events, domains, assignments, forwardcheck=False):
         curr_event = list(assignments)[-1]
@@ -91,28 +99,39 @@ class Response(BaseEventConstraint):
         self.case_status = self.clean_struct(assignments, self.case_status)
 
         if not self.case_status.get(curr_case, None):
-            self.case_status[curr_case] = []
+            self.case_status[curr_case] = {}
+
+        self.case_status[curr_case].setdefault('e', [])
+        self.case_status[curr_case].setdefault('e2', [])
 
         # 1 2 3 4 5 6 7 8
         # A,C,A,B,C,C,A,B
         # 1 1 2 2 2 1 3 3
 
-        # A C A B C
+        # A,C,A,B,C
+        # 1 1 2 2 2
 
         # if B
         if self.data[curr_event][self.attr] == self.val:
-            # if C was before
-            if self.find_event_type(assignments, 'e2'):
-                return False
-            else:
-                if forwardcheck:
-                    self.forwardCheckEvents(events[curr_event:], domains, assignments)
-
-                self.case_status[curr_case].append({'e': curr_event})
+            if self.conditions(curr_event, curr_case, 'e'):
+                if self.prev_assignments[curr_event] != curr_case \
+                        and self.has_available_cases(domains, assignments,
+                                                     'e'):  # and self.backtracking_available(domains, assignments):
+                    self.prev_assignments[curr_event] = curr_case
+                    return False
+            self.case_status[curr_case]['e'].append(curr_event)
         # if C
         elif self.data[curr_event][self.attr2] == self.val2:
-            self.case_status[curr_case].append({'e2': curr_event})
+            if self.conditions(curr_event, curr_case, 'e2'):
+                if self.prev_assignments[curr_event] != curr_case \
+                        and self.has_available_cases(domains, assignments,
+                                                     'e2'):  # and self.backtracking_available(domains, assignments):
+                    self.prev_assignments[curr_event] = curr_case
+                    return False
 
+            self.case_status[curr_case]['e2'].append(curr_event)
+
+        self.prev_assignments[curr_event] = None
         return True
 
 
