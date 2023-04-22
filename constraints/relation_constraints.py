@@ -305,7 +305,8 @@ class AlternateResponse(BaseEventConstraint):
         # A,A,B,D,C,A,B,C,B
         # 1 2 1 1 1 3 2 2 3
 
-        # 1 2 1 1 1 3 2 1 3
+        # A,A,B,B,C,C
+        # 1 2 1 2 1 2
 
         # B noB C
 
@@ -326,25 +327,7 @@ class AlternateResponse(BaseEventConstraint):
                     return False
                 self.case_status[curr_case].append({'e2': curr_event})
 
-        # # if B
-        # if data[curr_id][required_attr] == required_value:
-        #     not_target_event = self.find_single_target_event(curr_case, 'e')
-        #     if not_target_event:
-        #         return False
-        #     case_status[curr_case].append({'e': curr_id})
-        # # if C
-        # elif data[curr_id][required_attr2] == required_value2:
-        #     target_event = self.find_single_target_event(curr_case, 'e')
-        #     if target_event:
-        #         target_event['e2'] = curr_id
-        #     else:
-        #         if self.has_available_solutions(domains, assignments, case_status, 'e2'):
-        #             return False
-        #         else:
-        #             case_status[curr_case].append({'e2': curr_id})
-
         self.prev_assignments[curr_event] = None
-
         return True
 
 
@@ -354,22 +337,18 @@ class AlternateResponse(BaseEventConstraint):
 # A no(B) B
 class AlternatePrecedence(BaseEventConstraint):
 
-    def __call__(self, events, domains, assignments, forwardcheck=False):
-        data = self._data
-        case_status = self._case_status
-        required_attr = self._required_event['attr']
-        required_value = self._required_event['value']
-        required_attr2 = self._required_event2['attr']
-        required_value2 = self._required_event2['value']
+    def reject_conditions(self, event, case, event_type):
+        single_events = self.find_single_events_in_pairs(event, case, event_type, True, False)
+        return single_events
 
-        self._curr_event = list(assignments)[-1]
-        curr_event = self._curr_event
+    def __call__(self, events, domains, assignments, forwardcheck=False):
+        curr_event = list(assignments)[-1]
         curr_case = assignments[curr_event]
 
-        case_status = self.clean_struct(assignments, case_status)
+        self.case_status = self.clean_struct(assignments, self.case_status)
 
-        if not case_status.get(curr_case, None):
-            case_status[curr_case] = []
+        if not self.case_status.get(curr_case, None):
+            self.case_status[curr_case] = []
 
         # if C, preceded by B and no B in between
         # (B, C) B no(C) C
@@ -377,19 +356,27 @@ class AlternatePrecedence(BaseEventConstraint):
         # A,B,B,C,B,C,A,B,C
         # 1 1 1 1 1 1 2 2 2
 
+        # 1 2 3 4 5 6 7
+        # A,A,B,D,B,C,C
+        # 1 2 1 1 2 1 2
+
+        # B no(C) C
+
         # if B
-        if data[curr_event][required_attr] == required_value:
-            case_status[curr_case].append({'e': curr_event})
-        # if C
-        elif data[curr_event][required_attr2] == required_value2:
-            if case_status[curr_case]:
-                last_pair = case_status[curr_case][-1]
-                if 'e2' in last_pair:
+        if self.data[curr_event][self.attr] == self.val:
+            if self.reject_conditions(curr_event, curr_case, 'e'):
+                if self.check_rejection(domains, assignments, 'e'):
                     return False
-                else:
-                    last_pair['e2'] = curr_event
-            else:
+
+            self.case_status[curr_case].append({'e': curr_event})
+        # if C
+        elif self.data[curr_event][self.attr2] == self.val2:
+            if not self.case_status[curr_case]:
                 return False
+            last_pair = self.case_status[curr_case][-1]
+            if 'e2' in last_pair:
+                return False
+            else:
+                last_pair['e2'] = curr_event
 
         return True
-
