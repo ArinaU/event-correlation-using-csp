@@ -379,4 +379,6 @@ class AlternatePrecedence(BaseEventConstraint):
             else:
                 last_pair['e2'] = curr_event
 
+        self.prev_assignments[curr_event] = None
+
         return True
