@@ -17,14 +17,14 @@ class NotCoexistence(BaseEventConstraint):
 
         # if B
         if self.data[curr_event][self.attr] == self.val:
-            not_target_event = self.find_single_event_type(assignments, 'e2')
+            not_target_event = self.find_events_in_pairs(curr_event, curr_case, 'e2')
             if not_target_event:
                 return False
 
             self.case_status[curr_case].append({'e': curr_event})
         # if C
         elif self.data[curr_event][self.attr2] == self.val2:
-            not_target_event = self.find_single_event_type(assignments, 'e')
+            not_target_event = self.find_events_in_pairs(curr_event, curr_case, 'e')
             if not_target_event:
                 return False
 
@@ -37,31 +37,23 @@ class NotCoexistence(BaseEventConstraint):
 class NotSuccession(BaseEventConstraint):
 
     def __call__(self, events, domains, assignments, forwardcheck=False):
-        data = self._data
-        case_status = self._case_status
-        required_attr = self._required_event['attr']
-        required_value = self._required_event['value']
-        required_attr2 = self._required_event2['attr']
-        required_value2 = self._required_event2['value']
-
-        self._curr_event = list(assignments)[-1]
-        curr_event = self._curr_event
+        curr_event = list(assignments)[-1]
         curr_case = assignments[curr_event]
 
-        case_status = self.clean_struct(assignments, case_status)
+        self.case_status = self.clean_struct(assignments, self.case_status)
 
-        if not case_status.get(curr_case, None):
-            case_status[curr_case] = []
+        if not self.case_status.get(curr_case, None):
+            self.case_status[curr_case] = []
 
         # if B
-        if data[curr_event][required_attr] == required_value:
-            case_status[curr_case].append({'e': curr_event})
+        if self.data[curr_event][self.attr] == self.val:
+            self.case_status[curr_case].append({'e': curr_event})
         # if C
-        elif data[curr_event][required_attr2] == required_value2:
-            not_target_event = self.find_single_event_type(curr_case, 'e')
+        elif self.data[curr_event][self.attr2] == self.val2:
+            not_target_event = self.find_events_in_pairs(curr_event, curr_case, 'e')
             if not_target_event:
                 return False
-            case_status[curr_case].append({'e2': curr_event})
+            self.case_status[curr_case].append({'e2': curr_event})
 
         return True
 
@@ -71,7 +63,6 @@ class NotSuccession(BaseEventConstraint):
 class NotChainSuccession(BaseEventConstraint):
 
     def __call__(self, events, domains, assignments, forwardcheck=False):
-
         curr_event = list(assignments)[-1]
         curr_case = assignments[curr_event]
 
