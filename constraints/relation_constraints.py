@@ -334,7 +334,8 @@ class ChainPrecedence(BaseEventConstraint):
 # After each activity A at least one activity B is executed
 class AlternateResponse(BaseEventConstraint):
     def reject_conditions(self, event, case, event_type):
-        events = self.find_single_events_in_pairs(event, case, event_type, True, False)
+        event_type2 = 'e2' if event_type == 'e' else 'e'
+        events = self.find_single_events_in_pairs(event, case, event_type2, True, False)
         return not events
 
     def __call__(self, events, domains, assignments, forwardcheck=False):
@@ -372,6 +373,8 @@ class AlternateResponse(BaseEventConstraint):
             if target_event:
                 target_event[0]['e2'] = curr_event
             else:
+                if self.check_rejection(domains, assignments, 'e2'):
+                    return False
                 self.case_status[curr_case].append({'e2': curr_event})
 
         # # if B
@@ -391,8 +394,9 @@ class AlternateResponse(BaseEventConstraint):
         #         else:
         #             case_status[curr_case].append({'e2': curr_id})
 
-        return True
+        self.prev_assignments[curr_event] = None
 
+        return True
 
 
 # If B occurs, it's preceded by A and no other B in between: <C, A, C, B, A>, <A, B, C, A, A, C, B>

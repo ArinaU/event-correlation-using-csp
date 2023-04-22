@@ -89,6 +89,9 @@ class BaseEventConstraint(Constraint):
 
         return available_cases
 
+    def reject_conditions(self, curr_event, case, event_type):
+        pass
+
     def check_rejection(self, domains, assignments, event_type):
         curr_event = list(assignments)[-1]
         curr_case = assignments[curr_event]
@@ -176,7 +179,7 @@ class BaseEventConstraint(Constraint):
 
         return events
 
-    def find_event_in_pairs(self, event, case, target_type, check_order=False, pairs=False):
+    def find_single_events_in_pairs(self, event, case, target_type, check_order=False, pairs=False):
         other_type = 'e2' if target_type == 'e' else 'e'
         case_events = self.case_status[case]
         events = []
