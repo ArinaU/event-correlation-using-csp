@@ -179,25 +179,47 @@ class BaseEventConstraint(Constraint):
 
         return events
 
-    def find_single_events_in_pairs(self, event, case, target_type, check_order=False, pairs=False):
+    def find_events_in_pairs(self, event, case, target_type, check_order=False, with_pairs=False, case_events=None):
         other_type = 'e2' if target_type == 'e' else 'e'
-        case_events = self.case_status[case]
+
+        if case_events is None:
+            case_events = self.case_status[case]
+
         events = []
 
         for event_pair in case_events:
-            is_pair = other_type in event_pair
+            target_value = event_pair.get(target_type)
 
-            if is_pair == pairs:
-                target_value = event_pair.get(target_type)
-
-                if target_value is not None:
-                    if check_order:
-                        if target_value < event:
-                            events.append(event_pair)
-                    else:
+            if target_value is not None:
+                if check_order:
+                    if target_value < event:
                         events.append(event_pair)
+                else:
+                    events.append(event_pair)
 
-        return events
+        if with_pairs:  # If with_pairs is True, return both pairs and single elements together
+            return events
+        else:  # If with_pairs is False, return only single elements
+            return [event_pair for event_pair in events if other_type not in event_pair]
+
+    # def find_events_in_pairs(self, event, case, target_type, check_order=False, pairs=False):
+    #     other_type = 'e2' if target_type == 'e' else 'e'
+    #     case_events = self.case_status[case]
+    #     events = []
+    #
+    #     for event_pair in case_events:
+    #         is_pair = other_type in event_pair
+    #
+    #         if is_pair == pairs:
+    #             target_value = event_pair.get(target_type)
+    #
+    #             if target_value is not None:
+    #                 if check_order:
+    #                     if target_value < event:
+    #                         events.append(event_pair)
+    #                 else:
+    #                     events.append(event_pair)
+    #     return events
 
     def find_all_occurrences_of_event(self, assignments, target_type):
         curr_event = list(assignments)[-1]
