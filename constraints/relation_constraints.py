@@ -5,18 +5,6 @@ from copy import deepcopy
 
 # If A occurs, then B occurs: <B, C, A, A, C>, <B, C, C> NOT: <A, C, C>
 class RespondedExistence(BaseEventConstraint):
-    def has_available_cases(self, domains, assignments, event_type):
-        curr_event = list(assignments)[-1]
-        curr_case = assignments[curr_event]
-        event_domains = domains[curr_event]
-
-        available_cases = []
-        for case, events in self.case_status.items():
-            if case in event_domains[event_domains.index(curr_case)+1:]:
-                if not self.reject_conditions(curr_event, case, event_type):
-                    available_cases.append(case)
-
-        return available_cases
 
     def reject_conditions(self, event, case, event_type):
         event_type2 = 'e2' if event_type == 'e' else 'e'
@@ -47,18 +35,14 @@ class RespondedExistence(BaseEventConstraint):
 
         if self.data[curr_event][self.attr] == self.val:
             if self.reject_conditions(curr_event, curr_case, 'e'):
-                if self.prev_assignments[curr_event] != curr_case \
-                        and self.has_available_cases(domains, assignments, 'e'): # and self.backtracking_available(domains, assignments):
-                    self.prev_assignments[curr_event] = curr_case
+                if self.check_rejection(domains, assignments, 'e'):
                     return False
             self.case_status[curr_case]['e'].append(curr_event)
 
         # if C
         elif self.data[curr_event][self.attr2] == self.val2:
             if self.reject_conditions(curr_event, curr_case, 'e2'):
-                if self.prev_assignments[curr_event] != curr_case \
-                        and self.has_available_cases(domains, assignments, 'e2'): # and self.backtracking_available(domains, assignments):
-                    self.prev_assignments[curr_event] = curr_case
+                if self.check_rejection(domains, assignments, 'e2'):
                     return False
 
             self.case_status[curr_case]['e2'].append(curr_event)
