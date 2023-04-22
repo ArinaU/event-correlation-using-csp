@@ -167,9 +167,9 @@ class ChainResponse(BaseEventConstraint):
     def reject_conditions(self, event, case, event_type):
         event_type2 = 'e2' if event_type == 'e' else 'e'
 
-        single_events = self.find_single_events_in_pairs(event, case, event_type, True, False)
-        pairs = self.find_single_events_in_pairs(event, case, event_type, True, True)
-        single_events2 = self.find_single_events_in_pairs(event, case, event_type2, True, False)
+        single_events = self.find_events_in_pairs(event, case, event_type, True, False)
+        pairs = self.find_events_in_pairs(event, case, event_type, True, True)
+        single_events2 = self.find_events_in_pairs(event, case, event_type2, True, False)
 
         if event_type == 'e2':
             return pairs or len(self.case_status[case]) == 0
@@ -212,7 +212,7 @@ class ChainResponse(BaseEventConstraint):
             self.case_status[curr_case].append({'e': curr_event})
         # if C
         elif self.data[curr_event][self.attr2] == self.val2:
-            target_event = self.find_single_events_in_pairs(curr_event, curr_case, 'e', True)
+            target_event = self.find_events_in_pairs(curr_event, curr_case, 'e', True)
             if target_event:
                 target_event[0]['e2'] = curr_event
             else:
@@ -235,7 +235,7 @@ class ChainResponse(BaseEventConstraint):
 class ChainPrecedence(BaseEventConstraint):
 
     def reject_conditions(self, event, case, event_type):
-        single_events = self.find_single_events_in_pairs(event, case, event_type, True, False)
+        single_events = self.find_events_in_pairs(event, case, event_type, True, False)
         if event_type == 'e':
             return single_events
 
@@ -266,7 +266,7 @@ class ChainPrecedence(BaseEventConstraint):
             self.case_status[curr_case].append({'e': curr_event})
         # if C
         elif self.data[curr_event][self.attr2] == self.val2:
-            single_events = self.find_single_events_in_pairs(curr_event, curr_case, 'e', True, False)
+            single_events = self.find_events_in_pairs(curr_event, curr_case, 'e', True, False)
             if not single_events:
                 return False
             case_events = [e for e, c in assignments.items() if c == curr_case and e < curr_event]
@@ -284,7 +284,7 @@ class ChainPrecedence(BaseEventConstraint):
 class AlternateResponse(BaseEventConstraint):
     def reject_conditions(self, event, case, event_type):
         event_type2 = 'e2' if event_type == 'e' else 'e'
-        events = self.find_single_events_in_pairs(event, case, event_type2, True, False)
+        events = self.find_events_in_pairs(event, case, event_type2, True, False)
         return not events
 
     def __call__(self, events, domains, assignments, forwardcheck=False):
@@ -312,14 +312,14 @@ class AlternateResponse(BaseEventConstraint):
 
         # if B
         if self.data[curr_event][self.attr] == self.val:
-            another_event = self.find_single_events_in_pairs(curr_event, curr_case, 'e', True, False)
+            another_event = self.find_events_in_pairs(curr_event, curr_case, 'e', True, False)
             if another_event:
                 return False
             else:
                 self.case_status[curr_case].append({'e': curr_event})
         # if C
         elif self.data[curr_event][self.attr2] == self.val2:
-            target_event = self.find_single_events_in_pairs(curr_event, curr_case, 'e', True, False)
+            target_event = self.find_events_in_pairs(curr_event, curr_case, 'e', True, False)
             if target_event:
                 target_event[0]['e2'] = curr_event
             else:
@@ -338,7 +338,7 @@ class AlternateResponse(BaseEventConstraint):
 class AlternatePrecedence(BaseEventConstraint):
 
     def reject_conditions(self, event, case, event_type):
-        single_events = self.find_single_events_in_pairs(event, case, event_type, True, False)
+        single_events = self.find_events_in_pairs(event, case, event_type, True, False)
         return single_events
 
     def __call__(self, events, domains, assignments, forwardcheck=False):
