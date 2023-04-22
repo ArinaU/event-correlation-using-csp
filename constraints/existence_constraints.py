@@ -7,24 +7,6 @@ from constraints.base_event_constraint import BaseEventConstraint
 # A occurs at most once
 class Absence(BaseEventConstraint):
 
-    # def preProcess(self, events, domains, constraints, vconstraints):
-    #     required_attr = self._required_event['attr']
-    #     required_value = self._required_event['value']
-    #     data = self._data
-    #     all_cases = self.find_cases(events, domains)
-    #
-    #     for event in events:
-    #         if all_cases:
-    #             if data[event][required_attr] == required_value:
-    #                 domain = domains[event]
-    #                 #iterate over domain of curr event
-    #                 for case in domain[:]:
-    #                     if case != all_cases[0]:
-    #                         domain.hideValue(case)
-    #                 all_cases.pop(0)
-    #         else:
-    #             break
-
     def __call__(self, events, domains, assignments, forwardcheck=False):
         curr_event = list(assignments)[-1]
         curr_case = assignments[curr_event]
@@ -50,7 +32,7 @@ class Absence(BaseEventConstraint):
 # A occurs at least once
 class Existence(BaseEventConstraint):
 
-    def forwardCheckEvents(self, events, domains, assignments):
+    def check_next_events(self, events, domains, assignments):
         # if left_cases:
         for event in events:
             if event not in assignments:
@@ -84,8 +66,8 @@ class Existence(BaseEventConstraint):
         # 1 1 1 1 1 1 2 2 1
 
         if self.data[curr_event][self.attr] == self.val:
-            if forwardcheck and len(all_cases) != len(self.case_status):
-                self.forwardCheckEvents(events[curr_event:], domains, assignments)
+            if len(all_cases) != len(self.case_status):
+                self.check_next_events(events[curr_event:], domains, assignments)
 
             self.case_status[curr_case].append(curr_event)
 
