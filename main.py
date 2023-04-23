@@ -98,9 +98,9 @@ class Window(QWidget):
             {"constraint": "Precedence",
              "e": {"attr": "Activity", "value": "J"},
              "e2": {"attr": "Activity", "value": "K"}},
-            {"constraint": "Coexistence",
-             "e": {"attr": "Activity", "value": "B"},
-             "e2": {"attr": "Activity", "value": "C"}},
+            # {"constraint": "Coexistence",
+            #  "e": {"attr": "Activity", "value": "B"},
+            #  "e2": {"attr": "Activity", "value": "C"}},
             {"constraint": "ChainResponse",
              "e": {"attr": "Activity", "value": "F"},
              "e2": {"attr": "Activity", "value": "G"}},
@@ -108,11 +108,8 @@ class Window(QWidget):
              "e": {"attr": "Activity", "value": "E"},
              "e2": {"attr": "Activity", "value": "G"}},
             {"constraint": "ChainPrecedence",
-             "e": {"attr": "Activity", "value": "G"},
-             "e2": {"attr": "Activity", "value": "H"}},
-            {"constraint": "ChainPrecedence",
-             "e": {"attr": "Activity", "value": "I"},
-             "e2": {"attr": "Activity", "value": "J"}},
+             "e": {"attr": "Activity", "value": "H"},
+             "e2": {"attr": "Activity", "value": "I"}},
             {"constraint": "NotChainSuccession",
              "e": {"attr": "Activity", "value": "D"},
              "e2": {"attr": "Activity", "value": "G"}},
@@ -128,15 +125,12 @@ class Window(QWidget):
             {"constraint": "RespondedExistence",
              "e": {"attr": "Activity", "value": "E"},
              "e2": {"attr": "Activity", "value": "G"}},
-            {"constraint": "RespondedExistence",
-             "e": {"attr": "Activity", "value": "K"},
-             "e2": {"attr": "Activity", "value": "L"}},
-            {"constraint": "AlternatePrecedence",
-             "e": {"attr": "Activity", "value": "H"},
-             "e2": {"attr": "Activity", "value": "I"}},
             {"constraint": "AlternatePrecedence",
              "e": {"attr": "Activity", "value": "G"},
-             "e2": {"attr": "Activity", "value": "H"}}
+             "e2": {"attr": "Activity", "value": "H"}},
+            {"constraint": "AlternatePrecedence",
+             "e": {"attr": "Activity", "value": "H"},
+             "e2": {"attr": "Activity", "value": "I"}}
         ]
 
         self.setWindowTitle("Event Correlation Engine")
@@ -151,7 +145,7 @@ class Window(QWidget):
         file_button.clicked.connect(self.open_file_dialog)
         self.filename_edit = QLineEdit()
         # TODO remove next line
-        self.filename_edit.setText('/Users/arinaulanova/PycharmProjects/pythonProject1/event_logs/data39.csv')
+        self.filename_edit.setText('/Users/arinaulanova/PycharmProjects/pythonProject1/event_logs/data40.csv')
 
         grid_layout.addWidget(QLabel('Event log in csv format:'), 0, 0)
         grid_layout.addWidget(self.filename_edit, 0, 1)
