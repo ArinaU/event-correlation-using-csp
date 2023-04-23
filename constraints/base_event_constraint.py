@@ -14,15 +14,6 @@ class BaseEventConstraint(Constraint):
             self._attr2 = required_event2['attr']
             self._val2 = required_event2['value']
 
-
-    # @property
-    # def curr_case(self):
-    #     return self._curr_case
-    #
-    # @curr_case.setter
-    # def curr_case(self, value):
-    #     self._curr_case = value
-
     @property
     def data(self):
         return self._data
@@ -30,14 +21,6 @@ class BaseEventConstraint(Constraint):
     @data.setter
     def data(self, value):
         self._data = value
-
-    # @property
-    # def curr_event(self):
-    #     return self._curr_event
-    #
-    # @curr_event.setter
-    # def curr_event(self, value):
-    #     self._curr_event = value
 
     @property
     def case_status(self):
@@ -82,7 +65,6 @@ class BaseEventConstraint(Constraint):
 
         available_cases = []
         for case, events in self.case_status.items():
-            # if case in event_domains[event_domains.index(curr_case)+1:]:
             if case in event_domains:
                 if not self.reject_conditions(curr_event, case, event_type):
                     available_cases.append(case)
@@ -138,36 +120,6 @@ class BaseEventConstraint(Constraint):
                     return True
         return False
 
-
-    def get_all_cases(self, events, domains):
-        cases = []
-        for event in events:
-            if self.data[event][self.attr] == self.start_event['value']:
-                cases.append(domains[event][0])
-
-        return cases
-
-
-    def has_available_solutions(self, domains, assignments, target_event_type):
-        curr_event = list(assignments)[-1]
-        curr_case = assignments[curr_event]
-
-        other_event_type = 'e2' if target_event_type == 'e' else 'e'
-        available_cases = []
-        for case, pairs in self.case_status.items():
-            for pair in pairs:
-                if target_event_type not in pair and len(domains[pair[other_event_type]]) > 1:
-                    available_cases.append(case)
-                    break
-
-        # check if there are events that can be assigned to free cases
-        event_domains = domains[curr_event]
-        # event_domains[event_domains.index(curr_case):]
-        if set(available_cases) & set(event_domains):
-            return True
-
-        return False
-
     def find_events_in_list(self, event, case, target_type, check_order=False):
         events = []
         for e in self.case_status[case][target_type]:
@@ -221,18 +173,7 @@ class BaseEventConstraint(Constraint):
     #                     events.append(event_pair)
     #     return events
 
-    def find_all_occurrences_of_event(self, assignments, target_type):
-        curr_event = list(assignments)[-1]
-        curr_case = assignments[curr_event]
-
-        pairs = []
-        for pair in self.case_status[curr_case]:
-            if target_type in pair and pair[target_type] < curr_event:
-                pairs.append(pair)
-
-        return pairs
-
-    def clean_struct(self, assignments, struct):
+    def clean_case_status(self, assignments, case_status):
         # Remove values u'', None, {}, []
         # for key, value in list(struct.items()):
         #     if value in (u'', None, {}, []):
@@ -240,24 +181,31 @@ class BaseEventConstraint(Constraint):
 
         # Remove prev events
         last_key = list(assignments.keys())[-1]
-        for key, value in list(struct.items()):
+        for key, value in list(case_status.items()):
             if isinstance(value, dict):
-                struct[key] = self.clean_struct(assignments, value)
+                case_status[key] = self.clean_case_status(assignments, value)
                 # if not struct[key]:
                 #     del struct[key]
             elif isinstance(value, list):
                 new_list = []
                 for item in value:
                     if isinstance(item, dict):
-                        new_dict = self.clean_struct(assignments, item)
+                        new_dict = self.clean_case_status(assignments, item)
                         if new_dict:
                             new_list.append(new_dict)
                     elif isinstance(item, int) and item in assignments and item != last_key:
                         new_list.append(item)
-                struct[key] = new_list
+                case_status[key] = new_list
                 # if not struct[key]:
                 #     del struct[key]
             elif isinstance(value, int) and (value not in assignments or value == last_key):
-                del struct[key]
+                del case_status[key]
 
-        return struct
+        return case_status
+
+    def get_all_cases(self, events, domains):
+        cases = []
+        for event in events:
+            if self.data[event][self.attr] == self.start_event['value']:
+                cases.append(domains[event][0])
+        return cases

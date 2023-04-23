@@ -10,7 +10,7 @@ class NotCoexistence(BaseEventConstraint):
         curr_event = list(assignments)[-1]
         curr_case = assignments[curr_event]
 
-        self.case_status = self.clean_struct(assignments, self.case_status)
+        self.case_status = self.clean_case_status(assignments, self.case_status)
 
         if not self.case_status.get(curr_case, None):
             self.case_status[curr_case] = []
@@ -40,7 +40,7 @@ class NotSuccession(BaseEventConstraint):
         curr_event = list(assignments)[-1]
         curr_case = assignments[curr_event]
 
-        self.case_status = self.clean_struct(assignments, self.case_status)
+        self.case_status = self.clean_case_status(assignments, self.case_status)
 
         if not self.case_status.get(curr_case, None):
             self.case_status[curr_case] = []
@@ -66,7 +66,7 @@ class NotChainSuccession(BaseEventConstraint):
         curr_event = list(assignments)[-1]
         curr_case = assignments[curr_event]
 
-        self.case_status = self.clean_struct(assignments, self.case_status)
+        self.case_status = self.clean_case_status(assignments, self.case_status)
 
         if not self.case_status.get(curr_case, None):
             self.case_status[curr_case] = []

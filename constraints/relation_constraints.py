@@ -18,7 +18,7 @@ class RespondedExistence(BaseEventConstraint):
         curr_event = list(assignments)[-1]
         curr_case = assignments[curr_event]
 
-        self.case_status = self.clean_struct(assignments, self.case_status)
+        self.case_status = self.clean_case_status(assignments, self.case_status)
 
         if not self.case_status.get(curr_case, None):
             self.case_status[curr_case] = {}
@@ -68,7 +68,7 @@ class Response(BaseEventConstraint):
         curr_event = list(assignments)[-1]
         curr_case = assignments[curr_event]
 
-        self.case_status = self.clean_struct(assignments, self.case_status)
+        self.case_status = self.clean_case_status(assignments, self.case_status)
 
         if not self.case_status.get(curr_case, None):
             self.case_status[curr_case] = {}
@@ -121,7 +121,7 @@ class Precedence(BaseEventConstraint):
         curr_event = list(assignments)[-1]
         curr_case = assignments[curr_event]
 
-        self.case_status = self.clean_struct(assignments, self.case_status)
+        self.case_status = self.clean_case_status(assignments, self.case_status)
 
         if not self.case_status.get(curr_case, None):
             self.case_status[curr_case] = {}
@@ -180,7 +180,7 @@ class ChainResponse(BaseEventConstraint):
         curr_event = list(assignments)[-1]
         curr_case = assignments[curr_event]
 
-        self.case_status = self.clean_struct(assignments, self.case_status)
+        self.case_status = self.clean_case_status(assignments, self.case_status)
 
         if not self.case_status.get(curr_case, None):
             self.case_status[curr_case] = []
@@ -245,7 +245,7 @@ class ChainPrecedence(BaseEventConstraint):
         curr_event = list(assignments)[-1]
         curr_case = assignments[curr_event]
 
-        self.case_status = self.clean_struct(assignments, self.case_status)
+        self.case_status = self.clean_case_status(assignments, self.case_status)
 
         if not self.case_status.get(curr_case, None):
             self.case_status[curr_case] = []
@@ -291,7 +291,7 @@ class AlternateResponse(BaseEventConstraint):
         curr_event = list(assignments)[-1]
         curr_case = assignments[curr_event]
 
-        self.case_status = self.clean_struct(assignments, self.case_status)
+        self.case_status = self.clean_case_status(assignments, self.case_status)
 
         if not self.case_status.get(curr_case, None):
             self.case_status[curr_case] = []
@@ -345,7 +345,7 @@ class AlternatePrecedence(BaseEventConstraint):
         curr_event = list(assignments)[-1]
         curr_case = assignments[curr_event]
 
-        self.case_status = self.clean_struct(assignments, self.case_status)
+        self.case_status = self.clean_case_status(assignments, self.case_status)
 
         if not self.case_status.get(curr_case, None):
             self.case_status[curr_case] = []
