@@ -47,20 +47,9 @@ class Absence(BaseEventConstraint):
 
 # A occurs at least once
 class Existence(BaseEventConstraint):
-
-    def check_next_events(self, events, domains, assignments):
-        curr_event = list(assignments)[-1]
-
-        for event in events[curr_event:]:
-            if event not in assignments:
-                if self.data[event][self.attr] == self.val:
-                    domain = domains[event]
-                    for case in domain[:]:
-                        if self.case_status.get(case) and len(domain) > 1:
-                            domain.hideValue(case)
-                    return True
-        return True
-
+    def reject_conditions(self, event, case, event_type):
+        events = self.find_events_in_list(event, case, event_type)
+        return events
 
     def __call__(self, events, domains, assignments, forwardcheck=False):
         curr_event = list(assignments)[-1]
@@ -70,7 +59,9 @@ class Existence(BaseEventConstraint):
         self.case_status = self.clean_case_status(assignments, self.case_status)
 
         if not self.case_status.get(curr_case, None):
-            self.case_status[curr_case] = []
+            self.case_status[curr_case] = {}
+
+        self.case_status[curr_case].setdefault('e', [])
 
         # A,B,A,B,B,C
         # 1 1 2 2 1 1
@@ -83,17 +74,17 @@ class Existence(BaseEventConstraint):
         # 1 1 1 1 1 1 2 2 1
 
         if self.data[curr_event][self.attr] == self.val:
-            self.case_status[curr_case].append(curr_event)
+            if self.reject_conditions(curr_event, curr_case, 'e'):
+                if self.check_rejection(domains, assignments, 'e'):
+                    return False
 
-            assigned_cases = [key for key, value in self.case_status.items() if value]
-            left_cases = [case for case in self.get_all_cases(events, domains) if case not in assigned_cases]
+            self.case_status[curr_case]['e'].append(curr_event)
 
-            if left_cases:
-                self.check_next_events(events, domains, assignments)
+        self.prev_assignments[curr_event] = None
 
         if len(assignments) == len(events):
             for case in set(assignments.values()):
-                if not self.case_status.get(case):
+                if not self.case_status[case]['e']:
                     return False
 
         return True
