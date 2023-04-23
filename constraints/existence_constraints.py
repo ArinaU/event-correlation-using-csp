@@ -54,7 +54,6 @@ class Existence(BaseEventConstraint):
     def __call__(self, events, domains, assignments, forwardcheck=False):
         curr_event = list(assignments)[-1]
         curr_case = assignments[curr_event]
-        all_cases = self.get_all_cases(events, domains)
 
         self.case_status = self.clean_case_status(assignments, self.case_status)
 
