@@ -6,20 +6,6 @@ from constraints.base_event_constraint import BaseEventConstraint
 
 # A occurs at most once
 class Absence(BaseEventConstraint):
-
-    def check_next_events(self, events, domains, assignments):
-        curr_event = list(assignments)[-1]
-
-        for event in events[curr_event:]:
-            if event not in assignments:
-                if self.data[event][self.attr] == self.val:
-                    domain = domains[event]
-                    for case in domain[:]:
-                        if self.case_status.get(case) and len(domain) > 1:
-                            domain.hideValue(case)
-                    return True
-        return True
-
     def __call__(self, events, domains, assignments, forwardcheck=False):
         curr_event = list(assignments)[-1]
         curr_case = assignments[curr_event]
@@ -38,9 +24,6 @@ class Absence(BaseEventConstraint):
             if self.case_status[curr_case]:
                 return False
             else:
-                if len(all_cases) != len(self.case_status):
-                    self.check_next_events(events, domains, assignments)
-
                 self.case_status[curr_case] = curr_event
         return True
 

@@ -32,10 +32,11 @@ DISPLAY_HEIGHT = 35
 class Window(QWidget):
 
     def open_file_dialog(self):
+        default_folder = "/Users/arinaulanova/PycharmProjects/pythonProject1/event_logs"
         filename, ok = QFileDialog.getOpenFileName(
             self,
             "Import CSV",
-            "",
+            default_folder,
             "CSV data files (*.csv)"
         )
         if filename:
@@ -54,7 +55,7 @@ class Window(QWidget):
         case_name = "CaseID"
         timestamp_name = "Start Timestamp"
 
-        # data_file = 'event_logs/check/data21.csv'
+        # data_file = 'event_logs2/check/data21.csv'
         data_file = self.filename_edit.text()
 
         text = self.text_edit_constr.toPlainText()
@@ -150,7 +151,7 @@ class Window(QWidget):
         file_button.clicked.connect(self.open_file_dialog)
         self.filename_edit = QLineEdit()
         # TODO remove next line
-        self.filename_edit.setText('/Users/arinaulanova/PycharmProjects/pythonProject1/event_logs/data48.csv')
+        self.filename_edit.setText('/Users/arinaulanova/PycharmProjects/pythonProject1/event_logs/data39.csv')
 
         grid_layout.addWidget(QLabel('Event log in csv format:'), 0, 0)
         grid_layout.addWidget(self.filename_edit, 0, 1)
