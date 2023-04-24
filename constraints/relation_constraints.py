@@ -148,33 +148,23 @@ class Precedence(BaseEventConstraint):
 
         self.prev_assignments[curr_event] = None
 
-        # # if B
-        # if self.data[curr_event][self.attr] == self.val:
-        #     self.case_status[curr_case].append({'e': curr_event})
-        # # if C
-        # elif self.data[curr_event][self.attr2] == self.val2:
-        #     target_event = self.find_single_event_type(assignments, 'e')
-        #     if target_event:
-        #         target_event['e2'] = curr_event
-        #     else:
-        #         return False
         return True
 
 
 # If A occurs, then B occurs immediately after A <A, B, B>, <A, B, C, A, B>
 class ChainResponse(BaseEventConstraint):
 
-    def reject_conditions(self, event, case, event_type):
-        event_type2 = 'e2' if event_type == 'e' else 'e'
-
-        single_events = self.find_events_in_pairs(event, case, event_type, True, False)
-        pairs = self.find_events_in_pairs(event, case, event_type, True, True)
-        single_events2 = self.find_events_in_pairs(event, case, event_type2, True, False)
-
-        if event_type == 'e2':
-            return pairs or len(self.case_status[case]) == 0
-        else:
-            return single_events2 and not single_events
+    # def reject_conditions(self, event, case, event_type):
+    #     event_type2 = 'e2' if event_type == 'e' else 'e'
+    #
+    #     single_events = self.find_events_in_pairs(event, case, event_type, True, False)
+    #     pairs = self.find_events_in_pairs(event, case, event_type, True, True)
+    #     single_events2 = self.find_events_in_pairs(event, case, event_type2, True, False)
+    #
+    #     if event_type == 'e2':
+    #         return pairs or len(self.case_status[case]) == 0
+    #     else:
+    #         return single_events2 and not single_events
 
     def __call__(self, events, domains, assignments, forwardcheck=False):
         curr_event = list(assignments)[-1]
@@ -184,6 +174,8 @@ class ChainResponse(BaseEventConstraint):
 
         if not self.case_status.get(curr_case, None):
             self.case_status[curr_case] = []
+
+        case_events = [e for e, c in assignments.items() if c == curr_case and e < curr_event]
 
         # self.case_status[curr_case].setdefault('e', [])
         # self.case_status[curr_case].setdefault('e2', [])
@@ -206,27 +198,24 @@ class ChainResponse(BaseEventConstraint):
 
         # if B
         if self.data[curr_event][self.attr] == self.val:
-            if self.reject_conditions(curr_event, curr_case, 'e'):
-                return False
-
+            # if self.reject_conditions(curr_event, curr_case, 'e'):
+            #     return False
             self.case_status[curr_case].append({'e': curr_event})
         # if C
         elif self.data[curr_event][self.attr2] == self.val2:
-            target_event = self.find_events_in_pairs(curr_event, curr_case, 'e', True)
-            if target_event:
-                target_event[0]['e2'] = curr_event
+            event = self.find_events_in_pairs(curr_event, curr_case, 'e', True)
+            if event and event[0]['e'] == case_events[-1]:
+                event[0]['e2'] = curr_event
             else:
-                if self.check_rejection(domains, assignments, 'e2'):
-                    return False
+                # if self.check_rejection(domains, assignments, 'e2'):
+                return False
         else:
-            case_events = [e for e, c in assignments.items() if c == curr_case and e < curr_event]
+            # case_events = [e for e, c in assignments.items() if c == curr_case and e < curr_event]
             if case_events:
                 prev_event = case_events[-1]
                 # if prev event was B
                 if self.data[prev_event][self.attr] == self.val:
                     return False
-
-        self.prev_assignments[curr_event] = None
 
         return True
 
@@ -258,10 +247,12 @@ class ChainPrecedence(BaseEventConstraint):
         # A,A,B,B,C,C
         # 1 2 1 2 1 2
 
+        # A no(B) B
+
         if self.data[curr_event][self.attr] == self.val:
-            if self.reject_conditions(curr_event, curr_case, 'e'):
-                if self.check_rejection(domains, assignments, 'e'):
-                    return False
+            # if self.reject_conditions(curr_event, curr_case, 'e'):
+            #     if self.check_rejection(domains, assignments, 'e'):
+            #         return False
 
             self.case_status[curr_case].append({'e': curr_event})
         # if C
@@ -274,7 +265,7 @@ class ChainPrecedence(BaseEventConstraint):
                 return False
             single_events[-1]['e2'] = curr_event
 
-        self.prev_assignments[curr_event] = None
+        # self.prev_assignments[curr_event] = None
 
         return True
 
@@ -334,7 +325,7 @@ class AlternateResponse(BaseEventConstraint):
 # If B occurs, it's preceded by A and no other B in between: <C, A, C, B, A>, <A, B, C, A, A, C, B>
 # Cannot be: <A, C, A, B, B>, <A, B, C, B>
 # After each activity A at least one activity B is executed
-# A no(B) B
+# A no(B) B J no(I) I
 class AlternatePrecedence(BaseEventConstraint):
 
     def reject_conditions(self, event, case, event_type):
@@ -364,10 +355,6 @@ class AlternatePrecedence(BaseEventConstraint):
 
         # if B
         if self.data[curr_event][self.attr] == self.val:
-            if self.reject_conditions(curr_event, curr_case, 'e'):
-                if self.check_rejection(domains, assignments, 'e'):
-                    return False
-
             self.case_status[curr_case].append({'e': curr_event})
         # if C
         elif self.data[curr_event][self.attr2] == self.val2:
@@ -379,6 +366,6 @@ class AlternatePrecedence(BaseEventConstraint):
             else:
                 last_pair['e2'] = curr_event
 
-        self.prev_assignments[curr_event] = None
+        # self.prev_assignments[curr_event] = None
 
         return True
