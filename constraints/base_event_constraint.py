@@ -89,10 +89,10 @@ class BaseEventConstraint(Constraint):
                     self.prev_assignments[curr_event] = curr_case
                     return True
 
-        if self.check_backtracking(domains, assignments, event_type) \
-                and self.prev_assignments[curr_event] != curr_case:
-            self.prev_assignments[curr_event] = curr_case
-            return True
+        # if self.check_backtracking(domains, assignments, event_type) \
+        #         and self.prev_assignments[curr_event] != curr_case:
+        #     self.prev_assignments[curr_event] = curr_case
+        #     return True
 
         return False
 
@@ -100,15 +100,15 @@ class BaseEventConstraint(Constraint):
         curr_event = list(assignments)[-1]
         curr_case = assignments[curr_event]
         if event_type == 'e':
-            attr = self.attr
-            val = self.val
-        else:
             attr = self.attr2
             val = self.val2
+        else:
+            attr = self.attr
+            val = self.val
 
         if len(domains) > curr_event:
             for event in domains:
-                if event not in assignments and not self.prev_assignments[event]:
+                if event not in assignments:
                     if self.data[event][attr] == val:
                         if curr_case in domains[event]:
                             return False
