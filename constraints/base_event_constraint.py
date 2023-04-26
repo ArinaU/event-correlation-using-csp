@@ -58,6 +58,64 @@ class BaseEventConstraint(Constraint):
     def val2(self):
         return self._val2
 
+    def check_case_status(self, events, domains, assignments, event_type):
+        other_event_type = 'e2' if event_type == 'e' else 'e'
+        curr_event = list(assignments)[-1]
+        curr_case = assignments[curr_event]
+        if event_type == 'e':
+            attr, val = self.attr2, self.val2
+        else:
+            attr, val = self.attr, self.val
+
+        empty_cases = {}
+        possible_cases = {}
+        for case, status in self.case_status.items():
+            if case in domains[curr_event]:
+                if not status['e'] and not status['e2']:
+                    continue
+                if not status[other_event_type]:
+                    empty_cases.setdefault(event_type, []).append(case)
+                elif len(status[other_event_type]) > len(status[event_type]):
+                    possible_cases.setdefault(event_type, []).append(case)
+
+        # ????
+        if not empty_cases:
+            return True
+
+        # Cases with no 'e': ['Case2']
+        # Cases with superfluous 'e2': ['Case1']
+
+        # if B, check there are any C in future with this case in domain
+        all_cases_occur = True
+        found_cases = set()
+        for case in empty_cases[event_type]:
+            case_occurs = False
+            for future_event in events:
+                if future_event not in assignments:
+                    if self.data[future_event][attr] == val:
+                        if case in domains[future_event] and case not in found_cases:
+                            found_cases.add(case)
+                            case_occurs = True
+                            break
+            if not case_occurs:
+                all_cases_occur = False
+                break
+
+        if all_cases_occur:
+            return True
+
+        remaining_cases_occur = True
+        for event_type, cases in possible_cases.items():
+            remaining_cases = set(empty_cases[event_type]) - found_cases
+            remaining_cases_occur = True
+            for case in remaining_cases:
+                if case not in possible_cases.get(event_type, []):
+                    remaining_cases_occur = False
+                    break
+
+        if remaining_cases_occur:
+            return False
+
     def has_available_cases(self, domains, assignments, event_type):
         curr_event = list(assignments)[-1]
         curr_case = assignments[curr_event]
