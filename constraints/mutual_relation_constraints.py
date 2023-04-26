@@ -41,6 +41,63 @@ class Coexistence(BaseEventConstraint):
         return available_cases
 
 
+    def check_case_status(self, events, domains, assignments, event_type):
+        other_event_type = 'e2' if event_type == 'e' else 'e'
+        curr_event = list(assignments)[-1]
+        curr_case = assignments[curr_event]
+        if event_type == 'e':
+            attr, val = self.attr2, self.val2
+        else:
+            attr, val = self.attr, self.val
+
+        empty_cases = {}
+        superfluous_cases = {}
+        for case, status in self.case_status.items():
+            if case in domains[curr_event]:
+                if not status[event_type]:
+                    empty_cases.setdefault(event_type, []).append(case)
+                elif len(status[other_event_type]) > len(status[event_type]):
+                    superfluous_cases.setdefault(event_type, []).append(case)
+
+        # ????
+        if empty_cases:
+            return True
+
+        # Cases with no 'e': ['Case2']
+        # Cases with superfluous 'e2': ['Case1']
+
+        # if B, check there are any C in future with this case in domain
+        all_cases_occur = True
+        found_cases = set()
+        for case in empty_cases[event_type]:
+            case_occurs = False
+            for future_event in events:
+                if future_event not in assignments:
+                    if self.data[future_event][attr] == val:
+                        if case in domains[future_event] and case not in found_cases:
+                            found_cases.add(case)
+                            case_occurs = True
+                            break
+            if not case_occurs:
+                all_cases_occur = False
+                break
+
+        if all_cases_occur:
+            return True
+
+        remaining_cases_occur = True
+        for event_type, cases in superfluous_cases:
+            remaining_cases = set(empty_cases[event_type]) - found_cases
+            remaining_cases_occur = True
+            for case in remaining_cases:
+                if case not in superfluous_cases.get(other_event_type, []):
+                    remaining_cases_occur = False
+                    break
+
+        if remaining_cases_occur:
+            return False
+
+
     def __call__(self, events, domains, assignments, forwardcheck=False):
         curr_event = list(assignments)[-1]
         curr_case = assignments[curr_event]
@@ -57,9 +114,6 @@ class Coexistence(BaseEventConstraint):
         # A,A,B,C,C,A,B,C,B
         # 1 2 1 1 2 3 2 3 3
 
-        # 1 2 1 1 1 3 3 1
-
-
         # if B
         if self.data[curr_event][self.attr] == self.val:
             if not (self.case_status[curr_case]['e2'] and not self.case_status[curr_case]['e']):
@@ -68,6 +122,8 @@ class Coexistence(BaseEventConstraint):
 
             self.case_status[curr_case].setdefault('e', []).append(curr_event)
 
+            if not self.check_case_status(events, domains, assignments, 'e'):
+                return False
         elif self.data[curr_event][self.attr2] == self.val2:
             if not (self.case_status[curr_case]['e'] and not self.case_status[curr_case]['e2']):
                 if self.check_rejection(domains, assignments, 'e2'):
@@ -75,6 +131,8 @@ class Coexistence(BaseEventConstraint):
 
             self.case_status[curr_case].setdefault('e2', []).append(curr_event)
 
+            if not self.check_case_status(events, domains, assignments, 'e2'):
+                return False
 
             # if B
             # if no B and no C
