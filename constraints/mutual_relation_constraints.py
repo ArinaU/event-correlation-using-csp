@@ -42,8 +42,6 @@ class Coexistence(BaseEventConstraint):
 
         return available_cases
 
-
-
     def forward_check_events(self, events, domains, assignments, event_type):
         curr_event = list(assignments)[-1]
         curr_case = assignments[curr_event]
@@ -63,7 +61,6 @@ class Coexistence(BaseEventConstraint):
                             if case != curr_case:
                                 domain.hideValue(case)
                         break
-
 
     def __call__(self, events, domains, assignments, forwardcheck=False):
         curr_event = list(assignments)[-1]
@@ -91,7 +88,6 @@ class Coexistence(BaseEventConstraint):
                     return False
                 elif not (self.case_status[curr_case]['e'] and self.case_status[curr_case]['e2']):
                     self.forward_check_events(events, domains, assignments, 'e')
-
 
             self.case_status[curr_case].setdefault('e', []).append(curr_event)
         elif self.data[curr_event][self.attr2] == self.val2:
