@@ -58,7 +58,8 @@ class BaseEventConstraint(Constraint):
     def val2(self):
         return self._val2
 
-    def check_case_status(self, events, domains, assignments, event_type):
+
+    def check_cases(self, events, domains, assignments, event_type):
         other_event_type = 'e2' if event_type == 'e' else 'e'
         curr_event = list(assignments)[-1]
         curr_case = assignments[curr_event]
@@ -78,9 +79,23 @@ class BaseEventConstraint(Constraint):
                 elif len(status[other_event_type]) > len(status[event_type]):
                     possible_cases.setdefault(event_type, []).append(case)
 
-        # ????
+        return empty_cases, possible_cases
+
+
+    def check_case_status(self, events, domains, assignments, event_type):
+        other_event_type = 'e2' if event_type == 'e' else 'e'
+        curr_event = list(assignments)[-1]
+        curr_case = assignments[curr_event]
+        if event_type == 'e':
+            attr, val = self.attr2, self.val2
+        else:
+            attr, val = self.attr, self.val
+
+        empty_cases, possible_cases = self.check_cases(events, domains, assignments, event_type)
+
         if not empty_cases:
             return True
+
 
         # Cases with no 'e': ['Case2']
         # Cases with superfluous 'e2': ['Case1']
