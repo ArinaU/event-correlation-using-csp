@@ -71,7 +71,7 @@ class BaseEventConstraint(Constraint):
         possible_cases = {}
         for case, status in self.case_status.items():
             if case in domains[curr_event]:
-                if not status['e'] and not status['e2']:
+                if not status[event_type] and not status[other_event_type]:
                     continue
                 if not status[other_event_type]:
                     empty_cases.setdefault(event_type, []).append(case)
