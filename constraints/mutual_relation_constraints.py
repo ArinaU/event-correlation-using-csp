@@ -51,16 +51,18 @@ class Coexistence(BaseEventConstraint):
             attr, val = self.attr, self.val
 
         empty_cases = {}
-        superfluous_cases = {}
+        possible_cases = {}
         for case, status in self.case_status.items():
             if case in domains[curr_event]:
-                if not status[event_type]:
+                if not status['e'] and not status['e2']:
+                    continue
+                if not status[other_event_type]:
                     empty_cases.setdefault(event_type, []).append(case)
                 elif len(status[other_event_type]) > len(status[event_type]):
-                    superfluous_cases.setdefault(event_type, []).append(case)
+                    possible_cases.setdefault(event_type, []).append(case)
 
         # ????
-        if empty_cases:
+        if not empty_cases:
             return True
 
         # Cases with no 'e': ['Case2']
@@ -86,11 +88,11 @@ class Coexistence(BaseEventConstraint):
             return True
 
         remaining_cases_occur = True
-        for event_type, cases in superfluous_cases:
+        for event_type, cases in possible_cases.items():
             remaining_cases = set(empty_cases[event_type]) - found_cases
             remaining_cases_occur = True
             for case in remaining_cases:
-                if case not in superfluous_cases.get(other_event_type, []):
+                if case not in possible_cases.get(event_type, []):
                     remaining_cases_occur = False
                     break
 
