@@ -68,20 +68,21 @@ class BaseEventConstraint(Constraint):
         else:
             attr, val = self.attr, self.val
 
-        empty_cases = {}
+        # empty_cases = {}
         possible_cases = {}
         for case, status in self.case_status.items():
             if case in domains[curr_event]:
                 if not status[event_type] and not status[other_event_type]:
                     continue
-                if not status[other_event_type]:
-                    empty_cases.setdefault(event_type, []).append(case)
+                # if not status[other_event_type]:
+                #     empty_cases.setdefault(event_type, []).append(case)
                 elif len(status[other_event_type]) > len(status[event_type]):
                     possible_cases.setdefault(event_type, []).append(case)
 
-        return empty_cases, possible_cases
+        # return empty_cases, possible_cases
+        return possible_cases
 
-    def check_future_case_assignment(self, events, domains, assignments, empty_cases, event_type):
+    def check_future_case_assignment(self, events, domains, assignments, curr_case, event_type):
         if event_type == 'e':
             attr, val = self.attr2, self.val2
         else:
@@ -89,20 +90,18 @@ class BaseEventConstraint(Constraint):
         all_cases_occur = True
         found_cases = set()
 
-        for case in empty_cases[event_type]:
-            case_occurs = False
-            for future_event in events:
-                if future_event not in assignments:
-                    if self.data[future_event][attr] == val:
-                        if case in domains[future_event] and case not in found_cases:
-                            found_cases.add(case)
-                            case_occurs = True
-                            break
+        # for case in empty_cases[event_type]:
+        case_occurs = False
+        for future_event in events:
+            if future_event not in assignments:
+                if self.data[future_event][attr] == val:
+                    if curr_case in domains[future_event]:
+                        case_occurs = True
+                        break
             if not case_occurs:
-                all_cases_occur = False
                 break
 
-        return found_cases
+        return case_occurs
 
 
     def check_case_status(self, events, domains, assignments, event_type):
@@ -114,31 +113,36 @@ class BaseEventConstraint(Constraint):
         else:
             attr, val = self.attr, self.val
 
-        empty_cases, possible_cases = self.check_possible_cases(events, domains, assignments, event_type)
+        # empty_cases, possible_cases = self.check_possible_cases(events, domains, assignments, event_type)
+        possible_cases = self.check_possible_cases(events, domains, assignments, event_type)
 
-        if not empty_cases:
-            return True
+        # if not empty_cases:
+        #     return True
 
         # Cases with no 'e': ['Case2']
         # Cases with superfluous 'e2': ['Case1']
 
-        found_cases = self.check_future_case_assignment(events, domains, assignments, empty_cases,
+        found_case = self.check_future_case_assignment(events, domains, assignments, curr_case,
                                                                     event_type)
-
-        if set(empty_cases[event_type]) == found_cases:
+        if found_case:
             return True
 
-        remaining_cases_occur = True
-        for event_type, cases in possible_cases.items():
-            remaining_cases = set(empty_cases[event_type]) - found_cases
-            remaining_cases_occur = True
-            for case in remaining_cases:
-                if case not in possible_cases.get(event_type, []):
-                    remaining_cases_occur = False
-                    break
-
-        if remaining_cases_occur:
+        if possible_cases:
             return False
+
+        return True
+
+        # remaining_cases_occur = True
+        # for event_type, cases in possible_cases.items():
+        #     remaining_cases = set(empty_cases[event_type]) - found_cases
+        #     remaining_cases_occur = True
+        #     for case in remaining_cases:
+        #         if case not in possible_cases.get(event_type, []):
+        #             remaining_cases_occur = False
+        #             break
+        #
+        # if remaining_cases_occur:
+        #     return False
 
 
 
