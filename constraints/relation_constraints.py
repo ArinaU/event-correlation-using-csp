@@ -321,12 +321,6 @@ class ChainResponse(BaseEventConstraint):
 
 class ChainPrecedence(BaseEventConstraint):
 
-    def check_conditions(self, event, case, event_type):
-        single_events = self.find_events_in_pairs(event, case, event_type, True, False)
-        if event_type == 'e':
-            return single_events
-
-
     # each time B occurs, A immediately beforehand
     def __call__(self, events, domains, assignments, forwardcheck=False):
         curr_event = list(assignments)[-1]
@@ -346,21 +340,18 @@ class ChainPrecedence(BaseEventConstraint):
         # 1 2 1 2 1 2
 
         # A no(B) B
+        case_events = [e for e, c in assignments.items() if c == curr_case and e < curr_event]
 
         if self.data[curr_event][self.attr] == self.val:
-            if self.check_rejection(domains, assignments, 'e'):
-                return False
 
             self.case_status[curr_case].append({'e': curr_event})
         # if C
         elif self.data[curr_event][self.attr2] == self.val2:
-            single_events = self.find_events_in_pairs(curr_event, curr_case, 'e', True, False)
-            if not single_events:
+            events = self.find_events_in_pairs(curr_event, curr_case, 'e', True, False)
+            if events and case_events[-1] == events[-1]['e']:
+                events[-1]['e2'] = curr_event
+            else:
                 return False
-            case_events = [e for e, c in assignments.items() if c == curr_case and e < curr_event]
-            if not case_events[-1] == single_events[-1]['e']:
-                return False
-            single_events[-1]['e2'] = curr_event
 
         return True
 
