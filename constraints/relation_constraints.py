@@ -198,15 +198,6 @@ class Response(BaseEventConstraint):
 # C occurs only if preceded by B
 class Precedence(BaseEventConstraint):
 
-    def check_conditions(self, event, case, event_type):
-        event_type2 = 'e2' if event_type == 'e' else 'e'
-        events = self.find_events_in_list(event, case, event_type, True)
-        events2 = self.find_events_in_list(event, case, event_type2, True)
-        if event_type == 'e':
-            return events
-
-        return not events2
-
     def __call__(self, events, domains, assignments, forwardcheck=False):
         curr_event = list(assignments)[-1]
         curr_case = assignments[curr_event]
@@ -214,29 +205,23 @@ class Precedence(BaseEventConstraint):
         self.case_status = self.clean_case_status(assignments, self.case_status)
 
         if not self.case_status.get(curr_case, None):
-            self.case_status[curr_case] = {}
-
-        self.case_status[curr_case].setdefault('e', [])
-        self.case_status[curr_case].setdefault('e2', [])
+            self.case_status[curr_case] = {'e': [], 'e2': []}
 
         # 1 2 3 4 5 6 7 8
         # A,A,B,B,C,C,A,B
         # 1 2 1 2 1 2 3 1
 
+
         # if B
         if self.data[curr_event][self.attr] == self.val:
-            if self.check_conditions(curr_event, curr_case, 'e'):
-                if self.check_rejection(domains, assignments, 'e'):
-                    return False
             self.case_status[curr_case]['e'].append(curr_event)
+
         # if C
         elif self.data[curr_event][self.attr2] == self.val2:
-            if self.check_conditions(curr_event, curr_case, 'e2'):
+            if not self.find_events_in_list(curr_event, curr_case, 'e', True):
                 return False
 
             self.case_status[curr_case]['e2'].append(curr_event)
-
-        self.prev_assignments[curr_event] = None
 
         return True
 
