@@ -12,54 +12,68 @@ class RespondedExistence(BaseEventConstraint):
     #     events2 = self.find_events_in_list(event, case, event_type2)
     #     return (events2 and events) or (events and not events2)
 
-    def has_available_cases(self, domains, assignments, event_type):
+    # def has_available_cases(self, domains, assignments, event_type):
+    #     curr_event = list(assignments)[-1]
+    #     curr_case = assignments[curr_event]
+    #     event_domains = domains[curr_event]
+    #     other_event_type = 'e2' if event_type == 'e' else 'e'
+    #
+    #     available_cases = []
+    #
+    #     for case, events in self.case_status.items():
+    #         if case in event_domains:
+    #             events = self.find_events_in_list(curr_event, case, event_type)  # B
+    #             other_events = self.find_events_in_list(curr_event, case, other_event_type)  # C
+    #
+    #             if event_type == 'e':
+    #                 # if B, select cases where C exist
+    #                 if other_events:
+    #                     available_cases.append(case)
+    #             else:
+    #                 # # if C, select cases where B exist and not C yet
+    #                 if other_events and not events:
+    #                     available_cases.append(case)
+    #
+    #     return available_cases
+
+    def check_possible_cases(self, events, domains, assignments, event_type, target_type):
+        # other_event_type = 'e2' if event_type == 'e' else 'e'
         curr_event = list(assignments)[-1]
         curr_case = assignments[curr_event]
-        event_domains = domains[curr_event]
-        other_event_type = 'e2' if event_type == 'e' else 'e'
 
-        available_cases = []
-
-        for case, events in self.case_status.items():
-            if case in event_domains:
-                events = self.find_events_in_list(curr_event, case, event_type)  # B
-                other_events = self.find_events_in_list(curr_event, case, other_event_type)  # C
-
-                if event_type == 'e':
-                    # if B, select cases where C exist
-                    if other_events:
-                        available_cases.append(case)
-                else:
-                    # # if C, select cases where B exist and not C yet
-                    if other_events and not events:
-                        available_cases.append(case)
-
-        return available_cases
-
-
-    def check_possible_cases(self, events, domains, assignments, event_type):
-        other_event_type = 'e2' if event_type == 'e' else 'e'
-        curr_event = list(assignments)[-1]
-        curr_case = assignments[curr_event]
-        if event_type == 'e':
-            attr, val = self.attr2, self.val2
-        else:
-            attr, val = self.attr, self.val
-
-        empty_cases = {}
         possible_cases = {}
         for case, status in self.case_status.items():
             if case in domains[curr_event]:
-                if status[event_type] and not status[other_event_type]:
-                    empty_cases.setdefault(event_type, []).append(case)
+                # if status[event_type] and not status[other_event_type]:
+                #     empty_cases.setdefault(event_type, []).append(case)
+                if event_type == 'e':
+                    if (status[event_type] and len(status[target_type]) > 1) \
+                            or (not status[event_type] and status[target_type]):
+                        possible_cases.setdefault(event_type, []).append(case)
+                if event_type == 'e2':
+                    if status[target_type] and not status[event_type]:
+                        possible_cases.setdefault(event_type, []).append(case)
 
-                elif (status[event_type] and len(status[other_event_type]) > 1) \
-                        or (not status[event_type] and status[other_event_type]):
-                    possible_cases.setdefault(event_type, []).append(case)
-
-        return empty_cases, possible_cases
+        return possible_cases
 
 
+    def check_future_case_assignment(self, events, domains, assignments, curr_case, event_type, target_type):
+
+        if target_type == 'e2':
+            target_attr, target_val = self.attr2, self.val2
+        else:
+            target_attr, target_val = self.attr2, self.val2
+
+        # for case in empty_cases[event_type]:
+        case_occurs = False
+        for future_event in events:
+            if future_event not in assignments:
+                if self.data[future_event][target_attr] == target_val:
+                    if curr_case in domains[future_event]:
+                        case_occurs = True
+                        break
+
+        return case_occurs
 
     def __call__(self, events, domains, assignments, forwardcheck=False):
         curr_event = list(assignments)[-1]
@@ -69,44 +83,37 @@ class RespondedExistence(BaseEventConstraint):
         if not self.case_status.get(curr_case, None):
             self.case_status[curr_case] = {'e': [], 'e2': []}
 
-
-
-
-        # 1 2 3 4 5 6 7 8 9
-        # A,C,B,A,A,B,C,C,B
-        # 1 1 1 2 3 2 2 3 3
-        # 1 1 1 2 3 2 2 1 3
-
         # A,B,A,C,C,B
         # 1 1 2 1 2 2
-
-        # 1 2 3 4 5 6 7 8 9
-        # A,C,B,A,A,B,B,C,C
-        # 1 1 1 2 3 2 3 2 3
 
         # 2
         # 1 2 3 4 5 6 7 8 9
         # A,C,B,A,A,B,B,C,C
         # 1 1 1 2 3 2 3 2 3
 
+        # 1 2 3 4 5 6 7 8 9
+        # A,C,B,A,A,B,B,C,C
+        # 1 1 1 2 3 2 3 2 3
+
+        # 1 2 3 4 5 6 7 8 9
+        # A,C,B,A,A,B,C,C,B
+        # 1 1 1 2 3 2 2 3 3
+
         # B
         if self.data[curr_event][self.attr] == self.val:
-            if not self.case_status[curr_case]['e2']:
-                if self.check_rejection(domains, assignments, 'e'):
-                    return False
-
             self.case_status[curr_case]['e'].append(curr_event)
 
-            if not self.check_case_status(events, domains, assignments, 'e'):
-                return False
+            if not self.case_status[curr_case]['e2']:
+                if not self.check_case_status(events, domains, assignments, 'e', 'e2'):
+                    return False
+
         # C
         elif self.data[curr_event][self.attr2] == self.val2:
-            if self.check_rejection(domains, assignments, 'e2'):
-                return False
-
             self.case_status[curr_case]['e2'].append(curr_event)
+            # if not self.case_status[curr_case]['e'] \
+            #         or (self.case_status[curr_case]['e'] and self.case_status[curr_case]['e2']):
 
-            if not self.check_case_status(events, domains, assignments, 'e'):
+            if not self.check_case_status(events, domains, assignments, 'e2', 'e'):
                 return False
 
         self.prev_assignments[curr_event] = None
