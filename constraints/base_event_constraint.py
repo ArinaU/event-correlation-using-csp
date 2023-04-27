@@ -209,7 +209,7 @@ class BaseEventConstraint(Constraint):
         for event, case in assignments.items():
             if case == curr_case:
                 if event > check_event and event < curr_event:
-                    if self.data[curr_event][attr] == val:
+                    if self.data[event][attr] == val:
                         return False
         return True
 
