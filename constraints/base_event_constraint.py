@@ -59,7 +59,7 @@ class BaseEventConstraint(Constraint):
         return self._val2
 
 
-    def check_cases(self, events, domains, assignments, event_type):
+    def check_possible_cases(self, events, domains, assignments, event_type):
         other_event_type = 'e2' if event_type == 'e' else 'e'
         curr_event = list(assignments)[-1]
         curr_case = assignments[curr_event]
@@ -114,7 +114,7 @@ class BaseEventConstraint(Constraint):
         else:
             attr, val = self.attr, self.val
 
-        empty_cases, possible_cases = self.check_cases(events, domains, assignments, event_type)
+        empty_cases, possible_cases = self.check_possible_cases(events, domains, assignments, event_type)
 
         if not empty_cases:
             return True

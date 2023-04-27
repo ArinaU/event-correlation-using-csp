@@ -37,7 +37,7 @@ class RespondedExistence(BaseEventConstraint):
         return available_cases
 
 
-    def check_cases(self, events, domains, assignments, event_type):
+    def check_possible_cases(self, events, domains, assignments, event_type):
         other_event_type = 'e2' if event_type == 'e' else 'e'
         curr_event = list(assignments)[-1]
         curr_case = assignments[curr_event]
@@ -126,6 +126,28 @@ class Response(BaseEventConstraint):
 
         return (events2 and events) or (events and not events2)
 
+    def check_possible_cases(self, events, domains, assignments, event_type):
+        other_event_type = 'e2' if event_type == 'e' else 'e'
+        curr_event = list(assignments)[-1]
+        curr_case = assignments[curr_event]
+        if event_type == 'e':
+            attr, val = self.attr2, self.val2
+        else:
+            attr, val = self.attr, self.val
+
+        empty_cases = {}
+        possible_cases = {}
+        for case, status in self.case_status.items():
+            if case in domains[curr_event]:
+                if status[event_type] and not status[other_event_type]:
+                    empty_cases.setdefault(event_type, []).append(case)
+
+                elif (status[event_type] and len(status[other_event_type]) > 1) \
+                        or (not status[event_type] and status[other_event_type]):
+                    possible_cases.setdefault(event_type, []).append(case)
+
+        return empty_cases, possible_cases
+
     def __call__(self, events, domains, assignments, forwardcheck=False):
         curr_event = list(assignments)[-1]
         curr_case = assignments[curr_event]
@@ -138,16 +160,16 @@ class Response(BaseEventConstraint):
         self.case_status[curr_case].setdefault('e', [])
         self.case_status[curr_case].setdefault('e2', [])
 
-        # 1 2 3 4 5 6 7 8
-        # A,C,A,B,C,C,A,B
-        # 1 1 2 2 2 1 3 3
-
         # A,C,A,B,C
         # 1 1 2 2 2
 
         # 1 2 3 4 5 6 7 8 9
         # A,C,B,A,A,B,C,C,B
         # 1 1 1 2 3 2 2 3 3
+
+        # 1 2 3 4 5 6 7 8
+        # A,C,A,B,C,C,A,B
+        # 1 1 2 2 2 1 3 3
 
         # if B
         if self.data[curr_event][self.attr] == self.val:
@@ -158,6 +180,7 @@ class Response(BaseEventConstraint):
                     if self.check_rejection(domains, assignments, 'e'):
                         return False
             self.case_status[curr_case]['e'].append(curr_event)
+
             if not self.check_case_status(events, domains, assignments, 'e'):
                 return False
         # if C
@@ -167,7 +190,8 @@ class Response(BaseEventConstraint):
                     return False
 
             self.case_status[curr_case]['e2'].append(curr_event)
-            if not self.check_case_status(events, domains, assignments, 'e2'):
+
+            if not self.check_case_status(events, domains, assignments, 'e'):
                 return False
 
         self.prev_assignments[curr_event] = None
