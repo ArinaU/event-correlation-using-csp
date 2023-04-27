@@ -198,6 +198,21 @@ class BaseEventConstraint(Constraint):
                     return True
         return False
 
+    def check_order(self, assignments, check_event, event_type):
+        curr_event = list(assignments)[-1]
+        curr_case = assignments[curr_event]
+        if event_type == 'e':
+            attr, val = self.attr2, self.val2
+        else:
+            attr, val = self.attr, self.val
+
+        for event, case in assignments.items():
+            if case == curr_case:
+                if event > check_event and event < curr_event:
+                    if self.data[curr_event][attr] == val:
+                        return False
+        return True
+
     def find_events_in_list(self, event, case, target_type, check_order=False):
         events = []
         for e in self.case_status[case][target_type]:
