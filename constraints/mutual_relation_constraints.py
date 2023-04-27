@@ -39,24 +39,29 @@ class Coexistence(BaseEventConstraint):
     #     return available_cases
 
 
-    def check_possible_cases(self, events, domains, assignments, event_type):
-        other_event_type = 'e2' if event_type == 'e' else 'e'
+    def check_possible_cases(self, events, domains, assignments, event_type, target_type):
+        # other_event_type = 'e2' if event_type == 'e' else 'e'
         curr_event = list(assignments)[-1]
         curr_case = assignments[curr_event]
         if event_type == 'e':
-            attr, val = self.attr2, self.val2
-        else:
             attr, val = self.attr, self.val
+        else:
+            attr, val = self.attr2, self.val2
+
+        if target_type == 'e2':
+            target_attr, target_val = self.attr2, self.val2
+        else:
+            target_attr, target_val = self.attr, self.val
 
         # empty_cases = {}
         possible_cases = {}
         for case, status in self.case_status.items():
             if case in domains[curr_event]:
-                if not status[event_type] and not status[other_event_type]:
+                if not status[event_type] and not status[target_type]:
                     continue
                 # if not status[other_event_type]:
                 #     empty_cases.setdefault(event_type, []).append(case)
-                elif len(status[other_event_type]) > len(status[event_type]):
+                elif len(status[target_type]) > len(status[event_type]):
                     possible_cases.setdefault(event_type, []).append(case)
 
         # return empty_cases, possible_cases
@@ -71,29 +76,29 @@ class Coexistence(BaseEventConstraint):
             self.case_status[curr_case] = {'e': [], 'e2': []}
 
         # 1 2 3 4 5 6 7 8 9
-        # A,A,A,B,C,B,C,C,C
-        # 1 2 3 1 1 2 2 1 1
-
-        # 1 2 3 4 5 6 7 8 9
         # A,A,B,C,C,A,B,C,B
         # 1 2 1 1 2 3 2 3 3
 
+        # 1 2 3 4 5 6 7 8 9
+        # A,A,A,B,C,B,C,C,C
+        # 1 2 3 1 1 2 2 1 1
+
         # if B
         if self.data[curr_event][self.attr] == self.val:
-            if not self.case_status[curr_case]['e2'] \
-                    or (self.case_status[curr_case]['e'] and self.case_status[curr_case]['e2']):
-                if not self.check_case_status(events, domains, assignments, 'e'):
-                    return False
-
             self.case_status[curr_case].setdefault('e', []).append(curr_event)
 
-        elif self.data[curr_event][self.attr2] == self.val2:
-            if not self.case_status[curr_case]['e'] \
+            if not self.case_status[curr_case]['e2'] \
                     or (self.case_status[curr_case]['e'] and self.case_status[curr_case]['e2']):
-                if not self.check_case_status(events, domains, assignments, 'e2'):
+                if not self.check_case_status(events, domains, assignments, 'e', 'e2'):
                     return False
 
+        elif self.data[curr_event][self.attr2] == self.val2:
             self.case_status[curr_case].setdefault('e2', []).append(curr_event)
+
+            if not self.case_status[curr_case]['e'] \
+                    or (self.case_status[curr_case]['e'] and self.case_status[curr_case]['e2']):
+                if not self.check_case_status(events, domains, assignments, 'e2', 'e'):
+                    return False
 
             # if B
             # if no B and no C
