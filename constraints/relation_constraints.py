@@ -443,10 +443,6 @@ class AlternateResponse(BaseEventConstraint):
 # A no(B) B J no(I) I
 class AlternatePrecedence(BaseEventConstraint):
 
-    def check_conditions(self, event, case, event_type):
-        single_events = self.find_events_in_pairs(event, case, event_type, True, False)
-        return single_events
-
     def __call__(self, events, domains, assignments, forwardcheck=False):
         curr_event = list(assignments)[-1]
         curr_case = assignments[curr_event]
@@ -468,20 +464,25 @@ class AlternatePrecedence(BaseEventConstraint):
 
         # B no(C) C
 
+        # 1 2 3 4 5 6 7 8 9
+        # A,B,B,C,B,C,A,B,C
+        # 1 1 1 1 1 1 2 2 2
+
         # if B
         if self.data[curr_event][self.attr] == self.val:
             # here add rejection checking or not
             self.case_status[curr_case].append({'e': curr_event})
         # if C
         elif self.data[curr_event][self.attr2] == self.val2:
-            if not self.case_status[curr_case]:
-                return False
-            last_pair = self.case_status[curr_case][-1]
-            if 'e2' in last_pair:
-                return False
-            else:
-                last_pair['e2'] = curr_event
+            pairs = self.find_events_in_pairs(curr_event, curr_case, 'e', True, True)
 
-        # self.prev_assignments[curr_event] = None
+            if pairs:
+                last_pair = pairs[-1]
+                if not last_pair.get('e2'):
+                    if self.check_order(assignments, last_pair['e'], 'e2'):
+                        last_pair['e2'] = curr_event
+                        return True
+
+            return False
 
         return True
