@@ -158,13 +158,7 @@ class Response(BaseEventConstraint):
         self.case_status = self.clean_case_status(assignments, self.case_status)
 
         if not self.case_status.get(curr_case, None):
-            self.case_status[curr_case] = {}
-
-        self.case_status[curr_case].setdefault('e', [])
-        self.case_status[curr_case].setdefault('e2', [])
-
-        # A,C,A,B,C
-        # 1 1 2 2 2
+            self.case_status[curr_case] = {'e': [], 'e2': []}
 
         # 1 2 3 4 5 6 7 8 9
         # A,C,B,A,A,B,C,C,B
@@ -174,27 +168,26 @@ class Response(BaseEventConstraint):
         # A,C,A,B,C,C,A,B
         # 1 1 2 2 2 1 3 3
 
+        # 1 2 3 4 5 6 7 8
+        # A,A,B,B,C,C,A,C
+        # 1 2 1 1 1 2 3 3
+
+        # 1 2 3 4 5
+        # A,C,A,B,C
+        # 1 1 2 2 2
+
         # if B
         if self.data[curr_event][self.attr] == self.val:
             if self.find_events_in_list(curr_event, curr_case, 'e2', True):
                 return False
-            else:
-                if self.check_conditions(curr_event, curr_case, 'e'):
-                    if self.check_rejection(domains, assignments, 'e'):
-                        return False
+
             self.case_status[curr_case]['e'].append(curr_event)
 
-            if not self.check_case_status(events, domains, assignments, 'e'):
-                return False
         # if C
         elif self.data[curr_event][self.attr2] == self.val2:
-            if self.check_conditions(curr_event, curr_case, 'e2'):
-                if self.check_rejection(domains, assignments, 'e2'):
-                    return False
-
             self.case_status[curr_case]['e2'].append(curr_event)
 
-            if not self.check_case_status(events, domains, assignments, 'e'):
+            if not self.check_case_status(events, domains, assignments, 'e2', 'e'):
                 return False
 
         self.prev_assignments[curr_event] = None
