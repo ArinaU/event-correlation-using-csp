@@ -56,13 +56,9 @@ class RespondedExistence(BaseEventConstraint):
 
         return possible_cases
 
-
     def check_future_case_assignment(self, events, domains, assignments, curr_case, event_type, target_type):
 
-        if target_type == 'e2':
-            target_attr, target_val = self.attr2, self.val2
-        else:
-            target_attr, target_val = self.attr2, self.val2
+        target_attr, target_val = self.attr2, self.val2
 
         # for case in empty_cases[event_type]:
         case_occurs = False
@@ -123,37 +119,37 @@ class RespondedExistence(BaseEventConstraint):
 # If A occurs, then B occurs after A <C, A, A, C, B>, <B, C, C>
 class Response(BaseEventConstraint):
 
-    def check_conditions(self, event, case, event_type):
-        event_type2 = 'e2' if event_type == 'e' else 'e'
-        events = self.find_events_in_list(event, case, event_type, True)
-        events2 = self.find_events_in_list(event, case, event_type2, True)
-        if event_type == 'e':
-            # return (events and not events2) or (events2 and not events)
-            return events or events2
+    def check_future_case_assignment(self, events, domains, assignments, curr_case, event_type, target_type):
+        target_attr, target_val = self.attr2, self.val2
 
-        return (events2 and events) or (events and not events2)
+        # for case in empty_cases[event_type]:
+        case_occurs = False
+        for future_event in events:
+            if future_event not in assignments:
+                if self.data[future_event][target_attr] == target_val:
+                    if curr_case in domains[future_event]:
+                        case_occurs = True
+                        break
 
-    def check_possible_cases(self, events, domains, assignments, event_type):
-        other_event_type = 'e2' if event_type == 'e' else 'e'
+        return case_occurs
+
+    def check_possible_cases(self, events, domains, assignments, event_type, target_type):
+        # other_event_type = 'e2' if event_type == 'e' else 'e'
         curr_event = list(assignments)[-1]
         curr_case = assignments[curr_event]
-        if event_type == 'e':
-            attr, val = self.attr2, self.val2
-        else:
-            attr, val = self.attr, self.val
 
-        empty_cases = {}
         possible_cases = {}
         for case, status in self.case_status.items():
             if case in domains[curr_event]:
-                if status[event_type] and not status[other_event_type]:
-                    empty_cases.setdefault(event_type, []).append(case)
 
-                elif (status[event_type] and len(status[other_event_type]) > 1) \
-                        or (not status[event_type] and status[other_event_type]):
-                    possible_cases.setdefault(event_type, []).append(case)
+                events = self.find_events_in_list(curr_event, case, 'e2', True)
+                target_events = self.find_events_in_list(curr_event, case, 'e', True)
 
-        return empty_cases, possible_cases
+                if event_type == 'e2':
+                    if target_events and not events:
+                        possible_cases.setdefault(event_type, []).append(case)
+
+        return possible_cases
 
     def __call__(self, events, domains, assignments, forwardcheck=False):
         curr_event = list(assignments)[-1]

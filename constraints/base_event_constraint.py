@@ -202,7 +202,7 @@ class BaseEventConstraint(Constraint):
         events = []
         for e in self.case_status[case][target_type]:
             if check_order:
-                if e < event:
+                if e <= event:
                     events.append(e)
             else:
                 events.append(e)
