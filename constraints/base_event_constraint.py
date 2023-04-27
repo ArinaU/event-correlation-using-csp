@@ -81,6 +81,29 @@ class BaseEventConstraint(Constraint):
 
         return empty_cases, possible_cases
 
+    def check_future_case_assignment(self, events, domains, assignments, empty_cases, event_type):
+        if event_type == 'e':
+            attr, val = self.attr2, self.val2
+        else:
+            attr, val = self.attr, self.val
+        all_cases_occur = True
+        found_cases = set()
+
+        for case in empty_cases[event_type]:
+            case_occurs = False
+            for future_event in events:
+                if future_event not in assignments:
+                    if self.data[future_event][attr] == val:
+                        if case in domains[future_event] and case not in found_cases:
+                            found_cases.add(case)
+                            case_occurs = True
+                            break
+            if not case_occurs:
+                all_cases_occur = False
+                break
+
+        return found_cases
+
 
     def check_case_status(self, events, domains, assignments, event_type):
         other_event_type = 'e2' if event_type == 'e' else 'e'
@@ -96,27 +119,13 @@ class BaseEventConstraint(Constraint):
         if not empty_cases:
             return True
 
-
         # Cases with no 'e': ['Case2']
         # Cases with superfluous 'e2': ['Case1']
 
-        # if B, check there are any C in future with this case in domain
-        all_cases_occur = True
-        found_cases = set()
-        for case in empty_cases[event_type]:
-            case_occurs = False
-            for future_event in events:
-                if future_event not in assignments:
-                    if self.data[future_event][attr] == val:
-                        if case in domains[future_event] and case not in found_cases:
-                            found_cases.add(case)
-                            case_occurs = True
-                            break
-            if not case_occurs:
-                all_cases_occur = False
-                break
+        found_cases = self.check_future_case_assignment(events, domains, assignments, empty_cases,
+                                                                    event_type)
 
-        if all_cases_occur:
+        if set(empty_cases[event_type]) == found_cases:
             return True
 
         remaining_cases_occur = True
@@ -130,6 +139,9 @@ class BaseEventConstraint(Constraint):
 
         if remaining_cases_occur:
             return False
+
+
+
 
     def has_available_cases(self, domains, assignments, event_type):
         curr_event = list(assignments)[-1]
