@@ -222,7 +222,7 @@ class BaseEventConstraint(Constraint):
 
             if target_value is not None:
                 if check_order:
-                    if target_value < event:
+                    if target_value <= event:
                         events.append(event_pair)
                 else:
                     events.append(event_pair)
