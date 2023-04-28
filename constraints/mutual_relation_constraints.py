@@ -76,25 +76,25 @@ class Coexistence(BaseEventConstraint):
 
         # if B
         if self.data[curr_event][self.attr] == self.val:
-            if not self.case_status[curr_case]['e']:
+            if not self.case_status[curr_case]['e'] and self.case_status[curr_case]['e2']:
                 self.case_status[curr_case].setdefault('e', []).append(curr_event)
                 return True
-
-            missing_cases = [case for case, events in self.case_status.items() if not events['e']]
-            if missing_cases and not self.check_case_status(events, domains, assignments, 'e', 'e2'):
-                return False
+            else:
+                missing_cases = [case for case, events in self.case_status.items() if not events['e']]
+                if missing_cases and not self.check_case_status(events, domains, assignments, 'e', 'e2'):
+                    return False
 
             self.case_status[curr_case].setdefault('e', []).append(curr_event)
         elif self.data[curr_event][self.attr2] == self.val2:
-            if not self.case_status[curr_case]['e2']:
+            if not self.case_status[curr_case]['e2'] and self.case_status[curr_case]['e']:
                 self.case_status[curr_case].setdefault('e2', []).append(curr_event)
                 return True
+            else:
+                missing_cases = [case for case, events in self.case_status.items() if not events['e2']]
+                if missing_cases and not self.check_case_status(events, domains, assignments, 'e2', 'e'):
+                    return False
 
-            missing_cases = [case for case, events in self.case_status.items() if not events['e2']]
-            if missing_cases and not self.check_case_status(events, domains, assignments, 'e2', 'e'):
-                return False
-
-            self.case_status[curr_case].setdefault('e', []).append(curr_event)
+            self.case_status[curr_case].setdefault('e2', []).append(curr_event)
 
             # if B
             # if no B and no C
