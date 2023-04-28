@@ -10,6 +10,51 @@ from constraints.relation_constraints import *
 from constraints.mutual_relation_constraints import *
 from constraints.negative_relation_constraints import *
 
+class TheRecursiveBacktrackingSolver(RecursiveBacktrackingSolver):
+
+    def recursiveBacktracking(self, solutions, domains, vconstraints, assignments, single):
+        for variable in domains:
+            if variable not in assignments:
+                break
+        else:
+            solutions.append(assignments.copy())
+            return solutions
+
+        assignments[variable] = None
+
+        forwardcheck = self._forwardcheck
+        if forwardcheck:
+            pushdomains = [domains[x] for x in domains if x not in assignments]
+        else:
+            pushdomains = None
+
+        for value in domains[variable]:
+            assignments[variable] = value
+            if pushdomains:
+                for domain in pushdomains:
+                    domain.pushState()
+            for constraint, variables in vconstraints[variable]:
+                if not constraint(variables, domains, assignments, pushdomains):
+                    break
+            else:
+                self.recursiveBacktracking(solutions, domains, vconstraints, assignments, single)
+                if solutions and single:
+                    return solutions
+            if pushdomains:
+                for domain in pushdomains:
+                    domain.popState()
+
+        del assignments[variable]
+        return solutions
+    #
+    # def getSolution(self, domains, constraints, vconstraints):
+    #     solutions = self.recursiveBacktracking([], domains, vconstraints, {}, True)
+    #     return solutions and solutions[0] or None
+    #
+    # def getSolutions(self, domains, constraints, vconstraints):
+    #     return self.recursiveBacktracking([], domains, vconstraints, {}, False)
+
+
 
 class EventCorrelationEngine:
     def __init__(self, start_event, constraints, case_name='CaseID', timestamp_name='Start Timestamp'):
@@ -52,7 +97,6 @@ class EventCorrelationEngine:
         for id, val in data.items():
             # if equal to start event
             if val[attr] == value:
-                # problem.addVariable(id, [iter])
                 problem.addVariable(id, [f"Case{iter}"])
                 iter += 1
             # if n-th events
@@ -61,7 +105,8 @@ class EventCorrelationEngine:
                 problem.addVariable(id, [f"Case{i}" for i in range(1, iter)])
 
     def assign_cases(self, datadict, forwardcheck=False):
-        solver = RecursiveBacktrackingSolver(forwardcheck)
+        # solver = RecursiveBacktrackingSolver(True)
+        solver = TheRecursiveBacktrackingSolver(True)
         problem = Problem(solver)
         self.declare_domains(problem, datadict, self._start_event)
 
