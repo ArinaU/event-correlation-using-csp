@@ -59,7 +59,7 @@ class BaseEventConstraint(Constraint):
         return self._val2
 
 
-    def check_possible_cases(self, events, domains, assignments, event_type, target_type):
+    def check_possible_cases(self, events, domains, assignments, event_type, target_type=None):
         # other_event_type = 'e2' if event_type == 'e' else 'e'
         curr_event = list(assignments)[-1]
         curr_case = assignments[curr_event]
@@ -87,7 +87,7 @@ class BaseEventConstraint(Constraint):
         # return empty_cases, possible_cases
         return possible_cases
 
-    def check_future_case_assignment(self, events, domains, assignments, curr_case, event_type, target_type):
+    def check_future_case_assignment(self, events, domains, assignments, curr_case, event_type, target_type=None):
         if event_type == 'e':
             attr, val = self.attr, self.val
         else:
@@ -110,11 +110,11 @@ class BaseEventConstraint(Constraint):
         return case_occurs
 
 
-    def check_case_status(self, events, domains, assignments, event_type, target_type):
+    def check_case_status(self, events, domains, assignments, event_type, target_type=None):
         other_event_type = 'e2' if event_type == 'e' else 'e'
         curr_event = list(assignments)[-1]
         curr_case = assignments[curr_event]
-        if event_type == 'e':
+        if event_type == 'e' and target_type:
             attr, val = self.attr2, self.val2
         else:
             attr, val = self.attr, self.val
@@ -125,10 +125,10 @@ class BaseEventConstraint(Constraint):
         # Cases with no 'e': ['Case2']
         # Cases with superfluous 'e2': ['Case1']
 
-        found_case = self.check_future_case_assignment(events, domains, assignments, curr_case,
-                                                                    event_type, target_type)
-        if found_case:
-            return True
+        # found_case = self.check_future_case_assignment(events, domains, assignments, curr_case,
+        #                                                             event_type, target_type)
+        # if found_case:
+        #     return True
 
         if possible_cases:
             return False
@@ -198,19 +198,24 @@ class BaseEventConstraint(Constraint):
                     return True
         return False
 
-    def check_order(self, assignments, check_event, event_type):
+    def check_order(self, assignments, check_event, event_type, not_event_type=False):
         curr_event = list(assignments)[-1]
         curr_case = assignments[curr_event]
+        attr, val = None, None
         if event_type == 'e':
             attr, val = self.attr2, self.val2
-        else:
+        elif event_type == 'e2':
             attr, val = self.attr, self.val
 
         for event, case in assignments.items():
             if case == curr_case:
-                if event > check_event and event < curr_event:
-                    if self.data[event][attr] == val:
+                if check_event < event < curr_event:
+                    if not_event_type:
                         return False
+                    else:
+                        if self.data[event][attr] == val:
+                            return False
+
         return True
 
     def find_events_in_list(self, event, case, target_type, check_order=False):
