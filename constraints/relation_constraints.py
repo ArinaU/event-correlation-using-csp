@@ -88,13 +88,17 @@ class RespondedExistence(BaseEventConstraint):
         # A,C,B,A,A,B,C,C,B
         # 1 1 1 2 3 2 2 3 3
 
-        # 1 2 3 4 5 6 7 8 9
-        # A,C,B,A,A,B,B,C,C
-        # 1 1 1 2 3 2 3 2 3
-
         # 1 2 3 4 5 6
         # A,B,A,C,C,B
         # 1 1 2 1 2 2
+
+        #                   1                   2                   3
+        # 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9
+        # A,C,A,B,C,A,B,D,C,B,D,F,D,F,G,E,G,H,G,H,I,H,I,J,I,L,J,C,B,K,D,L,E,G,H,I,J,K,L
+
+        # 1 2 3 4 5 6 7 8 9
+        # A,C,B,A,A,B,B,C,C
+        # 1 1 1 2 3 2 3 2 3
 
         # B
         if self.data[curr_event][self.attr] == self.val:
@@ -105,15 +109,15 @@ class RespondedExistence(BaseEventConstraint):
                     return False
         # C
         elif self.data[curr_event][self.attr2] == self.val2:
-            if not self.case_status[curr_case]['e2']:
+            if self.case_status[curr_case]['e'] and not self.case_status[curr_case]['e2']:
                 self.case_status[curr_case]['e2'].append(curr_event)
                 return True
             else:
-                missing_cases = [case for case, events in self.case_status.items() if not events['e2']]
+                # if not self.case_status[curr_case]['e']:
+                missing_cases = [case for case, events in self.case_status.items() if not events['e2'] and events['e']]
                 if missing_cases and not self.check_case_status(events, domains, assignments, 'e2', 'e'):
                     return False
-
-                self.case_status[curr_case]['e2'].append(curr_event)
+            self.case_status[curr_case]['e2'].append(curr_event)
         return True
 
 
@@ -334,7 +338,6 @@ class ChainResponse(BaseEventConstraint):
             else:
                 self.case_status[curr_case].append({'e2': curr_event})
 
-                # # possible check last event in check_possible_cases
                 if not self.check_case_status(events, domains, assignments, 'e2', 'e'):
                     return False
         else:
