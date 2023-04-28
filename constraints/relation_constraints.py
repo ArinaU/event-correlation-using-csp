@@ -36,14 +36,14 @@ class RespondedExistence(BaseEventConstraint):
     #
     #     return available_cases
 
-    def check_possible_cases(self, events, domains, assignments, event_type, target_type):
+    def check_possible_cases(self, events, domains, assignments, event_type, target_type=None):
         # other_event_type = 'e2' if event_type == 'e' else 'e'
         curr_event = list(assignments)[-1]
         curr_case = assignments[curr_event]
 
         possible_cases = {}
         for case, status in self.case_status.items():
-            if case in domains[curr_event]:
+            if case != curr_case and case in domains[curr_event]:
                 # if status[event_type] and not status[other_event_type]:
                 #     empty_cases.setdefault(event_type, []).append(case)
                 if event_type == 'e':
@@ -56,7 +56,7 @@ class RespondedExistence(BaseEventConstraint):
 
         return possible_cases
 
-    def check_future_case_assignment(self, events, domains, assignments, curr_case, event_type, target_type):
+    def check_future_case_assignment(self, events, domains, assignments, curr_case, event_type, target_type=None):
 
         target_attr, target_val = self.attr2, self.val2
 
@@ -119,7 +119,7 @@ class RespondedExistence(BaseEventConstraint):
 # If A occurs, then B occurs after A <C, A, A, C, B>, <B, C, C>
 class Response(BaseEventConstraint):
 
-    def check_future_case_assignment(self, events, domains, assignments, curr_case, event_type, target_type):
+    def check_future_case_assignment(self, events, domains, assignments, curr_case, event_type, target_type=None):
         target_attr, target_val = self.attr2, self.val2
 
         # for case in empty_cases[event_type]:
@@ -133,14 +133,14 @@ class Response(BaseEventConstraint):
 
         return case_occurs
 
-    def check_possible_cases(self, events, domains, assignments, event_type, target_type):
+    def check_possible_cases(self, events, domains, assignments, event_type, target_type=None):
         # other_event_type = 'e2' if event_type == 'e' else 'e'
         curr_event = list(assignments)[-1]
         curr_case = assignments[curr_event]
 
         possible_cases = {}
         for case, status in self.case_status.items():
-            if case in domains[curr_event]:
+            if case != curr_case and case in domains[curr_event]:
 
                 events = self.find_events_in_list(curr_event, case, 'e2', True)
                 target_events = self.find_events_in_list(curr_event, case, 'e', True)
@@ -185,12 +185,16 @@ class Response(BaseEventConstraint):
 
         # if C
         elif self.data[curr_event][self.attr2] == self.val2:
+            if self.case_status[curr_case]['e'] and not self.case_status[curr_case]['e2']:
+                self.case_status[curr_case]['e2'].append(curr_event)
+                return True
+            else:
+                missing_cases = [case for case, events in self.case_status.items() if events['e'] and not events['e2']]
+                if missing_cases and not self.check_case_status(events, domains, assignments, 'e2', 'e'):
+                    return False
+
             self.case_status[curr_case]['e2'].append(curr_event)
 
-            if not self.check_case_status(events, domains, assignments, 'e2', 'e'):
-                return False
-
-        self.prev_assignments[curr_event] = None
         return True
 
 
@@ -218,10 +222,10 @@ class Precedence(BaseEventConstraint):
 
         # if C
         elif self.data[curr_event][self.attr2] == self.val2:
-            if not self.find_events_in_list(curr_event, curr_case, 'e', True):
+            if self.find_events_in_list(curr_event, curr_case, 'e', True):
+                self.case_status[curr_case]['e2'].append(curr_event)
+            else:
                 return False
-
-            self.case_status[curr_case]['e2'].append(curr_event)
 
         return True
 
@@ -255,27 +259,27 @@ class ChainResponse(BaseEventConstraint):
                         for case in domain[:]:
                             if case != curr_case:
                                 domain.hideValue(case)
-                        break
-    #
-    # def check_possible_cases(self, events, domains, assignments, event_type, target_type=None):
-    #     # other_event_type = 'e2' if event_type == 'e' else 'e'
-    #     curr_event = list(assignments)[-1]
-    #     curr_case = assignments[curr_event]
-    #
-    #     possible_cases = {}
-    #     for case, status in self.case_status.items():
-    #         if case != curr_case:
-    #             if case in domains[curr_event]:
-    #
-    #                 # events = self.find_events_in_pairs(curr_event, case, 'e2', True)
-    #                 target_events = self.find_events_in_pairs(curr_event, case, 'e', True)
-    #
-    #                 if event_type == 'e2':
-    #                     if target_events: # and not events:
-    #                         # if self.check_order(assignments, target_events[-1]['e'], 'e', True):
-    #                         possible_cases.setdefault(event_type, []).append(case)
-    #
-    #     return possible_cases
+                        return True
+
+    def check_possible_cases(self, events, domains, assignments, event_type, target_type=None):
+        # other_event_type = 'e2' if event_type == 'e' else 'e'
+        curr_event = list(assignments)[-1]
+        curr_case = assignments[curr_event]
+
+        possible_cases = {}
+        for case, status in self.case_status.items():
+            if case != curr_case:
+                if case in domains[curr_event]:
+
+                    # events = self.find_events_in_pairs(curr_event, case, 'e2', True)
+                    target_events = self.find_events_in_pairs(curr_event, case, 'e', True)
+
+                    if event_type == 'e2':
+                        if target_events: # and not events:
+                            # if self.check_order(assignments, target_events[-1]['e'], 'e', True):
+                            possible_cases.setdefault(event_type, []).append(case)
+
+        return possible_cases
 
     def __call__(self, events, domains, assignments, forwardcheck=False):
         curr_event = list(assignments)[-1]
@@ -330,8 +334,8 @@ class ChainResponse(BaseEventConstraint):
                 self.case_status[curr_case].append({'e2': curr_event})
 
             # # possible check last event in check_possible_cases
-            # if not self.check_case_status(events, domains, assignments, 'e2', 'e'):
-            #     return False
+            if not self.check_case_status(events, domains, assignments, 'e2', 'e'):
+                return False
         else:
             if case_events:
                 prev_event = case_events[-1]
@@ -342,10 +346,8 @@ class ChainResponse(BaseEventConstraint):
         return True
 
 
-
+# each time B occurs, A immediately beforehand
 class ChainPrecedence(BaseEventConstraint):
-
-    # each time B occurs, A immediately beforehand
     def __call__(self, events, domains, assignments, forwardcheck=False):
         curr_event = list(assignments)[-1]
         curr_case = assignments[curr_event]
@@ -364,7 +366,7 @@ class ChainPrecedence(BaseEventConstraint):
         # 1 2 1 2 1 2
 
         # A no(B) B
-        case_events = [e for e, c in assignments.items() if c == curr_case and e < curr_event]
+        case_events = sorted([e for e, c in assignments.items() if c == curr_case and e < curr_event])
 
         if self.data[curr_event][self.attr] == self.val:
             self.case_status[curr_case].append({'e': curr_event})
@@ -373,8 +375,9 @@ class ChainPrecedence(BaseEventConstraint):
             events = self.find_events_in_pairs(curr_event, curr_case, 'e', True, False)
             if events and case_events[-1] == events[-1]['e']:
                 events[-1]['e2'] = curr_event
-            else:
-                return False
+                return True
+
+            return False
 
         return True
 
@@ -383,7 +386,7 @@ class ChainPrecedence(BaseEventConstraint):
 # After each activity A at least one activity B is executed
 class AlternateResponse(BaseEventConstraint):
 
-    def check_future_case_assignment(self, events, domains, assignments, curr_case, event_type, target_type):
+    def check_future_case_assignment(self, events, domains, assignments, curr_case, event_type, target_type=None):
         target_attr, target_val = self.attr2, self.val2
 
         # for case in empty_cases[event_type]:
@@ -397,14 +400,14 @@ class AlternateResponse(BaseEventConstraint):
 
         return case_occurs
 
-    def check_possible_cases(self, events, domains, assignments, event_type, target_type):
+    def check_possible_cases(self, events, domains, assignments, event_type, target_type=None):
         # other_event_type = 'e2' if event_type == 'e' else 'e'
         curr_event = list(assignments)[-1]
         curr_case = assignments[curr_event]
 
         possible_cases = {}
         for case, status in self.case_status.items():
-            if case in domains[curr_event]:
+            if case != curr_case and case in domains[curr_event]:
 
                 events = self.find_events_in_pairs(curr_event, case, 'e2', True)
                 target_events = self.find_events_in_pairs(curr_event, case, 'e', True)
@@ -426,31 +429,40 @@ class AlternateResponse(BaseEventConstraint):
             self.case_status[curr_case] = []
 
         # 1 2 3 4 5 6 7 8 9
-        # A,A,B,B,D,C,A,B,C
-        # 1 2 1  1 1 3 3 2
-        # 1 2 1 2 1 1 3 3 2
-
-        # 1 2 3 4 5 6 7 8 9
         # A,A,B,D,C,A,B,C,B
         # 1 2 1 1 1 3 2 2 3
 
         # A,A,B,B,C,C
         # 1 2 1 2 1 2
 
+        # 1 2 3 4 5 6 7 8 9
+        # A,A,B,B,D,C,A,B,C
+        # 1 2 1 2 1 1 3 3 2
+
         # B noB C
+
+        # 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6
+        # A,A,C,C,B,B,D,D,F,E,G,G,H,C,B,I
+
+            # 1 2 3 4 5 6 7 8 9
+            # A,A,C,C,B,B,D,D,C
+            # 1 2 1 2 1 1 1 2 1
+
+            # 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0
+            # A,A,C,C,B,B,D,D,F,E,G,G,H,C,B,I,D,C,B,E,D,G,F,H,G,I,C,B,J,L
 
         # if B
         if self.data[curr_event][self.attr] == self.val:
-            another_event = self.find_events_in_pairs(curr_event, curr_case, 'e', True, False)
+            another_event = self.find_events_in_pairs(curr_event, curr_case, 'e', True)
             if another_event:
                 return False
             else:
                 self.case_status[curr_case].append({'e': curr_event})
         # if C
         elif self.data[curr_event][self.attr2] == self.val2:
-            target_event = self.find_events_in_pairs(curr_event, curr_case, 'e', True, False)
-            if target_event:
-                target_event[0]['e2'] = curr_event
+            event = self.find_events_in_pairs(curr_event, curr_case, 'e', True)
+            if event and self.check_order(assignments, event[-1]['e'], 'e'):
+                event[-1]['e2'] = curr_event
             else:
                 self.case_status[curr_case].append({'e2': curr_event})
 
@@ -491,7 +503,7 @@ class AlternatePrecedence(BaseEventConstraint):
         # 1 2 3 4 5 6 7 8 9
         # A,B,B,C,B,C,A,B,C
         # 1 1 1 1 1 1 2 2 2
-
+        # 31 
         # if B
         if self.data[curr_event][self.attr] == self.val:
             # here add rejection checking or not

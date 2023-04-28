@@ -57,21 +57,34 @@ class Existence(BaseEventConstraint):
     #
     #     return possible_cases
 
+    def get_all_cases(self, events, domains):
+        cases = []
+        for event in events:
+            if self.data[event][self.attr] == self.start_event['value']:
+                cases.append(domains[event][0])
+        return cases
+
     def forward_check_events(self, events, domains, assignments):
         curr_event = list(assignments)[-1]
         curr_case = assignments[curr_event]
+        all_cases = self.get_all_cases(events, domains)
 
-        for event in events:
-            if event not in assignments:
-                if self.data[event][self.attr] == self.val:
-                    domain = domains[event]
-                    if curr_case in domain:
-                        for case in domain[:]:
-                            if case == curr_case:
-                                domain.hideValue(case)
-                        return True
-                    else:
-                        return True
+        existing_cases = [c for c, e in self.case_status.items() if e['e']]
+
+        left_cases = [e for e in all_cases if e not in existing_cases]
+
+        if left_cases:
+            for event in events:
+                if event not in assignments:
+                    if self.data[event][self.attr] == self.val:
+                        domain = domains[event]
+                        if left_cases[0] in domain:
+                            for case in domain[:]:
+                                if case != left_cases[0]:
+                                    domain.hideValue(case)
+                            return True
+                        else:
+                            return True
 
     def __call__(self, events, domains, assignments, forwardcheck=False):
         curr_event = list(assignments)[-1]
@@ -107,8 +120,8 @@ class Existence(BaseEventConstraint):
 
             self.case_status[curr_case]['e'].append(curr_event)
 
-            if [c for c, e in self.case_status.items() if not e['e']]:
-                self.forward_check_events(events, domains, assignments)
+            # if [c for c, e in self.case_status.items() if not e['e']]:
+            self.forward_check_events(events, domains, assignments)
 
         self.prev_assignments[curr_event] = None
 
