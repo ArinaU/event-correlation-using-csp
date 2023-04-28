@@ -43,15 +43,6 @@ class Coexistence(BaseEventConstraint):
         # other_event_type = 'e2' if event_type == 'e' else 'e'
         curr_event = list(assignments)[-1]
         curr_case = assignments[curr_event]
-        if event_type == 'e':
-            attr, val = self.attr, self.val
-        else:
-            attr, val = self.attr2, self.val2
-
-        if target_type == 'e2':
-            target_attr, target_val = self.attr2, self.val2
-        else:
-            target_attr, target_val = self.attr, self.val
 
         # empty_cases = {}
         possible_cases = {}
@@ -89,7 +80,8 @@ class Coexistence(BaseEventConstraint):
                 self.case_status[curr_case].setdefault('e', []).append(curr_event)
                 return True
 
-            if not self.check_case_status(events, domains, assignments, 'e', 'e2'):
+            missing_cases = [case for case, events in self.case_status.items() if not events['e']]
+            if missing_cases and not self.check_case_status(events, domains, assignments, 'e', 'e2'):
                 return False
 
             self.case_status[curr_case].setdefault('e', []).append(curr_event)
@@ -98,7 +90,8 @@ class Coexistence(BaseEventConstraint):
                 self.case_status[curr_case].setdefault('e2', []).append(curr_event)
                 return True
 
-            if not self.check_case_status(events, domains, assignments, 'e2', 'e'):
+            missing_cases = [case for case, events in self.case_status.items() if not events['e2']]
+            if missing_cases and not self.check_case_status(events, domains, assignments, 'e2', 'e'):
                 return False
 
             self.case_status[curr_case].setdefault('e', []).append(curr_event)
