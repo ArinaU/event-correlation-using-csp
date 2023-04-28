@@ -79,14 +79,7 @@ class RespondedExistence(BaseEventConstraint):
         if not self.case_status.get(curr_case, None):
             self.case_status[curr_case] = {'e': [], 'e2': []}
 
-        # A,B,A,C,C,B
-        # 1 1 2 1 2 2
-
         # 2
-        # 1 2 3 4 5 6 7 8 9
-        # A,C,B,A,A,B,B,C,C
-        # 1 1 1 2 3 2 3 2 3
-
         # 1 2 3 4 5 6 7 8 9
         # A,C,B,A,A,B,B,C,C
         # 1 1 1 2 3 2 3 2 3
@@ -95,6 +88,14 @@ class RespondedExistence(BaseEventConstraint):
         # A,C,B,A,A,B,C,C,B
         # 1 1 1 2 3 2 2 3 3
 
+        # 1 2 3 4 5 6 7 8 9
+        # A,C,B,A,A,B,B,C,C
+        # 1 1 1 2 3 2 3 2 3
+
+        # 1 2 3 4 5 6
+        # A,B,A,C,C,B
+        # 1 1 2 1 2 2
+
         # B
         if self.data[curr_event][self.attr] == self.val:
             self.case_status[curr_case]['e'].append(curr_event)
@@ -102,17 +103,17 @@ class RespondedExistence(BaseEventConstraint):
             if not self.case_status[curr_case]['e2']:
                 if not self.check_case_status(events, domains, assignments, 'e', 'e2'):
                     return False
-
         # C
         elif self.data[curr_event][self.attr2] == self.val2:
-            self.case_status[curr_case]['e2'].append(curr_event)
-            # if not self.case_status[curr_case]['e'] \
-            #         or (self.case_status[curr_case]['e'] and self.case_status[curr_case]['e2']):
+            if not self.case_status[curr_case]['e2']:
+                self.case_status[curr_case]['e2'].append(curr_event)
+                return True
+            else:
+                missing_cases = [case for case, events in self.case_status.items() if not events['e2']]
+                if missing_cases and not self.check_case_status(events, domains, assignments, 'e2', 'e'):
+                    return False
 
-            if not self.check_case_status(events, domains, assignments, 'e2', 'e'):
-                return False
-
-        self.prev_assignments[curr_event] = None
+                self.case_status[curr_case]['e2'].append(curr_event)
         return True
 
 
@@ -503,7 +504,7 @@ class AlternatePrecedence(BaseEventConstraint):
         # 1 2 3 4 5 6 7 8 9
         # A,B,B,C,B,C,A,B,C
         # 1 1 1 1 1 1 2 2 2
-        # 31 
+        # 31
         # if B
         if self.data[curr_event][self.attr] == self.val:
             # here add rejection checking or not
