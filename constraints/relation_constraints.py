@@ -350,8 +350,8 @@ class ChainResponse(BaseEventConstraint):
             else:
                 self.case_status[curr_case].append({'e2': curr_event})
 
-                if not self.check_case_status(events, domains, assignments, 'e2', 'e'):
-                    return False
+                # if not self.check_case_status(events, domains, assignments, 'e2', 'e'):
+                #     return False
         else:
             if case_events:
                 prev_event = case_events[-1]
