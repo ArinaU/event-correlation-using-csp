@@ -87,27 +87,44 @@ class BaseEventConstraint(Constraint):
         # return empty_cases, possible_cases
         return possible_cases
 
-    def check_future_case_assignment(self, events, domains, assignments, curr_case, event_type, target_type=None):
-        if event_type == 'e':
-            attr, val = self.attr, self.val
-        else:
-            attr, val = self.attr2, self.val2
+    # def check_future_case_assignment(self, events, domains, assignments, curr_case, event_type, target_type=None):
+    #     if event_type == 'e':
+    #         attr, val = self.attr, self.val
+    #     else:
+    #         attr, val = self.attr2, self.val2
+    #
+    #     if target_type == 'e2':
+    #         target_attr, target_val = self.attr2, self.val2
+    #     else:
+    #         target_attr, target_val = self.attr, self.val
+    #
+    #     # for case in empty_cases[event_type]:
+    #     case_occurs = False
+    #     for future_event in events:
+    #         if future_event not in assignments:
+    #             if self.data[future_event][target_attr] == target_val:
+    #                 if curr_case in domains[future_event]:
+    #                     case_occurs = True
+    #                     break
+    #
+    #     return case_occurs
 
-        if target_type == 'e2':
-            target_attr, target_val = self.attr2, self.val2
-        else:
-            target_attr, target_val = self.attr, self.val
 
-        # for case in empty_cases[event_type]:
-        case_occurs = False
-        for future_event in events:
-            if future_event not in assignments:
-                if self.data[future_event][target_attr] == target_val:
-                    if curr_case in domains[future_event]:
-                        case_occurs = True
-                        break
+    def forward_check_events(self, events, domains, assignments):
+        curr_event = list(assignments)[-1]
+        curr_case = assignments[curr_event]
 
-        return case_occurs
+        for event in events:
+            if event not in assignments:
+                if self.data[event][self.attr2] == self.val2:
+                    domain = domains[event]
+                    if curr_case in domain:
+                        if len(domain) > 1:
+                            for case in domain[:]:
+                                if case != curr_case:
+                                    domain.hideValue(case)
+                        return True
+        return False
 
 
     def check_case_status(self, events, domains, assignments, event_type, target_type=None):

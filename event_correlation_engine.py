@@ -74,7 +74,7 @@ class EventCorrelationEngine:
             self._data = input_data
         # elif self._data_file:
         elif isinstance(input_data, str):
-            data = pd.read_csv(input_data, sep=',')
+            data = pd.read_csv(input_data, sep=';')
             data = data.sort_values(by=self._timestamp_name, ascending=True)
             data['EventID'] = range(1, len(data) + 1)
             data.set_index('EventID', inplace=True)
@@ -133,7 +133,7 @@ class EventCorrelationEngine:
             os.mkdir(outdir)
 
         fullname = os.path.join(outdir, filename)
-        generated_data.to_csv(fullname, sep=',')
+        generated_data.to_csv(fullname, sep=';')
 
     def generate(self, input_data=None):
         self.data = input_data  # set data

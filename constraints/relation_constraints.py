@@ -204,15 +204,23 @@ class Response(BaseEventConstraint):
 
             self.case_status[curr_case]['e'].append(curr_event)
 
+            # if not self.forward_check_events(events, domains, assignments):
+            #     if not self.check_case_status(events, domains, assignments, 'e', 'e2'):
+            #         return False
+            # if not self.forward_check_events(events, domains, assignments):
+            #     if not self.case_status[curr_case]['e2']:
+            #         return False
+            self.forward_check_events(events, domains, assignments)
+
         # if C
         elif self.data[curr_event][self.attr2] == self.val2:
             if self.case_status[curr_case]['e'] and not self.case_status[curr_case]['e2']:
                 self.case_status[curr_case]['e2'].append(curr_event)
                 return True
-            else:
-                missing_cases = [case for case, events in self.case_status.items() if events['e'] and not events['e2']]
-                if missing_cases and not self.check_case_status(events, domains, assignments, 'e2', 'e'):
-                    return False
+            # else:
+            #     missing_cases = [case for case, events in self.case_status.items() if events['e'] and not events['e2']]
+            #     if missing_cases and not self.check_case_status(events, domains, assignments, 'e2', 'e'):
+            #         return False
 
             self.case_status[curr_case]['e2'].append(curr_event)
 
