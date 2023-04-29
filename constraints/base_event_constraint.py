@@ -129,6 +129,27 @@ class BaseEventConstraint(Constraint):
                         return True
         return False
 
+    def forward_prune_events(self, events, domains, assignments, event_type, all_events=False):
+        curr_event = list(assignments)[-1]
+        curr_case = assignments[curr_event]
+        if event_type == 'e':
+            attr, val = self.attr, self.val
+        else:
+            attr, val = self.attr2, self.val2
+
+        for event in events:
+            if event not in assignments:
+                if self.data[event][attr] == val:
+                    domain = domains[event]
+                    if curr_case in domain:
+                        # if len(domain) > 1:
+                        for case in domain[:]:
+                            if case == curr_case:
+                                domain.hideValue(case)
+                        if not all_events:
+                            return True
+        return False
+
 
     def check_case_status(self, events, domains, assignments, event_type, target_type=None):
         other_event_type = 'e2' if event_type == 'e' else 'e'
