@@ -109,14 +109,17 @@ class BaseEventConstraint(Constraint):
     #
     #     return case_occurs
 
-
-    def forward_check_events(self, events, domains, assignments):
+    def forward_check_events(self, events, domains, assignments, event_type):
         curr_event = list(assignments)[-1]
         curr_case = assignments[curr_event]
+        if event_type == 'e':
+            attr, val = self.attr, self.val
+        else:
+            attr, val = self.attr2, self.val2
 
         for event in events:
             if event not in assignments:
-                if self.data[event][self.attr2] == self.val2:
+                if self.data[event][attr] == val:
                     domain = domains[event]
                     if curr_case in domain:
                         if len(domain) > 1:
