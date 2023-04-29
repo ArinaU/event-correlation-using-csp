@@ -455,10 +455,6 @@ class AlternateResponse(BaseEventConstraint):
             else:
                 self.case_status[curr_case].append({'e2': curr_event})
 
-                # # possible check last event in check_possible_cases
-                # if not self.check_case_status(events, domains, assignments, 'e2', 'e'):
-                #     return False
-
         return True
 
 
@@ -467,6 +463,39 @@ class AlternateResponse(BaseEventConstraint):
 # After each activity A at least one activity B is executed
 # A no(B) B J no(I) I
 class AlternatePrecedence(BaseEventConstraint):
+
+    def forward_check_events(self, events, domains, assignments, event_type):
+        curr_event = list(assignments)[-1]
+        curr_case = assignments[curr_event]
+        if event_type == 'e':
+            attr, val = self.attr, self.val
+            attr2, val2 = self.attr2, self.val2
+        else:
+            attr, val = self.attr2, self.val2
+            attr2, val2 = self.attr, self.val
+
+        flag = False
+        flag2 = False
+        for event in events:
+            if event not in assignments:
+                # if B found
+                if self.data[event][attr2] == val2 and not flag:
+                    flag = True
+                # if another C found
+                if self.data[event][attr] == val:
+                    # if B not found before
+                    if not flag:
+                        domain = domains[event]
+                        if curr_case in domain:
+                            # if len(domain) > 1
+                            for case in domain[:]:
+                                if case == curr_case:
+                                    domain.hideValue(case)
+                                    return True
+                # if flag and flag2:
+                #     return True
+
+        return False
 
     def __call__(self, events, domains, assignments, forwardcheck=False):
         curr_event = list(assignments)[-1]
@@ -496,7 +525,6 @@ class AlternatePrecedence(BaseEventConstraint):
         # 31
         # if B
         if self.data[curr_event][self.attr] == self.val:
-            # here add rejection checking or not
             self.case_status[curr_case].append({'e': curr_event})
         # if C
         elif self.data[curr_event][self.attr2] == self.val2:
@@ -507,6 +535,8 @@ class AlternatePrecedence(BaseEventConstraint):
                 if not last_pair.get('e2'):
                     if self.check_order(assignments, last_pair['e'], 'e2'):
                         last_pair['e2'] = curr_event
+
+                        self.forward_check_events(events, domains, assignments, 'e2')
                         return True
 
             return False
