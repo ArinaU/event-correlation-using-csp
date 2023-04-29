@@ -270,11 +270,13 @@ class ChainResponse(BaseEventConstraint):
             if event not in assignments:
                 if self.data[event][self.attr2] == self.val2:
                     domain = domains[event]
-                    if curr_case in domain and len(domain) > 1:
-                        for case in domain[:]:
-                            if case != curr_case:
-                                domain.hideValue(case)
+                    if curr_case in domain:
+                        if len(domain) > 1:
+                            for case in domain[:]:
+                                if case != curr_case:
+                                    domain.hideValue(case)
                         return True
+        return False
 
     def check_possible_cases(self, events, domains, assignments, event_type, target_type=None):
         # other_event_type = 'e2' if event_type == 'e' else 'e'
