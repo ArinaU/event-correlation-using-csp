@@ -484,7 +484,9 @@ class AlternatePrecedence(BaseEventConstraint):
                 # if another C found
                 if self.data[event][attr] == val:
                     # if B not found before
-                    if not flag:
+                    if flag:
+                        return True
+                    else:
                         domain = domains[event]
                         if curr_case in domain:
                             # if len(domain) > 1
@@ -492,8 +494,7 @@ class AlternatePrecedence(BaseEventConstraint):
                                 if case == curr_case:
                                     domain.hideValue(case)
                                     return True
-                # if flag and flag2:
-                #     return True
+
 
         return False
 
@@ -519,10 +520,14 @@ class AlternatePrecedence(BaseEventConstraint):
         # B no(C) C
         # G no(H) H
 
+        # 1 2 3 4 5 6 7 8
+        # A,A,B,D,B,C,C,C
+        # 1 2 1 1 2 1 2 1
+
         # 1 2 3 4 5 6 7 8 9
         # A,B,B,C,B,C,A,B,C
         # 1 1 1 1 1 1 2 2 2
-        # 31
+
         # if B
         if self.data[curr_event][self.attr] == self.val:
             self.case_status[curr_case].append({'e': curr_event})
