@@ -121,9 +121,7 @@ class Existence(BaseEventConstraint):
             self.case_status[curr_case]['e'].append(curr_event)
 
             # if [c for c, e in self.case_status.items() if not e['e']]:
-            self.forward_check_events(events, domains, assignments)
-
-        self.prev_assignments[curr_event] = None
+            # self.forward_check_events(events, domains, assignments)
 
         if len(assignments) == len(events):
             for case in set(assignments.values()):

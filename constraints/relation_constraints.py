@@ -170,9 +170,10 @@ class Response(BaseEventConstraint):
             #     self.case_status[curr_case]['e2'].append(curr_event)
             #     return True
 
-            self.case_status[curr_case]['e2'].append(curr_event)
+            if not self.case_status[curr_case]['e2']:
+                self.forward_prune_events(events, domains, assignments, 'e', True)
 
-            self.forward_prune_events(events, domains, assignments, 'e', True)
+            self.case_status[curr_case]['e2'].append(curr_event)
 
         return True
 
@@ -198,6 +199,8 @@ class Precedence(BaseEventConstraint):
         # if B
         if self.data[curr_event][self.attr] == self.val:
             self.case_status[curr_case]['e'].append(curr_event)
+
+            self.forward_check_events(events, domains, assignments, 'e2')
 
         # if C
         elif self.data[curr_event][self.attr2] == self.val2:
@@ -320,6 +323,7 @@ class ChainPrecedence(BaseEventConstraint):
 
         if self.data[curr_event][self.attr] == self.val:
             self.case_status[curr_case].append({'e': curr_event})
+            # self.forward_check_events(events, domains, assignments, 'e2')
         # if C
         elif self.data[curr_event][self.attr2] == self.val2:
             events = self.find_events_in_pairs(curr_event, curr_case, 'e', True, False)
@@ -379,7 +383,7 @@ class AlternateResponse(BaseEventConstraint):
 
         flag = False
         flag2 = False
-        for event in events:
+        for event in events[curr_event:]:
             if event not in assignments:
                 # if C found
                 if self.data[event][attr2] == val2 and not flag:
@@ -446,7 +450,7 @@ class AlternateResponse(BaseEventConstraint):
                 return False
             else:
                 self.case_status[curr_case].append({'e': curr_event})
-                self.forward_check_events(events, domains, assignments, 'e')
+                # self.forward_check_events(events, domains, assignments, 'e')
         # if C
         elif self.data[curr_event][self.attr2] == self.val2:
             event = self.find_events_in_pairs(curr_event, curr_case, 'e', True)
@@ -476,7 +480,7 @@ class AlternatePrecedence(BaseEventConstraint):
 
         flag = False
         flag2 = False
-        for event in events:
+        for event in events[curr_event:]:
             if event not in assignments:
                 # if B found
                 if self.data[event][attr2] == val2 and not flag:

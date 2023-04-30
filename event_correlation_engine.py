@@ -10,49 +10,273 @@ from constraints.relation_constraints import *
 from constraints.mutual_relation_constraints import *
 from constraints.negative_relation_constraints import *
 
-class TheRecursiveBacktrackingSolver(RecursiveBacktrackingSolver):
+# class TheRecursiveBacktrackingSolver(RecursiveBacktrackingSolver):
+#
+#     def recursiveBacktracking(self, solutions, domains, vconstraints, assignments, single):
+#         for variable in domains:
+#             if variable not in assignments:
+#                 break
+#         else:
+#             solutions.append(assignments.copy())
+#             return solutions
+#
+#         assignments[variable] = None
+#
+#         forwardcheck = self._forwardcheck
+#         if forwardcheck:
+#             pushdomains = [domains[x] for x in domains if x not in assignments]
+#         else:
+#             pushdomains = None
+#
+#         for value in domains[variable]:
+#             assignments[variable] = value
+#             if pushdomains:
+#                 for domain in pushdomains:
+#                     domain.pushState()
+#             for constraint, variables in vconstraints[variable]:
+#                 if not constraint(variables, domains, assignments, pushdomains):
+#                     break
+#             else:
+#                 self.recursiveBacktracking(solutions, domains, vconstraints, assignments, single)
+#                 if solutions and single:
+#                     return solutions
+#             if pushdomains:
+#                 for domain in pushdomains:
+#                     domain.popState()
+#
+#         del assignments[variable]
+#         return solutions
+#     #
+#     # def getSolution(self, domains, constraints, vconstraints):
+#     #     solutions = self.recursiveBacktracking([], domains, vconstraints, {}, True)
+#     #     return solutions and solutions[0] or None
+#     #
+#     # def getSolutions(self, domains, constraints, vconstraints):
+#     #     return self.recursiveBacktracking([], domains, vconstraints, {}, False)
+#
 
-    def recursiveBacktracking(self, solutions, domains, vconstraints, assignments, single):
-        for variable in domains:
-            if variable not in assignments:
-                break
-        else:
-            solutions.append(assignments.copy())
-            return solutions
+class BacktrackingSolverr(BacktrackingSolver):
+    def __init__(self, forwardcheck=True):
+        """
+        @param forwardcheck: If false forward checking will not be requested
+                             to constraints while looking for solutions
+                             (default is true)
+        @type  forwardcheck: bool
+        """
+        self._forwardcheck = forwardcheck
 
-        assignments[variable] = None
-
+    def getSolutionIter(self, domains, constraints, vconstraints):
         forwardcheck = self._forwardcheck
-        if forwardcheck:
-            pushdomains = [domains[x] for x in domains if x not in assignments]
-        else:
-            pushdomains = None
+        assignments = {}
+        queue = []
 
-        for value in domains[variable]:
-            assignments[variable] = value
-            if pushdomains:
-                for domain in pushdomains:
-                    domain.pushState()
-            for constraint, variables in vconstraints[variable]:
-                if not constraint(variables, domains, assignments, pushdomains):
-                    break
+        while True:
+            unassigned_variables = [variable for variable in domains if variable not in assignments]
+
+            if not unassigned_variables:
+                yield assignments.copy()
+
+                if not queue:
+                    return
+
+                variable, values, pushdomains = queue.pop()
+                if pushdomains:
+                    for domain in pushdomains:
+                        domain.popState()
             else:
-                self.recursiveBacktracking(solutions, domains, vconstraints, assignments, single)
-                if solutions and single:
-                    return solutions
-            if pushdomains:
-                for domain in pushdomains:
-                    domain.popState()
+                variable = unassigned_variables[0]
+                values = domains[variable][:]
+                if forwardcheck:
+                    pushdomains = [
+                        domains[x]
+                        for x in domains
+                        if x not in assignments and x != variable
+                    ]
+                else:
+                    pushdomains = None
 
-        del assignments[variable]
-        return solutions
+                while True:
+                    if not values:
+                        if variable in assignments:
+                            del assignments[variable]
+
+                        if not queue:
+                            return
+
+                        variable, values, pushdomains = queue.pop()
+                        if pushdomains:
+                            for domain in pushdomains:
+                                domain.popState()
+                    else:
+                        assignments[variable] = values.pop()
+
+                        if pushdomains:
+                            for domain in pushdomains:
+                                domain.pushState()
+
+                        for constraint, variables in vconstraints[variable]:
+                            if not constraint(variables, domains, assignments, pushdomains):
+                                break
+                        else:
+                            break
+
+                        if pushdomains:
+                            for domain in pushdomains:
+                                domain.popState()
+
+                queue.append((variable, values, pushdomains))
+
+        raise RuntimeError("Can't happen")
+
+    # def getSolutionIter(self, domains, constraints, vconstraints):
+    #     forwardcheck = self._forwardcheck
+    #     assignments = {}
     #
+    #     queue = []
+    #
+    #     while True:
+    #
+    #         # Mix the Degree and Minimum Remaing Values (MRV) heuristics
+    #         lst = [
+    #             (-len(vconstraints[variable]), len(domains[variable]), variable)
+    #             for variable in domains
+    #         ]
+    #         lst.sort()
+    #         for item in lst:
+    #             if item[-1] not in assignments:
+    #                 # Found unassigned variable
+    #                 variable = item[-1]
+    #                 values = domains[variable][:]
+    #                 if forwardcheck:
+    #                     pushdomains = [
+    #                         domains[x]
+    #                         for x in domains
+    #                         if x not in assignments and x != variable
+    #                     ]
+    #                 else:
+    #                     pushdomains = None
+    #                 break
+    #         else:
+    #             # No unassigned variables. We've got a solution. Go back
+    #             # to last variable, if there's one.
+    #             yield assignments.copy()
+    #             if not queue:
+    #                 return
+    #             variable, values, pushdomains = queue.pop()
+    #             if pushdomains:
+    #                 for domain in pushdomains:
+    #                     domain.popState()
+    #
+    #         while True:
+    #             # We have a variable. Do we have any values left?
+    #             if not values:
+    #                 # No. Go back to last variable, if there's one.
+    #                 del assignments[variable]
+    #                 while queue:
+    #                     variable, values, pushdomains = queue.pop()
+    #                     if pushdomains:
+    #                         for domain in pushdomains:
+    #                             domain.popState()
+    #                     if values:
+    #                         break
+    #                     del assignments[variable]
+    #                 else:
+    #                     return
+    #
+    #             # Got a value. Check it.
+    #             assignments[variable] = values.pop()
+    #
+    #             if pushdomains:
+    #                 for domain in pushdomains:
+    #                     domain.pushState()
+    #
+    #             for constraint, variables in vconstraints[variable]:
+    #                 if not constraint(variables, domains, assignments, pushdomains):
+    #                     # Value is not good.
+    #                     break
+    #             else:
+    #                 break
+    #
+    #             if pushdomains:
+    #                 for domain in pushdomains:
+    #                     domain.popState()
+    #
+    #         # Push state before looking for next variable.
+    #         queue.append((variable, values, pushdomains))
+    #
+    #     raise RuntimeError("Can't happen")
+
+    # def getSolutionIter(self, domains, constraints, vconstraints):
+    #     forwardcheck = self._forwardcheck
+    #     assignments = {}
+    #
+    #     queue = []
+    #
+    #     while True:
+    #         for variable in domains:
+    #             if variable not in assignments:
+    #                 values = domains[variable][:]
+    #                 if forwardcheck:
+    #                     pushdomains = [
+    #                         domains[x]
+    #                         for x in domains
+    #                         if x not in assignments and x != variable
+    #                     ]
+    #                 else:
+    #                     pushdomains = None
+    #                 break
+    #         else:
+    #             yield assignments.copy()
+    #             if not queue:
+    #                 return
+    #             variable, values, pushdomains = queue.pop()
+    #             if pushdomains:
+    #                 for domain in pushdomains:
+    #                     domain.popState()
+    #
+    #         while True:
+    #             if not values:
+    #                 del assignments[variable]
+    #                 while queue:
+    #                     variable, values, pushdomains = queue.pop()
+    #                     if pushdomains:
+    #                         for domain in pushdomains:
+    #                             domain.popState()
+    #                     if values:
+    #                         break
+    #                     del assignments[variable]
+    #                 else:
+    #                     return
+    #
+    #             assignments[variable] = values.pop()
+    #
+    #             if pushdomains:
+    #                 for domain in pushdomains:
+    #                     domain.pushState()
+    #
+    #             for constraint, variables in vconstraints[variable]:
+    #                 if not constraint(variables, domains, assignments, pushdomains):
+    #                     break
+    #             else:
+    #                 break
+    #
+    #             if pushdomains:
+    #                 for domain in pushdomains:
+    #                     domain.popState()
+    #
+    #         queue.append((variable, values, pushdomains))
+    #
+    #     raise RuntimeError("Can't happen")
+
     # def getSolution(self, domains, constraints, vconstraints):
-    #     solutions = self.recursiveBacktracking([], domains, vconstraints, {}, True)
-    #     return solutions and solutions[0] or None
+    #     iter = self.getSolutionIter(domains, constraints, vconstraints)
+    #     try:
+    #         return next(iter)
+    #     except StopIteration:
+    #         return None
     #
     # def getSolutions(self, domains, constraints, vconstraints):
-    #     return self.recursiveBacktracking([], domains, vconstraints, {}, False)
+    #     return list(self.getSolutionIter(domains, constraints, vconstraints))
 
 
 
@@ -106,7 +330,7 @@ class EventCorrelationEngine:
 
     def assign_cases(self, datadict, forwardcheck=False):
         # solver = RecursiveBacktrackingSolver(True)
-        solver = TheRecursiveBacktrackingSolver(True)
+        solver = BacktrackingSolverr(True)
         problem = Problem(solver)
         self.declare_domains(problem, datadict, self._start_event)
 

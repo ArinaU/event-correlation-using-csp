@@ -7,7 +7,6 @@ class BaseEventConstraint(Constraint):
         self._data = data
         self._start_event = start_event
         self._case_status = {}
-        self._prev_assignments = {event: None for event in self._data.keys()}
         self._attr = required_event['attr']
         self._val = required_event['value']
         if required_event2:
@@ -33,14 +32,6 @@ class BaseEventConstraint(Constraint):
     @property
     def start_event(self):
         return self._start_event
-
-    @property
-    def prev_assignments(self):
-        return self._prev_assignments
-
-    @prev_assignments.setter
-    def prev_assignments(self, value):
-        self._prev_assignments = value
 
     @property
     def attr(self):
@@ -117,7 +108,7 @@ class BaseEventConstraint(Constraint):
         else:
             attr, val = self.attr2, self.val2
 
-        for event in events:
+        for event in events[curr_event:]:
             if event not in assignments:
                 if self.data[event][attr] == val:
                     domain = domains[event]

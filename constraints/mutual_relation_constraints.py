@@ -52,7 +52,8 @@ class Coexistence(BaseEventConstraint):
                     continue
                 # if not status[other_event_type]:
                 #     empty_cases.setdefault(event_type, []).append(case)
-                elif len(status[target_type]) > len(status[event_type]):
+                elif len(status[target_type]) > len(status[event_type]) \
+                        or (status[target_type] and not status[event_type]):
                     possible_cases.setdefault(event_type, []).append(case)
 
         # return empty_cases, possible_cases
@@ -76,63 +77,24 @@ class Coexistence(BaseEventConstraint):
 
         # if B
         if self.data[curr_event][self.attr] == self.val:
-            if not self.case_status[curr_case]['e'] and self.case_status[curr_case]['e2']:
-                self.case_status[curr_case].setdefault('e', []).append(curr_event)
-                return True
-            else:
-                missing_cases = [case for case, events in self.case_status.items() if not events['e']]
-                if missing_cases and not self.check_case_status(events, domains, assignments, 'e', 'e2'):
-                    return False
-
             self.case_status[curr_case].setdefault('e', []).append(curr_event)
-        elif self.data[curr_event][self.attr2] == self.val2:
-            if not self.case_status[curr_case]['e2'] and self.case_status[curr_case]['e']:
-                self.case_status[curr_case].setdefault('e2', []).append(curr_event)
-                return True
-            else:
-                missing_cases = [case for case, events in self.case_status.items() if not events['e2']]
-                if missing_cases and not self.check_case_status(events, domains, assignments, 'e2', 'e'):
-                    return False
 
+            if not self.case_status[curr_case]['e2']:
+                # if not self.forward_check_events(events, domains, assignments, 'e2'):
+                #     if self.check_possible_cases(events, domains, assignments, 'e', 'e2'):
+                #         return False
+
+                self.forward_check_events(events, domains, assignments, 'e2')
+
+        elif self.data[curr_event][self.attr2] == self.val2:
             self.case_status[curr_case].setdefault('e2', []).append(curr_event)
 
-            # if B
-            # if no B and no C
-            #   check_rejection
-            #   check there if other cases with C and empty B
-            #       if no such cases, check other cases with C and B
-            #
-            # if only B and no C
-            #   check_rejection
-            #   check there if other cases with C and empty B
-            #       if no such cases, check other cases with C and B
-            # if only C and no B - ideal
-            #   return True in call() and append
-            # if B and C
-            #   check_rejection
-            #   check there if other cases with C and empty B, i.e. B required elsewhere
-            #   if no such cases, that's it, return True and append
+            if not self.case_status[curr_case]['e']:
+                # if not self.forward_check_events(events, domains, assignments, 'e'):
+                #     if self.check_possible_cases(events, domains, assignments, 'e2', 'e'):
+                #         return False
+                self.forward_check_events(events, domains, assignments, 'e')
 
-
-            # # if B
-            # if self.data[curr_event][self.attr] == self.val:
-            #     # if C exists
-            #     if self.case_status[curr_case]['e2'] and self.case_status[curr_case]['e']:
-            #         if self.check_rejection(domains, assignments, 'e'):
-            #             return False
-            #
-            #     self.case_status[curr_case].setdefault('e', []).append(curr_event)
-            #
-            # elif self.data[curr_event][self.attr2] == self.val2:
-            #     if self.case_status[curr_case]['e2'] and self.case_status[curr_case]['e']:
-            #         # if B exists
-            #         if self.check_rejection(domains, assignments, 'e2'):
-            #             return False
-            #
-            #     self.case_status[curr_case].setdefault('e2', []).append(curr_event)
-
-
-        self.prev_assignments[curr_event] = None
         return True
 
 
