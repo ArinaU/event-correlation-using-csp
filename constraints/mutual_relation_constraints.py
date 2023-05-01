@@ -80,20 +80,17 @@ class Coexistence(BaseEventConstraint):
             self.case_status[curr_case].setdefault('e', []).append(curr_event)
 
             if not self.case_status[curr_case]['e2']:
-                # if not self.forward_check_events(events, domains, assignments, 'e2'):
-                #     if self.check_possible_cases(events, domains, assignments, 'e', 'e2'):
-                #         return False
-
-                self.forward_check_events(events, domains, assignments, 'e2')
+                if not self.forward_check_events(events, domains, assignments, 'e2'):
+                    if self.check_possible_cases(events, domains, assignments, 'e', 'e2'):
+                        return False
 
         elif self.data[curr_event][self.attr2] == self.val2:
             self.case_status[curr_case].setdefault('e2', []).append(curr_event)
 
             if not self.case_status[curr_case]['e']:
-                # if not self.forward_check_events(events, domains, assignments, 'e'):
-                #     if self.check_possible_cases(events, domains, assignments, 'e2', 'e'):
-                #         return False
-                self.forward_check_events(events, domains, assignments, 'e')
+                if not self.forward_check_events(events, domains, assignments, 'e'):
+                    if self.check_possible_cases(events, domains, assignments, 'e2', 'e'):
+                        return False
 
         return True
 

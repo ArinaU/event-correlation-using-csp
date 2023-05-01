@@ -230,7 +230,7 @@ class BaseEventConstraint(Constraint):
                     return True
         return False
 
-    def check_order(self, assignments, check_event, event_type, not_event_type=False):
+    def check_occurrence(self, assignments, check_event, event_type, not_event_type=False):
         curr_event = list(assignments)[-1]
         curr_case = assignments[curr_event]
         attr, val = None, None

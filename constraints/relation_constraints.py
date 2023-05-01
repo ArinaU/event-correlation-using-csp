@@ -480,11 +480,14 @@ class AlternatePrecedence(BaseEventConstraint):
 
         flag = False
         flag2 = False
+
+        # B no(C) C
+        # B C! B C
+
         for event in events[curr_event:]:
             if event not in assignments:
                 # if B found
                 if self.data[event][attr2] == val2 and not flag:
-
                     flag = True
                 # if another C found
                 if self.data[event][attr] == val:
@@ -499,7 +502,6 @@ class AlternatePrecedence(BaseEventConstraint):
                                 if case == curr_case:
                                     domain.hideValue(case)
                                     return True
-
 
         return False
 

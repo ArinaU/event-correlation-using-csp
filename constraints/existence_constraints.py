@@ -9,7 +9,6 @@ class Absence(BaseEventConstraint):
     def __call__(self, events, domains, assignments, forwardcheck=False):
         curr_event = list(assignments)[-1]
         curr_case = assignments[curr_event]
-        all_cases = self.get_all_cases(events, domains)
 
         self.case_status = self.clean_case_status(assignments, self.case_status)
 
@@ -120,8 +119,8 @@ class Existence(BaseEventConstraint):
 
             self.case_status[curr_case]['e'].append(curr_event)
 
-            # if [c for c, e in self.case_status.items() if not e['e']]:
-            # self.forward_check_events(events, domains, assignments)
+            if [c for c, e in self.case_status.items() if not e['e']]:
+                self.forward_check_events(events, domains, assignments)
 
         if len(assignments) == len(events):
             for case in set(assignments.values()):
