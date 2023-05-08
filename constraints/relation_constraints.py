@@ -156,6 +156,8 @@ class Response(BaseEventConstraint):
 
             self.case_status[curr_case]['e'].append(curr_event)
 
+            self.forward_check_events(events, domains, assignments, 'e2')
+
             # if not self.forward_check_events(events, domains, assignments):
             #     if not self.check_case_status(events, domains, assignments, 'e', 'e2'):
             #         return False
@@ -170,8 +172,8 @@ class Response(BaseEventConstraint):
             #     self.case_status[curr_case]['e2'].append(curr_event)
             #     return True
 
-            if not self.case_status[curr_case]['e2']:
-                self.forward_prune_events(events, domains, assignments, 'e', True)
+            # if not self.case_status[curr_case]['e2']:
+            #     self.forward_prune_events(events, domains, assignments, 'e', True)
 
             self.case_status[curr_case]['e2'].append(curr_event)
 
@@ -268,7 +270,6 @@ class ChainResponse(BaseEventConstraint):
         # if B
         if self.data[curr_event][self.attr] == self.val:
             event = self.find_events_in_pairs(curr_event, curr_case, 'e', True)
-            # if event and event[-1]['e'] == case_events[-1]:
             if event:
                 return False
 
@@ -276,19 +277,17 @@ class ChainResponse(BaseEventConstraint):
             self.forward_check_events(events, domains, assignments, 'e2')
         # if C
         elif self.data[curr_event][self.attr2] == self.val2:
-            event = self.find_events_in_pairs(curr_event, curr_case, 'e', True)
-            if event:
-                prev_event = event[-1]
-                if self.check_occurrence(assignments, prev_event['e'], 'e2', True):
+            event_pairs = self.find_events_in_pairs(curr_event, curr_case, 'e', True)
+
+            if event_pairs:
+                prev_event = event_pairs[-1]
+                if case_events[-1] == prev_event['e']:
                     prev_event['e2'] = curr_event
                     return True
 
                 return False
             else:
                 self.case_status[curr_case].append({'e2': curr_event})
-
-                # if not self.check_case_status(events, domains, assignments, 'e2', 'e'):
-                #     return False
         else:
             if case_events:
                 prev_event = case_events[-1]
@@ -454,7 +453,7 @@ class AlternateResponse(BaseEventConstraint):
         # if C
         elif self.data[curr_event][self.attr2] == self.val2:
             event = self.find_events_in_pairs(curr_event, curr_case, 'e', True)
-            if event and self.check_occurrence(assignments, event[-1]['e'], 'e'):
+            if event:
                 event[-1]['e2'] = curr_event
             else:
                 self.case_status[curr_case].append({'e2': curr_event})
@@ -545,11 +544,11 @@ class AlternatePrecedence(BaseEventConstraint):
             if pairs:
                 last_pair = pairs[-1]
                 if not last_pair.get('e2'):
-                    if self.check_occurrence(assignments, last_pair['e'], 'e2'):
-                        last_pair['e2'] = curr_event
+                    # if self.check_occurrence(assignments, last_pair['e'], 'e2'):
+                    last_pair['e2'] = curr_event
 
-                        self.forward_check_events(events, domains, assignments, 'e2')
-                        return True
+                    # self.forward_check_events(events, domains, assignments, 'e2')
+                    return True
 
             return False
 

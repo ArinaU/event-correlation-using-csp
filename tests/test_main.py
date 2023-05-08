@@ -672,7 +672,7 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
                            }
         self.assertEqual(expected_result, cases, "Incorrect cases")
 
-    def test_alternate_response7(self):
+    def test_alternate_response8(self):
                                 # 1 2 3 4 5 6 7 8 9
         data = self.generate_log('A,A,C,C,B,B,D,D,C')
 
@@ -686,24 +686,33 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
                            7: 'Case1', 8: 'Case2', 9: 'Case1'}
         self.assertEqual(expected_result, cases, "Incorrect cases")
 
+    def test_alternate_response9(self):
+                                # 1 2 3 4 5 6 7 8 9
+        data = self.generate_log('A,A,B,C,B,B')
 
-    # def test_alternate_response8(self):
-    #
-    #     data = self.generate_log("A,B,C,A,A,B,A,C,B,A,C,D,B,C,B,C,D,D,E,D,D,E,F,G,F,E,\
-    #                 G,G,H,G,G,H,B,C,I,H,H,I,D,J,L,I,I,B,C,F,B,C,J,D,G,D,K,L,E,B,C,F,G,D,G,B,C,F,H,D,G,\
-    #                 I,F,H,B,C,G,I,D,B,C,B,C,F,D,D,G,E,E,H,G,G,I,B,C,B,C,J,L,D,D,E,F,G,G,B,C,H,D,I,F,J,G,K,L,H,I,J,L")
-    #
-    #     constraints = [
-    #         {"constraint": "AlternateResponse",
-    #          "e": {"attr": "Activity", "value": "B"},
-    #          "e2": {"attr": "Activity", "value": "D"}}
-    #     ]
-    #     cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
-    #     expected_result = {1: 'Case1', 2: 'Case2', 3: 'Case1', 4: 'Case2', 5: 'Case3', 6: 'Case3',
-    #                             7: 'Case4', 8: 'Case5', 9: 'Case4', 10: 'Case1', 11: 'Case5', 12: 'Case1',
-    #                             13: 'Case4', 14: 'Case5', 15: 'Case4', 16: 'Case1', 17: 'Case5', 18: 'Case1',
-    #                             19: 'Case1'}
-    #     self.assertEqual(expected_result, cases, "Incorrect cases")
+        constraints = [
+            {"constraint": "AlternateResponse",
+             "e": {"attr": "Activity", "value": "B"},
+             "e2": {"attr": "Activity", "value": "C"}}
+        ]
+        cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
+        expected_result = {1: 'Case1', 2: 'Case2', 3: 'Case1', 4: 'Case1', 5: 'Case1', 6: 'Case2'}
+        self.assertEqual(expected_result, cases, "Incorrect cases")
+
+
+    def test_alternate_response10(self):
+                                # 1 2 3 4 5 6 7 8 9
+        data = self.generate_log('A,A,B,C,B,C,B')
+
+        constraints = [
+            {"constraint": "AlternateResponse",
+             "e": {"attr": "Activity", "value": "B"},
+             "e2": {"attr": "Activity", "value": "C"}}
+        ]
+        cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
+        expected_result = {1: 'Case1', 2: 'Case2', 3: 'Case1', 4: 'Case1', 5: 'Case1', 6: 'Case1', 7: 'Case1'}
+        self.assertEqual(expected_result, cases, "Incorrect cases")
+
 
     def test_alternate_precedence(self):
         data = self.generate_log('A,A,B,B,C,C')
@@ -1424,9 +1433,9 @@ class TestCompoundConstraints(unittest.TestCase, EventLogGenerationMixin):
             # {"constraint": "RespondedExistence",
             #  "e": {"attr": "Activity", "value": "F"},
             #  "e2": {"attr": "Activity", "value": "G"}},
-            {"constraint": "RespondedExistence",
-             "e": {"attr": "Activity", "value": "E"},
-             "e2": {"attr": "Activity", "value": "G"}},
+            # {"constraint": "RespondedExistence",
+            #  "e": {"attr": "Activity", "value": "E"},
+            #  "e2": {"attr": "Activity", "value": "G"}},
             # {"constraint": "RespondedExistence",
             #  "e": {"attr": "Activity", "value": "K"},
             #  "e2": {"attr": "Activity", "value": "L"}},
@@ -1640,18 +1649,18 @@ class TestCompoundConstraints(unittest.TestCase, EventLogGenerationMixin):
             #  "e": {"attr": "Activity", "value": "A"}},
             # {"constraint": "Existence",
             #  "e": {"attr": "Activity", "value": "L"}},
-            # {"constraint": "Existence",
-            #  "e": {"attr": "Activity", "value": "B"}},
-            # {"constraint": "Existence",
-            #  "e": {"attr": "Activity", "value": "C"}},
+            {"constraint": "Existence",
+             "e": {"attr": "Activity", "value": "B"}},
+            {"constraint": "Existence",
+             "e": {"attr": "Activity", "value": "C"}},
             # {"constraint": "Existence",
             #  "e": {"attr": "Activity", "value": "G"}},
             # {"constraint": "Existence",
             #  "e": {"attr": "Activity", "value": "I"}},
-            # {"constraint": "Existence",
-            #  "e": {"attr": "Activity", "value": "D"}},
-            # {"constraint": "Absence",
-            #  "e": {"attr": "Activity", "value": "K"}},
+            {"constraint": "Existence",
+             "e": {"attr": "Activity", "value": "D"}},
+            {"constraint": "Absence",
+             "e": {"attr": "Activity", "value": "K"}},
             {"constraint": "AlternateResponse",
              "e": {"attr": "Activity", "value": "B"},
              "e2": {"attr": "Activity", "value": "D"}},
@@ -1700,9 +1709,9 @@ class TestCompoundConstraints(unittest.TestCase, EventLogGenerationMixin):
             {"constraint": "RespondedExistence",
              "e": {"attr": "Activity", "value": "E"},
              "e2": {"attr": "Activity", "value": "G"}},
-            {"constraint": "RespondedExistence",
-             "e": {"attr": "Activity", "value": "K"},
-             "e2": {"attr": "Activity", "value": "L"}},
+            # {"constraint": "RespondedExistence",
+            #  "e": {"attr": "Activity", "value": "K"},
+            #  "e2": {"attr": "Activity", "value": "L"}},
             {"constraint": "AlternatePrecedence",# I no(J) J
              "e": {"attr": "Activity", "value": "I"},
              "e2": {"attr": "Activity", "value": "J"}},
@@ -1710,6 +1719,82 @@ class TestCompoundConstraints(unittest.TestCase, EventLogGenerationMixin):
              "e": {"attr": "Activity", "value": "G"},
              "e2": {"attr": "Activity", "value": "H"}}
         ]
+
+        # constraints = [
+        #     # {"constraint": "Existence",
+        #     #  "e": {"attr": "Activity", "value": "A"}},
+        #     # {"constraint": "Existence",
+        #     #  "e": {"attr": "Activity", "value": "L"}},
+        #     # {"constraint": "Existence",
+        #     #  "e": {"attr": "Activity", "value": "B"}},
+        #     # {"constraint": "Existence",
+        #     #  "e": {"attr": "Activity", "value": "C"}},
+        #     # {"constraint": "Existence",
+        #     #  "e": {"attr": "Activity", "value": "G"}},
+        #     # {"constraint": "Existence",
+        #     #  "e": {"attr": "Activity", "value": "I"}},
+        #     # {"constraint": "Existence",
+        #     #  "e": {"attr": "Activity", "value": "D"}},
+        #     {"constraint": "Absence",
+        #      "e": {"attr": "Activity", "value": "K"}},
+        #     {"constraint": "AlternateResponse",
+        #      "e": {"attr": "Activity", "value": "B"},
+        #      "e2": {"attr": "Activity", "value": "D"}},
+        #     {"constraint": "AlternateResponse",
+        #      "e": {"attr": "Activity", "value": "D"},
+        #      "e2": {"attr": "Activity", "value": "G"}},
+        #     {"constraint": "Precedence",
+        #      "e": {"attr": "Activity", "value": "G"},
+        #      "e2": {"attr": "Activity", "value": "J"}},
+        #     {"constraint": "Precedence",
+        #      "e": {"attr": "Activity", "value": "J"},
+        #      "e2": {"attr": "Activity", "value": "K"}},
+        #     {"constraint": "Response",
+        #      "e": {"attr": "Activity", "value": "D"},
+        #      "e2": {"attr": "Activity", "value": "J"}},
+        #     {"constraint": "Response",
+        #      "e": {"attr": "Activity", "value": "I"},
+        #      "e2": {"attr": "Activity", "value": "J"}},
+        #     {"constraint": "Coexistence",
+        #      "e": {"attr": "Activity", "value": "B"},
+        #      "e2": {"attr": "Activity", "value": "C"}},
+        #     {"constraint": "ChainResponse",
+        #      "e": {"attr": "Activity", "value": "F"},
+        #      "e2": {"attr": "Activity", "value": "G"}},
+        #     {"constraint": "ChainResponse",
+        #      "e": {"attr": "Activity", "value": "E"},
+        #      "e2": {"attr": "Activity", "value": "G"}},
+        #     {"constraint": "ChainPrecedence",
+        #      "e": {"attr": "Activity", "value": "H"},
+        #      "e2": {"attr": "Activity", "value": "I"}},
+        #     {"constraint": "ChainPrecedence",
+        #      "e": {"attr": "Activity", "value": "I"},
+        #      "e2": {"attr": "Activity", "value": "J"}},
+        #     {"constraint": "NotChainSuccession",
+        #      "e": {"attr": "Activity", "value": "D"},
+        #      "e2": {"attr": "Activity", "value": "G"}},
+        #     {"constraint": "NotSuccession",
+        #      "e": {"attr": "Activity", "value": "L"},
+        #      "e2": {"attr": "Activity", "value": "A"}},
+        #     # {"constraint": "ChainPrecedence",
+        #     #  "e": {"attr": "Activity", "value": "J"},
+        #     #  "e2": {"attr": "Activity", "value": "K"}},
+        #     {"constraint": "RespondedExistence",
+        #      "e": {"attr": "Activity", "value": "F"},
+        #      "e2": {"attr": "Activity", "value": "G"}},
+        #     {"constraint": "RespondedExistence",
+        #      "e": {"attr": "Activity", "value": "E"},
+        #      "e2": {"attr": "Activity", "value": "G"}},
+        #     # {"constraint": "RespondedExistence",
+        #     #  "e": {"attr": "Activity", "value": "K"},
+        #     #  "e2": {"attr": "Activity", "value": "L"}},
+        #     {"constraint": "AlternatePrecedence",  # I no(J) J
+        #      "e": {"attr": "Activity", "value": "I"},
+        #      "e2": {"attr": "Activity", "value": "J"}},
+        #     {"constraint": "AlternatePrecedence",
+        #      "e": {"attr": "Activity", "value": "C"},
+        #      "e2": {"attr": "Activity", "value": "D"}}
+        # ]
 
         cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
 
