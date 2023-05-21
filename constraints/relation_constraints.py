@@ -328,11 +328,10 @@ class AlternateResponse(BaseEventConstraint):
 
         self.case_status = self.clean_case_status(assignments, self.case_status)
 
-        if not self.case_status.get(curr_case, None):
-            self.case_status[curr_case] = []
+        # if not self.case_status.get(curr_case, None):
+        #     self.case_status[curr_case] = []
 
         case_events = sorted([e for e, c in assignments.items() if c == curr_case and e <= curr_event])
-        # last_event = case_events[-1] if case_events else None
 
         # A,A,B,B,C,C
         # 1 2 1 2 1 2
@@ -373,22 +372,6 @@ class AlternateResponse(BaseEventConstraint):
                         flag = False
 
             self.forward_check_events(events, domains, assignments, 'e')
-
-        # # if B
-        # if self.data[curr_event][self.attr] == self.val:
-        #     another_event = self.find_events_in_pairs(curr_event, curr_case, 'e', True)
-        #     if another_event:
-        #         return False
-        #     else:
-        #         self.case_status[curr_case].append({'e': curr_event})
-        #         self.forward_check_events(events, domains, assignments, 'e')
-        # # if C
-        # elif self.data[curr_event][self.attr2] == self.val2:
-        #     event = self.find_events_in_pairs(curr_event, curr_case, 'e', True)
-        #     if event:
-        #         event[-1]['e2'] = curr_event
-        #     else:
-        #         self.case_status[curr_case].append({'e2': curr_event})
 
         return True
 
