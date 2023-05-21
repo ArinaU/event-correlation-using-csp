@@ -382,42 +382,42 @@ class AlternateResponse(BaseEventConstraint):
 # A no(B) B J no(I) I
 class AlternatePrecedence(BaseEventConstraint):
 
-    def forward_check_events(self, events, domains, assignments, event_type):
-        curr_event = list(assignments)[-1]
-        curr_case = assignments[curr_event]
-        if event_type == 'e':
-            attr, val = self.attr, self.val
-            attr2, val2 = self.attr2, self.val2
-        else:
-            attr, val = self.attr2, self.val2
-            attr2, val2 = self.attr, self.val
-
-        flag = False
-        flag2 = False
-
-        # B no(C) C
-        # B C! B C
-
-        for event in events[curr_event:]:
-            if event not in assignments:
-                # if B found
-                if self.data[event][attr2] == val2 and not flag:
-                    flag = True
-                # if another C found
-                if self.data[event][attr] == val:
-                    # if B not found before
-                    if flag:
-                        return True
-                    else:
-                        domain = domains[event]
-                        if curr_case in domain:
-                            # if len(domain) > 1
-                            for case in domain[:]:
-                                if case == curr_case:
-                                    domain.hideValue(case)
-                                    return True
-
-        return False
+    # def forward_check_events(self, events, domains, assignments, event_type):
+    #     curr_event = list(assignments)[-1]
+    #     curr_case = assignments[curr_event]
+    #     if event_type == 'e':
+    #         attr, val = self.attr, self.val
+    #         attr2, val2 = self.attr2, self.val2
+    #     else:
+    #         attr, val = self.attr2, self.val2
+    #         attr2, val2 = self.attr, self.val
+    #
+    #     flag = False
+    #     flag2 = False
+    #
+    #     # B no(C) C
+    #     # B C! B C
+    #
+    #     for event in events[curr_event:]:
+    #         # if event not in assignments:
+    #         # if B found
+    #         if self.data[event][attr2] == val2 and not flag:
+    #             flag = True
+    #         # if another C found
+    #         if self.data[event][attr] == val:
+    #             # if B not found before
+    #             if flag:
+    #                 return True
+    #             else:
+    #                 domain = domains[event]
+    #                 if curr_case in domain:
+    #                     # if len(domain) > 1
+    #                     for case in domain[:]:
+    #                         if case == curr_case:
+    #                             domain.hideValue(case)
+    #                             return True
+    #
+    #     return False
 
     def __call__(self, events, domains, assignments, forwardcheck=False):
         curr_event = list(assignments)[-1]
@@ -425,8 +425,10 @@ class AlternatePrecedence(BaseEventConstraint):
 
         self.case_status = self.clean_case_status(assignments, self.case_status)
 
-        if not self.case_status.get(curr_case, None):
-            self.case_status[curr_case] = []
+        case_events = sorted([e for e, c in assignments.items() if c == curr_case and e <= curr_event])
+
+        # if not self.case_status.get(curr_case, None):
+        #     self.case_status[curr_case] = []
 
         # if C, preceded by B and no B in between
         # (B, C) B no(C) C
@@ -438,9 +440,6 @@ class AlternatePrecedence(BaseEventConstraint):
         # A,A,B,D,B,C,C
         # 1 2 1 1 2 1 2
 
-        # B no(C) C
-        # G no(H) H
-
         # 1 2 3 4 5 6 7 8
         # A,A,B,D,B,C,C,C
         # 1 2 1 1 2 1 2 1
@@ -449,22 +448,38 @@ class AlternatePrecedence(BaseEventConstraint):
         # A,B,B,C,B,C,A,B,C
         # 1 1 1 1 1 1 2 2 2
 
-        # if B
-        if self.data[curr_event][self.attr] == self.val:
-            self.case_status[curr_case].append({'e': curr_event})
+        # B no(C) C
+        # G no(H) H
+
         # if C
-        elif self.data[curr_event][self.attr2] == self.val2:
-            pairs = self.find_events_in_pairs(curr_event, curr_case, 'e', True, True)
+        if self.data[curr_event][self.attr2] == self.val2:
+            flag = False
+            for event in case_events:
+                # B
+                if self.data[event][self.attr] == self.val:
+                    flag = True
+                # C
+                if self.data[event][self.attr2] == self.val2:
+                    if not flag:
+                        return False
+                    flag = False
 
-            if pairs:
-                last_pair = pairs[-1]
-                if not last_pair.get('e2'):
-                    # if self.check_occurrence(assignments, last_pair['e'], 'e2'):
-                    last_pair['e2'] = curr_event
-
-                    # self.forward_check_events(events, domains, assignments, 'e2')
-                    return True
-
-            return False
+        # # if B
+        # if self.data[curr_event][self.attr] == self.val:
+        #     self.case_status[curr_case].append({'e': curr_event})
+        # # if C
+        # elif self.data[curr_event][self.attr2] == self.val2:
+        #     pairs = self.find_events_in_pairs(curr_event, curr_case, 'e', True, True)
+        #
+        #     if pairs:
+        #         last_pair = pairs[-1]
+        #         if not last_pair.get('e2'):
+        #             # if self.check_occurrence(assignments, last_pair['e'], 'e2'):
+        #             last_pair['e2'] = curr_event
+        #
+        #             # self.forward_check_events(events, domains, assignments, 'e2')
+        #             return True
+        #
+        #     return False
 
         return True
