@@ -158,23 +158,8 @@ class Response(BaseEventConstraint):
 
             self.forward_check_events(events, domains, assignments, 'e2')
 
-            # if not self.forward_check_events(events, domains, assignments):
-            #     if not self.check_case_status(events, domains, assignments, 'e', 'e2'):
-            #         return False
-            # if not self.forward_check_events(events, domains, assignments):
-            #     if not self.case_status[curr_case]['e2']:
-            #         return False
-            # self.forward_check_events(events, domains, assignments, 'e2')
-
         # if C
         elif self.data[curr_event][self.attr2] == self.val2:
-            # if self.case_status[curr_case]['e'] and not self.case_status[curr_case]['e2']:
-            #     self.case_status[curr_case]['e2'].append(curr_event)
-            #     return True
-
-            # if not self.case_status[curr_case]['e2']:
-            #     self.forward_prune_events(events, domains, assignments, 'e', True)
-
             self.case_status[curr_case]['e2'].append(curr_event)
 
         return True
@@ -201,7 +186,6 @@ class Precedence(BaseEventConstraint):
         # if B
         if self.data[curr_event][self.attr] == self.val:
             self.case_status[curr_case]['e'].append(curr_event)
-
             # self.forward_check_events(events, domains, assignments, 'e2')
 
         # if C
@@ -244,23 +228,25 @@ class ChainResponse(BaseEventConstraint):
         self.case_status = self.clean_case_status(assignments, self.case_status)
 
         if not self.case_status.get(curr_case, None):
-            self.case_status[curr_case] = []
+            self.case_status[curr_case] = {'e': [], 'e2': []}
 
         case_events = sorted([e for e, c in assignments.items() if c == curr_case and e < curr_event])
+        last_event = case_events[-1] if case_events else None
 
         # 1 2 3 4 5 6
         # A,B,A,B,C,C
         # 1 1 2 2 1 2
-
-        # 1 2 3 4 5 6 7 8
-        # A,H,A,D,E,D,G,H
-        # 1 1 2 2 2 1 2 2
 
         # Absence(G)
         # 1 2 3 4 5 6 7 8
         # A,A,G,A,F,E,G,G
         # 1 2 1 3 2 3 3 2
         # 1 2 1 3 1 2 2 3
+
+        # 1 2 3 4 5 6 7 8
+        # A,H,A,D,E,D,G,H
+        # 1 1 2 2 2 1 2 2
+        # 1 1 2 1 2 2 2 2
 
         # ChainResp(B, C) Absence(D, B)
         # 1 2 3 4 5 6 7 8 9 10
@@ -269,31 +255,21 @@ class ChainResponse(BaseEventConstraint):
 
         # if B
         if self.data[curr_event][self.attr] == self.val:
-            event = self.find_events_in_pairs(curr_event, curr_case, 'e', True)
-            if event:
-                return False
-
-            self.case_status[curr_case].append({'e': curr_event})
             self.forward_check_events(events, domains, assignments, 'e2')
+
+            self.case_status[curr_case]['e'].append(curr_event)
+            # event = self.find_events_in_pairs(curr_event, curr_case, 'e', True)
         # if C
         elif self.data[curr_event][self.attr2] == self.val2:
-            event_pairs = self.find_events_in_pairs(curr_event, curr_case, 'e', True)
-
-            if event_pairs:
-                prev_event = event_pairs[-1]
-                if case_events[-1] == prev_event['e']:
-                    prev_event['e2'] = curr_event
-                    return True
-
-                return False
+            if last_event and self.data[last_event][self.attr] == self.val:
+                self.case_status[curr_case]['e'].remove(last_event)
+                return True
             else:
-                self.case_status[curr_case].append({'e2': curr_event})
-        else:
-            if case_events:
-                prev_event = case_events[-1]
-                # if prev event was B
-                if self.data[prev_event][self.attr] == self.val:
+                if self.case_status[curr_case]['e']:
                     return False
+        else:
+            if last_event and self.data[last_event][self.attr] == self.val:
+                return False
 
         return True
 

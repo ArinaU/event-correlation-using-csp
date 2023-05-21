@@ -108,7 +108,7 @@ class BaseEventConstraint(Constraint):
         else:
             attr, val = self.attr2, self.val2
 
-        for event in events[curr_event:]:
+        for event in events:
             if event not in assignments:
                 if self.data[event][attr] == val:
                     domain = domains[event]
