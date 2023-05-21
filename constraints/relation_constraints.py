@@ -297,20 +297,6 @@ class ChainPrecedence(BaseEventConstraint):
             if last_event and self.data[last_event][self.attr] != self.val:
                 return False
 
-        # case_events = sorted([e for e, c in assignments.items() if c == curr_case and e < curr_event])
-        #
-        # if self.data[curr_event][self.attr] == self.val:
-        #     self.case_status[curr_case].append({'e': curr_event})
-        #     # self.forward_check_events(events, domains, assignments, 'e2')
-        # # if C
-        # elif self.data[curr_event][self.attr2] == self.val2:
-        #     events = self.find_events_in_pairs(curr_event, curr_case, 'e', True, False)
-        #     if events and case_events[-1] == events[-1]['e']:
-        #         events[-1]['e2'] = curr_event
-        #         return True
-        #
-        #     return False
-
         return True
 
 
