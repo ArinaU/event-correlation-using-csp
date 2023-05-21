@@ -108,16 +108,16 @@ class BaseEventConstraint(Constraint):
         else:
             attr, val = self.attr2, self.val2
 
-        for event in events:
-            if event not in assignments:
-                if self.data[event][attr] == val:
-                    domain = domains[event]
-                    if curr_case in domain:
-                        if len(domain) > 1:
-                            for case in domain[:]:
-                                if case != curr_case:
-                                    domain.hideValue(case)
-                        return True
+        for event in events[curr_event:]:
+            # if event not in assignments:
+            if self.data[event][attr] == val:
+                domain = domains[event]
+                if curr_case in domain:
+                    if len(domain) > 1:
+                        for case in domain[:]:
+                            if case != curr_case:
+                                domain.hideValue(case)
+                    return True
         return False
 
     def forward_prune_events(self, events, domains, assignments, event_type, all_events=False):
