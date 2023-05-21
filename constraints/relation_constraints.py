@@ -245,7 +245,7 @@ class ChainResponse(BaseEventConstraint):
                 self.case_status[curr_case]['e'].remove(last_event)
                 return True
             else:
-                if self.case_status[curr_case]['e']:
+                if self.find_events_in_list(curr_event, curr_case, 'e', True):
                     return False
         else:
             if last_event and self.data[last_event][self.attr] == self.val:
