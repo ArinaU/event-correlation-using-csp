@@ -282,9 +282,6 @@ class ChainPrecedence(BaseEventConstraint):
 
         self.case_status = self.clean_case_status(assignments, self.case_status)
 
-        if not self.case_status.get(curr_case, None):
-            self.case_status[curr_case] = []
-
         # Absence(D, B)
         # 1 2 3 4 5 6 7 8
         # A,B,A,D,B,C,D,C
@@ -293,20 +290,26 @@ class ChainPrecedence(BaseEventConstraint):
         # A,A,B,B,C,C
         # 1 2 1 2 1 2
 
-        # A B
         case_events = sorted([e for e, c in assignments.items() if c == curr_case and e < curr_event])
+        last_event = case_events[-1] if case_events else None
 
-        if self.data[curr_event][self.attr] == self.val:
-            self.case_status[curr_case].append({'e': curr_event})
-            # self.forward_check_events(events, domains, assignments, 'e2')
-        # if C
-        elif self.data[curr_event][self.attr2] == self.val2:
-            events = self.find_events_in_pairs(curr_event, curr_case, 'e', True, False)
-            if events and case_events[-1] == events[-1]['e']:
-                events[-1]['e2'] = curr_event
-                return True
+        if self.data[curr_event][self.attr2] == self.val2:
+            if last_event and self.data[last_event][self.attr] != self.val:
+                return False
 
-            return False
+        # case_events = sorted([e for e, c in assignments.items() if c == curr_case and e < curr_event])
+        #
+        # if self.data[curr_event][self.attr] == self.val:
+        #     self.case_status[curr_case].append({'e': curr_event})
+        #     # self.forward_check_events(events, domains, assignments, 'e2')
+        # # if C
+        # elif self.data[curr_event][self.attr2] == self.val2:
+        #     events = self.find_events_in_pairs(curr_event, curr_case, 'e', True, False)
+        #     if events and case_events[-1] == events[-1]['e']:
+        #         events[-1]['e2'] = curr_event
+        #         return True
+        #
+        #     return False
 
         return True
 
