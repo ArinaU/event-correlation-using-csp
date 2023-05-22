@@ -36,6 +36,8 @@ class RespondedExistence(BaseEventConstraint):
     #
     #     return available_cases
 
+
+
     def check_possible_cases(self, events, domains, assignments, event_type, target_type=None):
         # other_event_type = 'e2' if event_type == 'e' else 'e'
         curr_event = list(assignments)[-1]
@@ -55,6 +57,50 @@ class RespondedExistence(BaseEventConstraint):
                         possible_cases.setdefault(event_type, []).append(case)
 
         return possible_cases
+
+
+    def forward_check_events(self, events, domains, assignments, event_type):
+        curr_event = list(assignments)[-1]
+        curr_case = assignments[curr_event]
+        if event_type == 'e':
+            attr, val = self.attr, self.val
+        else:
+            attr, val = self.attr2, self.val2
+
+        # for event in events[curr_event:]:
+        #     # if event not in assignments:
+        #     if self.data[event][attr] == val:
+        #         domain = domains[event]
+        #         if curr_case in domain:
+        #             if len(domain) > 1:
+        #                 for case in domain[:]:
+        #                     if case != curr_case:
+        #                         domain.hideValue(case)
+        #             return True
+
+        # 5: [Case1, 7]
+
+        target_event = None
+        for event in events[curr_event:]:
+            # if event not in assignments:
+            if self.data[event][attr] == val:
+                if self._prev_assignments[curr_event] \
+                        and self._prev_assignments[curr_event][1] == event and self._prev_assignments[curr_event][0] == curr_case:
+                    return False
+                target_event = event
+
+        if target_event:
+            domain = domains[target_event]
+            if curr_case in domain:
+                if len(domain) > 1:
+                    for case in domain[:]:
+                        if case != curr_case:
+                            domain.hideValue(case)
+
+                self._prev_assignments[curr_event] = [curr_case, target_event]
+                return True
+
+        return False
 
     def __call__(self, events, domains, assignments, forwardcheck=False):
         curr_event = list(assignments)[-1]
@@ -85,20 +131,37 @@ class RespondedExistence(BaseEventConstraint):
         # A,C,B,A,A,B,C,C,B
         # 1 1 1 2 3 2 2 3 3
 
+
         # B
         if self.data[curr_event][self.attr] == self.val:
-            self.case_status[curr_case]['e'].append(curr_event)
-
             if not self.case_status[curr_case]['e2']:
                 if not self.forward_check_events(events, domains, assignments, 'e2'):
                     if self.check_possible_cases(events, domains, assignments, 'e', 'e2'):
                         return False
-                # if not self.forward_check_events(events, domains, assignments):
-                #     if not self.check_case_status(events, domains, assignments, 'e', 'e2'):
-                #         return False
+
+            self.case_status[curr_case]['e'].append(curr_event)
+            # 5: [Case1, 7]
         # C
         elif self.data[curr_event][self.attr2] == self.val2:
             self.case_status[curr_case]['e2'].append(curr_event)
+
+
+
+
+        # # B
+        # if self.data[curr_event][self.attr] == self.val:
+        #     self.case_status[curr_case]['e'].append(curr_event)
+        #
+        #     if not self.case_status[curr_case]['e2']:
+        #         if not self.forward_check_events(events, domains, assignments, 'e2'):
+        #             if self.check_possible_cases(events, domains, assignments, 'e', 'e2'):
+        #                 return False
+        #         # if not self.forward_check_events(events, domains, assignments):
+        #         #     if not self.check_case_status(events, domains, assignments, 'e', 'e2'):
+        #         #         return False
+        # # C
+        # elif self.data[curr_event][self.attr2] == self.val2:
+        #     self.case_status[curr_case]['e2'].append(curr_event)
 
         return True
 
@@ -124,6 +187,29 @@ class Response(BaseEventConstraint):
     #
     #     return possible_cases
 
+    # def forward_check_events(self, events, domains, assignments, event_type):
+    #     curr_event = list(assignments)[-1]
+    #     curr_case = assignments[curr_event]
+    #     if event_type == 'e':
+    #         attr, val = self.attr, self.val
+    #     else:
+    #         attr, val = self.attr2, self.val2
+    #
+    #     target_event = None
+    #     for event in events[curr_event:]:
+    #         if self.data[event][attr] == val:
+    #             target_event = event
+    #
+    #     if target_event:
+    #         domain = domains[event]
+    #         if curr_case in domain:
+    #             if len(domain) > 1:
+    #                 for case in domain[:]:
+    #                     if case != curr_case:
+    #                         domain.hideValue(case)
+    #             return True
+    #     return False
+
     def __call__(self, events, domains, assignments, forwardcheck=False):
         curr_event = list(assignments)[-1]
         curr_case = assignments[curr_event]
@@ -133,10 +219,6 @@ class Response(BaseEventConstraint):
         if not self.case_status.get(curr_case, None):
             self.case_status[curr_case] = {'e': [], 'e2': []}
 
-        # 1 2 3 4 5 6 7 8 9
-        # A,C,B,A,A,B,C,C,B
-        # 1 1 1 2 3 2 2 3 3
-
         # 1 2 3 4 5 6 7 8
         # A,A,B,B,C,C,A,C
         # 1 2 1 1 1 2 3 3
@@ -144,6 +226,10 @@ class Response(BaseEventConstraint):
         # 1 2 3 4 5
         # A,C,A,B,C
         # 1 1 2 2 2
+
+        # 1 2 3 4 5 6 7 8 9
+        # A,C,B,A,A,B,C,C,B
+        # 1 1 1 2 3 2 2 3 3
 
         # 1 2 3 4 5 6 7 8
         # A,C,A,B,C,C,A,B
@@ -154,8 +240,8 @@ class Response(BaseEventConstraint):
             if self.find_events_in_list(curr_event, curr_case, 'e2', True):
                 return False
 
-            self.case_status[curr_case]['e'].append(curr_event)
             self.forward_check_events(events, domains, assignments, 'e2')
+            self.case_status[curr_case]['e'].append(curr_event)
 
         # if C
         elif self.data[curr_event][self.attr2] == self.val2:
@@ -274,7 +360,7 @@ class ChainPrecedence(BaseEventConstraint):
         last_event = case_events[-1] if case_events else None
 
         if self.data[curr_event][self.attr2] == self.val2:
-            if last_event and self.data[last_event][self.attr] != self.val:
+            if not last_event or self.data[last_event][self.attr] != self.val:
                 return False
 
         return True

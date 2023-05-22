@@ -9,9 +9,18 @@ class BaseEventConstraint(Constraint):
         self._case_status = {}
         self._attr = required_event['attr']
         self._val = required_event['value']
+        self._prev_assignments = {key: [] for key in data.keys()}
         if required_event2:
             self._attr2 = required_event2['attr']
             self._val2 = required_event2['value']
+
+    @property
+    def prev_assignments(self):
+        return self._prev_assignments
+
+    @prev_assignments.setter
+    def prev_assignments(self, value):
+        self._prev_assignments = value
 
     @property
     def data(self):
