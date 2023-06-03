@@ -7,10 +7,9 @@ from constraints.base_event_constraint import BaseEventConstraint
 # A occurs at most once
 class Absence(BaseEventConstraint):
     def __call__(self, events, domains, assignments, forwardcheck=False):
-        curr_event = list(assignments)[-1]
-        curr_case = assignments[curr_event]
-
-        self.case_status = self.clean_case_status(assignments, self.case_status)
+        BaseEventConstraint.__call__(self, events, domains, assignments, forwardcheck)
+        curr_event = self.curr_event
+        curr_case = self.curr_case
 
         # 1 2 3 4 5 6 7 8 9
         # A,C,B,A,A,B,C,C,B
@@ -29,32 +28,6 @@ class Absence(BaseEventConstraint):
 
 # A occurs at least once
 class Existence(BaseEventConstraint):
-    # def check_future_case_assignment(self, events, domains, assignments, curr_case, event_type, target_type):
-    #     target_attr, target_val = self.attr2, self.val2
-    #
-    #     # for case in empty_cases[event_type]:
-    #     case_occurs = False
-    #     for future_event in events:
-    #         if future_event not in assignments:
-    #             if self.data[future_event][target_attr] == target_val:
-    #                 if curr_case in domains[future_event]:
-    #                     case_occurs = True
-    #                     break
-    #
-    #     return case_occurs
-
-    # def check_possible_cases(self, events, domains, assignments, event_type, target_type=None):
-    #     # other_event_type = 'e2' if event_type == 'e' else 'e'
-    #     curr_event = list(assignments)[-1]
-    #     curr_case = assignments[curr_event]
-    #
-    #     possible_cases = {}
-    #     for case, status in self.case_status.items():
-    #         if case in domains[curr_event]:
-    #             if not self.case_status[case]['e']:
-    #                 possible_cases.setdefault(event_type, []).append(case)
-    #
-    #     return possible_cases
 
     def get_all_cases(self, events, domains):
         cases = []
@@ -86,10 +59,9 @@ class Existence(BaseEventConstraint):
                             return True
 
     def __call__(self, events, domains, assignments, forwardcheck=False):
-        curr_event = list(assignments)[-1]
-        curr_case = assignments[curr_event]
-
-        self.case_status = self.clean_case_status(assignments, self.case_status)
+        BaseEventConstraint.__call__(self, events, domains, assignments, forwardcheck)
+        curr_event = self.curr_event
+        curr_case = self.curr_case
 
         if not self.case_status.get(curr_case, None):
             self.case_status[curr_case] = {}
@@ -116,11 +88,10 @@ class Existence(BaseEventConstraint):
         # 1 1 1 1 1 1 2 2 1
 
         if self.data[curr_event][self.attr] == self.val:
-
             self.case_status[curr_case]['e'].append(curr_event)
 
-            if [c for c, e in self.case_status.items() if not e['e']]:
-                self.forward_check_events(events, domains, assignments)
+            # if [c for c, e in self.case_status.items() if not e['e']]:
+            #     self.forward_check_events(events, domains, assignments)
 
         if len(assignments) == len(events):
             for case in set(assignments.values()):

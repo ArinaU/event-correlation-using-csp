@@ -7,10 +7,9 @@ from constraints.base_event_constraint import BaseEventConstraint
 class NotCoexistence(BaseEventConstraint):
 
     def __call__(self, events, domains, assignments, forwardcheck=False):
-        curr_event = list(assignments)[-1]
-        curr_case = assignments[curr_event]
-
-        self.case_status = self.clean_case_status(assignments, self.case_status)
+        BaseEventConstraint.__call__(self, events, domains, assignments, forwardcheck)
+        curr_event = self.curr_event
+        curr_case = self.curr_case
 
         if not self.case_status.get(curr_case, None):
             self.case_status[curr_case] = []
@@ -37,10 +36,9 @@ class NotCoexistence(BaseEventConstraint):
 class NotSuccession(BaseEventConstraint):
 
     def __call__(self, events, domains, assignments, forwardcheck=False):
-        curr_event = list(assignments)[-1]
-        curr_case = assignments[curr_event]
-
-        self.case_status = self.clean_case_status(assignments, self.case_status)
+        BaseEventConstraint.__call__(self, events, domains, assignments, forwardcheck)
+        curr_event = self.curr_event
+        curr_case = self.curr_case
 
         if not self.case_status.get(curr_case, None):
             self.case_status[curr_case] = []
@@ -63,10 +61,9 @@ class NotSuccession(BaseEventConstraint):
 class NotChainSuccession(BaseEventConstraint):
 
     def __call__(self, events, domains, assignments, forwardcheck=False):
-        curr_event = list(assignments)[-1]
-        curr_case = assignments[curr_event]
-
-        self.case_status = self.clean_case_status(assignments, self.case_status)
+        BaseEventConstraint.__call__(self, events, domains, assignments, forwardcheck)
+        curr_event = self.curr_event
+        curr_case = self.curr_case
 
         if not self.case_status.get(curr_case, None):
             self.case_status[curr_case] = []

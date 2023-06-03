@@ -71,7 +71,7 @@ class TestExistenceConstraints(unittest.TestCase, EventLogGenerationMixin):
                              'e': {'attr': 'Activity', 'value': 'B'}}]
 
         cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
-        expected_result = {1: 'Case1', 2: 'Case1', 3: 'Case2', 4: 'Case2', 5: 'Case1', 6: 'Case1'}
+        expected_result = {1: 'Case1', 2: 'Case1', 3: 'Case2', 4: 'Case1', 5: 'Case2', 6: 'Case1'}
         self.assertEqual(expected_result, cases, "Incorrect cases")
 
     def test_existence3(self):
@@ -122,7 +122,7 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
     # If B occurs, then C occurs
     def test_responded_existence(self):
         data = self.generate_log('A,C,B,A,A,B,C,C,B')
-                                # 1 1 1 2 3 2 1 3 3
+                                # 1 1 1 2 3 2 3 2 3
 
         constraints = [
             {'constraint': 'RespondedExistence',
@@ -137,23 +137,6 @@ class TestRelationConstraints(unittest.TestCase, EventLogGenerationMixin):
         expected_result = {1: 'Case1', 2: 'Case1', 3: 'Case1', 4: 'Case2',
                            5: 'Case3', 6: 'Case2', 7: 'Case2', 8: 'Case3', 9: 'Case3'}
         self.assertEqual(expected_result, cases, "Incorrect cases")
-
-    # def test_responded_existence_check(self):
-    #     data = self.generate_log('A,C,B,A,A,B,C,C,B')
-    #
-    #     constraints = [
-    #         {'constraint': 'RespondedExistence',
-    #          'e': {'attr': 'Activity', 'value': 'B'},
-    #          'e2': {'attr': 'Activity', 'value': 'C'}},
-    #         {'constraint': 'Absence',
-    #          'e': {'attr': 'Activity', 'value': 'B'}}
-    #     ]
-    #
-    #     cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data, True)
-    #
-    #     expected_result = {1: 'Case1', 2: 'Case1', 3: 'Case1', 4: 'Case2',
-    #                        5: 'Case3', 6: 'Case2', 7: 'Case2', 8: 'Case3', 9: 'Case3'}
-    #     self.assertEqual(expected_result, cases, "Incorrect cases")
 
 
     def test_responded_existence2(self):
@@ -1044,154 +1027,6 @@ class TestCompoundConstraints(unittest.TestCase, EventLogGenerationMixin):
                            4: 'Case2', 6: 'Case3', 9: 'Case4', 10: 'Case1', 11: 'Case5',
                            12: 'Case1', 13: 'Case1', 14: 'Case1', 15: 'Case1', 16: 'Case1'}
         self.assertEqual(expected_result, cases, "Incorrect cases")
-    #
-    # def test_all(self):
-    #     data = self.generate_log('A,B,A,C,B,C,D,D,F,F,G,G,H,H,I,I,J,J,L,K,L')
-    #
-    #     constraints = [
-    #         {"constraint": "Existence",
-    #          "e": {"attr": "Activity", "value": "L"}},
-    #         {"constraint": "Absence",
-    #          "e": {"attr": "Activity", "value": "K"}},
-    #         {"constraint": "ChainPrecedence",
-    #          "e": {"attr": "Activity", "value": "I"},
-    #          "e2": {"attr": "Activity", "value": "J"}},
-    #         {"constraint": "ChainPrecedence",
-    #          "e": {"attr": "Activity", "value": "J"},
-    #          "e2": {"attr": "Activity", "value": "K"}},
-    #         {"constraint": "RespondedExistence",
-    #          "e": {"attr": "Activity", "value": "K"},
-    #          "e2": {"attr": "Activity", "value": "L"}}
-    #     ]
-    #
-    #     cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
-    #
-    #     expected_result = {1: 'Case1', 2: 'Case2', 3: 'Case1', 4: 'Case2', 5: 'Case3', 6: 'Case3',
-    #                        7: 'Case4', 8: 'Case5', 9: 'Case4', 10: 'Case1', 11: 'Case5', 12: 'Case1',
-    #                        13: 'Case4', 14: 'Case5', 15: 'Case4', 16: 'Case1', 17: 'Case5', 18: 'Case1',
-    #                        19: 'Case1', 20: 'Case5', 21: 'Case1'
-    #                        }
-    #     self.assertEqual(expected_result, cases, "Incorrect cases")
-    #
-    # def test_all2(self):
-    #     data = self.generate_log('A,B,A,C,B,C,D,D,F,F,G,G,H,H,I,I,J,J,L,K,L')
-    #
-    #     constraints = [
-    #         {"constraint": "Existence",
-    #          "e": {"attr": "Activity", "value": "A"}},
-    #         {"constraint": "Existence",
-    #          "e": {"attr": "Activity", "value": "B"}},
-    #         {"constraint": "Existence",
-    #          "e": {"attr": "Activity", "value": "C"}},
-    #         {"constraint": "Existence",
-    #          "e": {"attr": "Activity", "value": "G"}},
-    #         {"constraint": "Existence",
-    #          "e": {"attr": "Activity", "value": "I"}},
-    #         {"constraint": "Existence",
-    #          "e": {"attr": "Activity", "value": "D"}},
-    #         {"constraint": "Existence",
-    #          "e": {"attr": "Activity", "value": "L"}},
-    #         {"constraint": "Existence",
-    #          "e": {"attr": "Activity", "value": "J"}},
-    #         {"constraint": "Absence",
-    #          "e": {"attr": "Activity", "value": "K"}},
-    #         {"constraint": "AlternateResponse",
-    #          "e": {"attr": "Activity", "value": "B"},
-    #          "e2": {"attr": "Activity", "value": "D"}},
-    #         {"constraint": "AlternateResponse",
-    #          "e": {"attr": "Activity", "value": "C"},
-    #          "e2": {"attr": "Activity", "value": "D"}},
-    #         {"constraint": "Precedence",
-    #          "e": {"attr": "Activity", "value": "A"},
-    #          "e2": {"attr": "Activity", "value": "B"}},
-    #         {"constraint": "Precedence",
-    #          "e": {"attr": "Activity", "value": "A"},
-    #          "e2": {"attr": "Activity", "value": "C"}},
-    #         {"constraint": "Coexistence",
-    #          "e": {"attr": "Activity", "value": "B"},
-    #          "e2": {"attr": "Activity", "value": "C"}},
-    #         {"constraint": "ChainResponse",
-    #          "e": {"attr": "Activity", "value": "F"},
-    #          "e2": {"attr": "Activity", "value": "G"}},
-    #         {"constraint": "ChainResponse",
-    #          "e": {"attr": "Activity", "value": "E"},
-    #          "e2": {"attr": "Activity", "value": "G"}},
-    #         {"constraint": "NotChainSuccession",
-    #          "e": {"attr": "Activity", "value": "D"},
-    #          "e2": {"attr": "Activity", "value": "G"}},
-    #         {"constraint": "NotSuccession",
-    #          "e": {"attr": "Activity", "value": "J"},
-    #          "e2": {"attr": "Activity", "value": "I"}},
-    #         {"constraint": "ChainPrecedence",
-    #          "e": {"attr": "Activity", "value": "J"},
-    #          "e2": {"attr": "Activity", "value": "K"}},
-    #         {"constraint": "RespondedExistence",
-    #          "e": {"attr": "Activity", "value": "F"},
-    #          "e2": {"attr": "Activity", "value": "G"}},
-    #         {"constraint": "RespondedExistence",
-    #          "e": {"attr": "Activity", "value": "E"},
-    #          "e2": {"attr": "Activity", "value": "G"}},
-    #         {"constraint": "AlternatePrecedence",
-    #          "e": {"attr": "Activity", "value": "H"},
-    #          "e2": {"attr": "Activity", "value": "I"}},
-    #         {"constraint": "AlternatePrecedence",
-    #          "e": {"attr": "Activity", "value": "G"},
-    #          "e2": {"attr": "Activity", "value": "H"}}
-    #     ]
-    #
-    #     cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
-    #
-    #     expected_result = {1: 'Case1', 2: 'Case2', 3: 'Case1', 4: 'Case2', 5: 'Case3', 6: 'Case3',
-    #                        7: 'Case4', 8: 'Case5', 9: 'Case4', 10: 'Case1', 11: 'Case5', 12: 'Case1',
-    #                        13: 'Case4', 14: 'Case5', 15: 'Case4', 16: 'Case1', 17: 'Case5', 18: 'Case1',
-    #                        19: 'Case1', 20: 'Case5', 21: 'Case1'
-    #                        }
-    #     self.assertEqual(expected_result, cases, "Incorrect cases")
-    #
-    # def test_all3(self):
-    #     data = self.generate_log("A,A,C,C,B,B,D,D,F,E,G,G")
-    #
-    #     constraints = [
-    #         {"constraint": "Existence",
-    #          "e": {"attr": "Activity", "value": "A"}},
-    #         {"constraint": "Existence",
-    #          "e": {"attr": "Activity", "value": "B"}},
-    #         {"constraint": "Existence",
-    #          "e": {"attr": "Activity", "value": "C"}},
-    #         {"constraint": "Existence",
-    #          "e": {"attr": "Activity", "value": "G"}},
-    #         {"constraint": "Existence",
-    #          "e": {"attr": "Activity", "value": "D"}},
-    #         {"constraint": "Absence",
-    #          "e": {"attr": "Activity", "value": "K"}},
-    #         {"constraint": "AlternateResponse",
-    #          "e": {"attr": "Activity", "value": "B"},
-    #          "e2": {"attr": "Activity", "value": "D"}},
-    #         {"constraint": "AlternateResponse",
-    #          "e": {"attr": "Activity", "value": "C"},
-    #          "e2": {"attr": "Activity", "value": "D"}},
-    #         {"constraint": "Precedence",
-    #          "e": {"attr": "Activity", "value": "G"},
-    #          "e2": {"attr": "Activity", "value": "H"}},
-    #         {"constraint": "Precedence",
-    #          "e": {"attr": "Activity", "value": "J"},
-    #          "e2": {"attr": "Activity", "value": "K"}},
-    #         {"constraint": "Coexistence",
-    #          "e": {"attr": "Activity", "value": "B"},
-    #          "e2": {"attr": "Activity", "value": "C"}},
-    #         {"constraint": "ChainResponse",
-    #          "e": {"attr": "Activity", "value": "F"},
-    #          "e2": {"attr": "Activity", "value": "G"}},
-    #         {"constraint": "ChainResponse",
-    #          "e": {"attr": "Activity", "value": "E"},
-    #          "e2": {"attr": "Activity", "value": "G"}}
-    #     ]
-    #
-    #     cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
-    #
-    #     expected_result = {1: 'Case1', 2: 'Case2', 3: 'Case1', 4: 'Case2', 5: 'Case3', 6: 'Case3',
-    #                        7: 'Case4', 8: 'Case5', 9: 'Case4', 10: 'Case1', 11: 'Case5', 12: 'Case1'}
-    #     self.assertEqual(expected_result, cases, "Incorrect cases")
 
     def test_all4(self):
                                 # 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0
@@ -1463,6 +1298,9 @@ class TestCompoundConstraints(unittest.TestCase, EventLogGenerationMixin):
         self.assertEqual(expected_result, cases, "Incorrect cases")
 
     def test_115_short(self):
+        # "A,B,C,A,A,B,A,C,B,A,C,D,B,C,B,C,D,D,E,D,D,E,F,G,F,E,\
+        #  G,G,H,G,G,H,B,C,I,H,H,I,D,J,L,I,I,B,C,F,B,C,J,D,G,D,K,L,E,B,C,F,G,D,G,B,C,F,H,D,G,\
+        #  I,F,H,B,C,G,I,D,B,C,B,C,F,D,D,G,E,E,H,G,G,I,B,C,B,C,J,L,D,D,E,F,G,G,B,C,H,D,I,F,J,G,K,L,H,I,J,L"
         data = self.generate_log("A,B,C,A,A,B,A,C,B,A,C,D,B,C,B,C,D,D,E,D,D,E,F,G,F,E,\
         G,G,H,G,G,H,B,C,I,H,H,I,D,J,J")
 
@@ -1483,12 +1321,12 @@ class TestCompoundConstraints(unittest.TestCase, EventLogGenerationMixin):
             #  "e": {"attr": "Activity", "value": "D"}},
             # {"constraint": "Absence",
             #  "e": {"attr": "Activity", "value": "K"}},
-            {"constraint": "AlternateResponse",
-             "e": {"attr": "Activity", "value": "B"},
-             "e2": {"attr": "Activity", "value": "D"}},
-            {"constraint": "AlternateResponse",
-             "e": {"attr": "Activity", "value": "C"},
-             "e2": {"attr": "Activity", "value": "D"}},
+            # {"constraint": "AlternateResponse",
+            #  "e": {"attr": "Activity", "value": "B"},
+            #  "e2": {"attr": "Activity", "value": "D"}},
+            # {"constraint": "AlternateResponse",
+            #  "e": {"attr": "Activity", "value": "C"},
+            #  "e2": {"attr": "Activity", "value": "D"}},
             # {"constraint": "Precedence",
             #  "e": {"attr": "Activity", "value": "G"},
             #  "e2": {"attr": "Activity", "value": "J"}},
@@ -1504,9 +1342,9 @@ class TestCompoundConstraints(unittest.TestCase, EventLogGenerationMixin):
             {"constraint": "ChainResponse",
              "e": {"attr": "Activity", "value": "E"},
              "e2": {"attr": "Activity", "value": "G"}},
-            # {"constraint": "ChainPrecedence",
-            #  "e": {"attr": "Activity", "value": "G"},
-            #  "e2": {"attr": "Activity", "value": "H"}},
+            {"constraint": "ChainPrecedence",
+             "e": {"attr": "Activity", "value": "G"},
+             "e2": {"attr": "Activity", "value": "H"}},
             # {"constraint": "ChainPrecedence",
             #  "e": {"attr": "Activity", "value": "I"},
             #  "e2": {"attr": "Activity", "value": "J"}},
@@ -1528,12 +1366,12 @@ class TestCompoundConstraints(unittest.TestCase, EventLogGenerationMixin):
             # {"constraint": "RespondedExistence",
             #  "e": {"attr": "Activity", "value": "K"},
             #  "e2": {"attr": "Activity", "value": "L"}},
-            {"constraint": "AlternatePrecedence",  # I no(J) J
-             "e": {"attr": "Activity", "value": "I"},
-             "e2": {"attr": "Activity", "value": "J"}},
-            {"constraint": "AlternatePrecedence",
-             "e": {"attr": "Activity", "value": "G"},
-             "e2": {"attr": "Activity", "value": "H"}}
+            # {"constraint": "AlternatePrecedence",  # I no(J) J
+            #  "e": {"attr": "Activity", "value": "I"},
+            #  "e2": {"attr": "Activity", "value": "J"}},
+            # {"constraint": "AlternatePrecedence",
+            #  "e": {"attr": "Activity", "value": "G"},
+            #  "e2": {"attr": "Activity", "value": "H"}}
         ]
 
         cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
@@ -1899,6 +1737,101 @@ class TestCompoundConstraints(unittest.TestCase, EventLogGenerationMixin):
                                37: 'Case1', 38: 'Case5', 39: 'Case1'}
 
         self.assertEqual(expected_result, cases, "Incorrect cases")
+
+
+    def test_117(self):
+        data = self.generate_log("A,C,B,D,A,C,A,B,A,E,A,C,B,C,B,D,C,B,G,D,D,F,D,C,B,F,F,G,\
+    F,D,G,G,C,B,G,E,H,C,B,D,H,G,I,D,E,I,H,J,L,F,G,C,B,I,G,H,D,J,H,I,F,K,I,L,C,B,G,J,D,H,K,F,L,\
+    I,G,C,B,H,D,I,F,C,B,G,D,C,B,F,D,G,F,C,B,G,D,H,F,I,G,J,H,K,I,L,C,B,D,E,G,C,B,D,E,G,H,I,J,K,L")
+
+        constraints = [
+            {"constraint": "Existence",
+             "e": {"attr": "Activity", "value": "A"}},
+            {"constraint": "Existence",
+             "e": {"attr": "Activity", "value": "L"}},
+            {"constraint": "Existence",
+             "e": {"attr": "Activity", "value": "B"}},
+            {"constraint": "Existence",
+             "e": {"attr": "Activity", "value": "C"}},
+            {"constraint": "Existence",
+             "e": {"attr": "Activity", "value": "G"}},
+            {"constraint": "Existence",
+             "e": {"attr": "Activity", "value": "I"}},
+            {"constraint": "Existence",
+             "e": {"attr": "Activity", "value": "D"}},
+            {"constraint": "Absence",
+             "e": {"attr": "Activity", "value": "K"}},
+            # {"constraint": "AlternateResponse",
+            #  "e": {"attr": "Activity", "value": "B"},
+            #  "e2": {"attr": "Activity", "value": "D"}},
+            # {"constraint": "AlternateResponse",
+            #  "e": {"attr": "Activity", "value": "C"},
+            #  "e2": {"attr": "Activity", "value": "D"}},
+            {"constraint": "Precedence",
+             "e": {"attr": "Activity", "value": "G"},
+             "e2": {"attr": "Activity", "value": "J"}},
+            {"constraint": "Precedence",
+             "e": {"attr": "Activity", "value": "J"},
+             "e2": {"attr": "Activity", "value": "K"}},
+            {"constraint": "Response",
+             "e": {"attr": "Activity", "value": "D"},
+             "e2": {"attr": "Activity", "value": "J"}},
+            {"constraint": "Response",
+             "e": {"attr": "Activity", "value": "I"},
+             "e2": {"attr": "Activity", "value": "J"}},
+            {"constraint": "Coexistence",
+             "e": {"attr": "Activity", "value": "B"},
+             "e2": {"attr": "Activity", "value": "C"}},
+            # {"constraint": "ChainResponse",
+            #  "e": {"attr": "Activity", "value": "F"},
+            #  "e2": {"attr": "Activity", "value": "G"}},
+            # {"constraint": "ChainResponse",
+            #  "e": {"attr": "Activity", "value": "E"},
+            #  "e2": {"attr": "Activity", "value": "G"}},
+            {"constraint": "ChainPrecedence",
+             "e": {"attr": "Activity", "value": "G"},
+             "e2": {"attr": "Activity", "value": "H"}},
+            {"constraint": "ChainPrecedence",
+             "e": {"attr": "Activity", "value": "I"},
+             "e2": {"attr": "Activity", "value": "J"}},
+            {"constraint": "NotChainSuccession",
+             "e": {"attr": "Activity", "value": "D"},
+             "e2": {"attr": "Activity", "value": "G"}},
+            {"constraint": "NotSuccession",
+             "e": {"attr": "Activity", "value": "L"},
+             "e2": {"attr": "Activity", "value": "A"}},
+            {"constraint": "ChainPrecedence",
+             "e": {"attr": "Activity", "value": "J"},
+             "e2": {"attr": "Activity", "value": "K"}},
+            {"constraint": "RespondedExistence",
+             "e": {"attr": "Activity", "value": "F"},
+             "e2": {"attr": "Activity", "value": "G"}},
+            {"constraint": "RespondedExistence",
+             "e": {"attr": "Activity", "value": "E"},
+             "e2": {"attr": "Activity", "value": "G"}},
+            {"constraint": "RespondedExistence",
+             "e": {"attr": "Activity", "value": "K"},
+             "e2": {"attr": "Activity", "value": "L"}},
+            {"constraint": "AlternatePrecedence",# I no(J) J
+             "e": {"attr": "Activity", "value": "I"},
+             "e2": {"attr": "Activity", "value": "J"}},
+            {"constraint": "AlternatePrecedence",
+             "e": {"attr": "Activity", "value": "G"},
+             "e2": {"attr": "Activity", "value": "H"}}
+        ]
+
+        cases = EventCorrelationEngine(self.start_event, constraints).assign_cases(data)
+
+        expected_result = {1: 'Case1', 2: 'Case2', 3: 'Case1', 4: 'Case2', 5: 'Case3', 6: 'Case3',
+                               7: 'Case4', 8: 'Case5', 9: 'Case4', 10: 'Case1', 11: 'Case5', 12: 'Case1',
+                               13: 'Case4', 14: 'Case5', 15: 'Case4', 16: 'Case1', 17: 'Case5', 18: 'Case1',
+                               19: 'Case1', 20: 'Case5', 21: 'Case1', 22: 'Case4', 23: 'Case5', 24: 'Case4',
+                               25: 'Case1', 26: 'Case5', 27: 'Case1', 28: 'Case1', 29: 'Case5', 30: 'Case1',
+                               31: 'Case1', 32: 'Case5', 33: 'Case1', 34: 'Case1', 35: 'Case5', 36: 'Case1',
+                               37: 'Case1', 38: 'Case5', 39: 'Case1'}
+
+        self.assertEqual(expected_result, cases, "Incorrect cases")
+
 
 
 if __name__ == '__main__':

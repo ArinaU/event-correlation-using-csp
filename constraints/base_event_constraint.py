@@ -9,11 +9,11 @@ class BaseEventConstraint(Constraint):
         self._case_status = {}
         self._attr = required_event['attr']
         self._val = required_event['value']
-        self._prev_assignments = {key: [] for key in data.keys()}
+        self._prev_assignments = []
+        self._reserved_events = {key: [] for key in data.keys()}
         if required_event2:
             self._attr2 = required_event2['attr']
             self._val2 = required_event2['value']
-
     @property
     def prev_assignments(self):
         return self._prev_assignments
@@ -21,6 +21,14 @@ class BaseEventConstraint(Constraint):
     @prev_assignments.setter
     def prev_assignments(self, value):
         self._prev_assignments = value
+
+    @property
+    def reserved_events(self):
+        return self._reserved_events
+
+    @reserved_events.setter
+    def reserved_events(self, value):
+        self._reserved_events = value
 
     @property
     def data(self):
@@ -58,6 +66,15 @@ class BaseEventConstraint(Constraint):
     def val2(self):
         return self._val2
 
+    def __call__(self, events, domains, assignments, forwardcheck=False):
+        self.curr_event = list(assignments)[-1]
+        self.curr_case = assignments[self.curr_event]
+        self.case_status = self.clean_case_status(assignments, self.case_status)
+        self.clean_reserved_events(assignments, events)
+        if len(self.prev_assignments) == 0 or self.prev_assignments[-1] != list(assignments)[-1]:
+            self.prev_assignments.append(list(assignments)[-1])
+
+        return True
 
     def check_possible_cases(self, events, domains, assignments, event_type, target_type=None):
         # other_event_type = 'e2' if event_type == 'e' else 'e'
@@ -87,31 +104,9 @@ class BaseEventConstraint(Constraint):
         # return empty_cases, possible_cases
         return possible_cases
 
-    # def check_future_case_assignment(self, events, domains, assignments, curr_case, event_type, target_type=None):
-    #     if event_type == 'e':
-    #         attr, val = self.attr, self.val
-    #     else:
-    #         attr, val = self.attr2, self.val2
-    #
-    #     if target_type == 'e2':
-    #         target_attr, target_val = self.attr2, self.val2
-    #     else:
-    #         target_attr, target_val = self.attr, self.val
-    #
-    #     # for case in empty_cases[event_type]:
-    #     case_occurs = False
-    #     for future_event in events:
-    #         if future_event not in assignments:
-    #             if self.data[future_event][target_attr] == target_val:
-    #                 if curr_case in domains[future_event]:
-    #                     case_occurs = True
-    #                     break
-    #
-    #     return case_occurs
-
     def forward_check_events(self, events, domains, assignments, event_type):
-        curr_event = list(assignments)[-1]
-        curr_case = assignments[curr_event]
+        curr_event = self.curr_event
+        curr_case = self.curr_case
         if event_type == 'e':
             attr, val = self.attr, self.val
         else:
@@ -120,13 +115,20 @@ class BaseEventConstraint(Constraint):
         for event in events[curr_event:]:
             # if event not in assignments:
             if self.data[event][attr] == val:
-                domain = domains[event]
-                if curr_case in domain:
-                    if len(domain) > 1:
-                        for case in domain[:]:
-                            if case != curr_case:
-                                domain.hideValue(case)
-                    return True
+                if not self.reserved_events[curr_event] or \
+                        (curr_case >= self.reserved_events[curr_event][0] and
+                         (self.reserved_events[curr_event][1] == event or self.prev_assignments[-1] == curr_event)) \
+                        or (curr_case <= self.reserved_events[curr_event][0] and self.reserved_events[curr_event][
+                    1] < event):
+                    domain = domains[event]
+                    if curr_case in domain:
+                        if len(domain) > 1:
+                            for case in domain[:]:
+                                if case != curr_case:
+                                    domain.hideValue(case)
+
+                        self.reserved_events[curr_event] = [curr_case, event]
+                        return True
         return False
 
     def forward_prune_events(self, events, domains, assignments, event_type, all_events=False):
@@ -176,88 +178,6 @@ class BaseEventConstraint(Constraint):
 
         return True
 
-
-    def has_available_cases(self, domains, assignments, event_type):
-        curr_event = list(assignments)[-1]
-        curr_case = assignments[curr_event]
-        event_domains = domains[curr_event]
-
-        available_cases = []
-        for case, events in self.case_status.items():
-            if case in event_domains:
-                if not self.reject_conditions(curr_event, case, event_type):
-                    available_cases.append(case)
-
-        return available_cases
-
-    def reject_conditions(self, curr_event, case, event_type):
-        pass
-
-    def check_rejection(self, domains, assignments, event_type):
-        curr_event = list(assignments)[-1]
-        curr_case = assignments[curr_event]
-        event_domains = domains[curr_event]
-        cases = self.has_available_cases(domains, assignments, event_type)
-
-        if not cases:
-            return False
-
-        for case in cases:
-            if event_domains.index(case) > event_domains.index(curr_case):
-                if self.prev_assignments[curr_event] != curr_case:
-                    self.prev_assignments[curr_event] = curr_case
-                    return True
-
-        # if self.check_backtracking(domains, assignments, event_type) \
-        #         and self.prev_assignments[curr_event] != curr_case:
-        #     self.prev_assignments[curr_event] = curr_case
-        #     return True
-
-        return False
-
-    def check_backtracking(self, domains, assignments, event_type):
-        curr_event = list(assignments)[-1]
-        curr_case = assignments[curr_event]
-        if event_type == 'e':
-            attr = self.attr2
-            val = self.val2
-        else:
-            attr = self.attr
-            val = self.val
-
-        if len(domains) > curr_event:
-            for event in domains:
-                if event not in assignments:
-                    if self.data[event][attr] == val:
-                        if curr_case in domains[event]:
-                            return False
-
-        #if len(domains[curr_event]) > 1:
-        for event in reversed(domains):
-            if event < curr_event:
-                if domains[event].index(assignments[event]) < len(domains[event])-1:
-                    return True
-        return False
-
-    def check_occurrence(self, assignments, check_event, event_type, not_event_type=False):
-        curr_event = list(assignments)[-1]
-        curr_case = assignments[curr_event]
-        attr, val = None, None
-        if event_type == 'e':
-            attr, val = self.attr2, self.val2
-        elif event_type == 'e2':
-            attr, val = self.attr, self.val
-
-        for event, case in assignments.items():
-            if case == curr_case:
-                if check_event < event < curr_event:
-                    if not_event_type:
-                        return False
-                    else:
-                        if self.data[event][attr] == val:
-                            return False
-
-        return True
 
     def find_events_in_list(self, event, case, target_type, check_order=False):
         events = []
@@ -311,6 +231,15 @@ class BaseEventConstraint(Constraint):
     #                 else:
     #                     events.append(event_pair)
     #     return events
+
+
+    def clean_reserved_events(self, assignments, events):
+        curr_event = list(assignments.keys())[-1]
+        # self._reserved_events = {key: [] for key in data.keys()}
+
+        for event in events[curr_event+1:]:
+            self.reserved_events[event] = []
+
 
     def clean_case_status(self, assignments, case_status):
         # Remove values u'', None, {}, []
