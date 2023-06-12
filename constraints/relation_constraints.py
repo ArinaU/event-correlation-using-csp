@@ -162,12 +162,6 @@ class ChainResponse(BaseEventConstraint):
         # A,B,A,B,C,C
         # 1 1 2 2 1 2
 
-        # Absence(G)
-        # 1 2 3 4 5 6 7 8
-        # A,A,G,A,F,E,G,G
-        # 1 2 1 3 2 3 3 2
-        # 1 2 1 3 1 2 2 3
-
         # 1 2 3 4 5 6 7 8
         # A,H,A,D,E,D,G,H
         # 1 1 2 2 2 1 2 2
@@ -185,6 +179,14 @@ class ChainResponse(BaseEventConstraint):
         #         7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
         #         G,G,H,G,G,H,B,C,I,H,H,I,D,J,J
 
+        # Absence(G)
+        # 1 2 3 4 5 6 7 8
+        # A,A,G,A,F,E,G,G
+        # 1 2 1 3 2 3 2 3
+        # 1 2 1 3 2 1 2 3
+
+        # 6 Case3
+
         # if B
         if self.data[curr_event][self.attr] == self.val:
             if last_event and self.data[last_event][self.attr] == self.val:
@@ -196,9 +198,8 @@ class ChainResponse(BaseEventConstraint):
         elif self.data[curr_event][self.attr2] == self.val2:
             if last_event in self.case_status[curr_case]['e'] and self.data[last_event][self.attr] == self.val:
                 self.case_status[curr_case]['e'].remove(last_event)
-                return True
             else:
-                if self.find_events_in_list(curr_event, curr_case, 'e', True):
+                if self.find_events_in_list(curr_event, curr_case, 'e', True) :
                     return False
         else:
             if last_event and self.data[last_event][self.attr] == self.val:

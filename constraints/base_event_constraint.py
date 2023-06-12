@@ -10,10 +10,11 @@ class BaseEventConstraint(Constraint):
         self._attr = required_event['attr']
         self._val = required_event['value']
         self._prev_assignments = []
-        self._reserved_events = {key: [] for key in data.keys()}
+        self._reserved_events = {} # {key: [] for key in data.keys()}
         if required_event2:
             self._attr2 = required_event2['attr']
             self._val2 = required_event2['value']
+
     @property
     def prev_assignments(self):
         return self._prev_assignments
@@ -71,6 +72,10 @@ class BaseEventConstraint(Constraint):
         self.curr_case = assignments[self.curr_event]
         self.case_status = self.clean_case_status(assignments, self.case_status)
         self.clean_reserved_events(assignments, events)
+
+        if not self.reserved_events.get(self.curr_event, None):
+            self.reserved_events[self.curr_event] = []
+
         if len(self.prev_assignments) == 0 or self.prev_assignments[-1] != list(assignments)[-1]:
             self.prev_assignments.append(list(assignments)[-1])
 
@@ -115,13 +120,10 @@ class BaseEventConstraint(Constraint):
         for event in events[curr_event:]:
             # if event not in assignments:
             if self.data[event][attr] == val:
-                if not self.reserved_events[curr_event] or \
-                        (curr_case >= self.reserved_events[curr_event][0] and
-                         (self.reserved_events[curr_event][1] == event or self.prev_assignments[-1] == curr_event)) \
-                        or (curr_case <= self.reserved_events[curr_event][0] and self.reserved_events[curr_event][
-                    1] < event):
-                    domain = domains[event]
-                    if curr_case in domain:
+                domain = domains[event]
+                if curr_case in domain:
+                    if not self.reserved_events[curr_event] \
+                            or domain.index(self.reserved_events[curr_event][0]) + 1 == domain.index(curr_case):
                         if len(domain) > 1:
                             for case in domain[:]:
                                 if case != curr_case:
@@ -130,6 +132,16 @@ class BaseEventConstraint(Constraint):
                         self.reserved_events[curr_event] = [curr_case, event]
                         return True
         return False
+
+    def clean_reserved_events(self, assignments, events):
+        # curr_event = list(assignments.keys())[-1]
+        # self._reserved_events = {key: [] for key in data.keys()}
+
+        # +1 because when goes from last case to Case1, it needs to go 1 step back
+        # for event in events[curr_event+1:]:
+        #     self.reserved_events[event] = []
+
+        self.reserved_events = {key: val for key, val in self.reserved_events.items() if key in assignments}
 
     def forward_prune_events(self, events, domains, assignments, event_type, all_events=False):
         curr_event = list(assignments)[-1]
@@ -177,7 +189,6 @@ class BaseEventConstraint(Constraint):
             return False
 
         return True
-
 
     def find_events_in_list(self, event, case, target_type, check_order=False):
         events = []
@@ -231,14 +242,6 @@ class BaseEventConstraint(Constraint):
     #                 else:
     #                     events.append(event_pair)
     #     return events
-
-
-    def clean_reserved_events(self, assignments, events):
-        curr_event = list(assignments.keys())[-1]
-        # self._reserved_events = {key: [] for key in data.keys()}
-
-        for event in events[curr_event+1:]:
-            self.reserved_events[event] = []
 
 
     def clean_case_status(self, assignments, case_status):
